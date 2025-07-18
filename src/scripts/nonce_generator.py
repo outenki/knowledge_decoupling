@@ -4,7 +4,6 @@ from random import sample
 from datasets import Dataset, DatasetDict
 from datasets import load_dataset, load_from_disk
 from math import ceil
-import time
 from pathlib import Path
 from functools import partial
 
@@ -36,6 +35,7 @@ def load_texts_from_dataset(dataset: Dataset, batch_idx: int, batch_size: int) -
     Returns:
         list[str]: A list of texts from the dataset.
     """
+    batch_size = min(len(dataset), batch_size)
     rng = range(batch_idx * batch_size, (batch_idx + 1) * batch_size)
     if isinstance(dataset, Dataset):
         return dataset.select(rng)["text"]
@@ -209,14 +209,14 @@ def generate_nonce_sentence(doc: Doc, nonce_word_bank: dict, max_n: int) -> list
         # generate nonce words to form a new sentence
         nonce_sent_words = ori_words.copy()
         for i, index in enumerate(content_indexes):
-            # import ipdb; ipdb.set_trace()
             nonce_sent_words[index] = _nonce_words[i]
         nonce_sentences.append(" ".join(nonce_sent_words))
     return nonce_sentences
 
 
 def generate_nonce_for_dataset(
-    dataset: Dataset, batch_size: int, out_path: str, limit: int = None
+    dataset: Dataset, output_path: str, batch_size: int,
+    out_path: str, limit: int = None
 ):
     """
     Main function to generate nonce sentences from a list of texts.
@@ -234,27 +234,41 @@ def generate_nonce_for_dataset(
         batch_size = min(batch_size, limit)
         dataset = dataset.select(range(limit))
     batch_number = ceil(dataset.num_rows / batch_size)
-    print(f"Processing {dataset.num_rows} samples in {batch_number} batches of size {batch_size}...")
+    print(f"***Processing {dataset.num_rows} samples in {batch_number} batches of size {batch_size}...")
 
-    print("\n\n**** Generating lemma blacklist...")
-    pos_counts = {}
-    # for i in tqdm.tqdm(range(batch_number), total=batch_number):
-    for i in range(batch_number):
-        print(f"*** Processing batch {i + 1}/{batch_number}...")
-        texts = load_texts_from_dataset(dataset, i, batch_size)
-        docs = NLP.pipe(texts, batch_size=64)
-        pos_counts = count_pos_tags(docs, batch_size, update_dict=pos_counts)
-    lemma_blacklist = generate_nonce_words_blacklist_by_pos_tags_count(pos_counts)
+    # try to load existing lemma blacklist
+    if (Path(out_path) / "lemma_blacklist").exists():
+        print(f"**Loading existing lemma blacklist from {out_path}...")
+        with open(Path(out_path) / "lemma_blacklist", "r") as f:
+            lemma_blacklist = [line.strip() for line in f.readlines()]
+    else:
+        print("\n\n** Generating lemma blacklist...")
+        pos_counts = {}
+        for i in range(batch_number):
+            print(f"* Processing batch {i + 1}/{batch_number}...")
+            texts = load_texts_from_dataset(dataset, i, batch_size)
+            docs = NLP.pipe(texts, batch_size=64)
+            pos_counts = count_pos_tags(docs, batch_size, update_dict=pos_counts)
+        lemma_blacklist = generate_nonce_words_blacklist_by_pos_tags_count(pos_counts)
+        Path(out_path).mkdir(parents=True, exist_ok=True)
+        with open(Path(out_path) / "lemma_blacklist", "w") as f:
+            for lemma in lemma_blacklist:
+                f.write(f"{lemma}\n")
 
     print("\n\n**** Generating nonce word bank...")
     nonce_word_bank = {}
-    for i in range(batch_number):
-        print(f"*** Processing batch {i + 1}/{batch_number}...")
-        texts = load_texts_from_dataset(dataset, i, batch_size)
+    # Sample 1% to generate nonce word bank
+    bank_dataset = dataset.train_test_split(test_size=0.01, shuffle=True, seed=42)["test"]
+    _batch_size = min(batch_size, len(bank_dataset))
+    _batch_number = ceil(bank_dataset.num_rows / _batch_size)
+    print(f"Processing {bank_dataset.num_rows} samples in {_batch_number} batches of size {_batch_size}...")
+    for i in range(_batch_number):
+        print(f"*** Processing batch {i + 1}/{_batch_number}...")
+        texts = load_texts_from_dataset(bank_dataset, i, _batch_size)
         docs = NLP.pipe(texts, batch_size=64)
         nonce_word_bank = generate_nonce_word_bank(
             docs,
-            batch_size,
+            _batch_size,
             lemma_blacklist,
             update_dict=nonce_word_bank
         )
@@ -311,24 +325,28 @@ def main():
     args = parser.parse_args()
     print("\n\n**** Loading dataset...")
     if args.load_from == "local" and args.data_type is None:
+        print(f"Loading dataset {args.data_path} / {args.data_name} from local disk...")
         data_path = Path(args.data_path) / args.data_name
         dataset = load_from_disk(data_path)
     elif args.load_from == "local" and args.data_type is not None:
+        print(f"Loading dataset {args.data_path} / {args.data_name} from local disk with type {args.data_type}...")
         data_path = Path(args.data_path) / args.data_name
         dataset: Dataset = load_dataset(args.data_type, data_files=data_path)
     elif args.load_from == "hf":
+        print(f"Loading dataset {args.data_path} / {args.data_name} from Hugging Face...")
+        print(f"load_dataset('{args.data_path}', '{args.data_name}')")
         dataset: Dataset = load_dataset(args.data_path, args.data_name)
     else:
         raise ValueError("Invalid load_from option.")
 
-    timestamp = str(int(time.time()))
-    out_path = Path(args.out_path) / timestamp
+    out_path = Path(args.out_path)
     if type(dataset) is DatasetDict:
         for key, dataset in dataset.items():
             print(f"\n\n**** Processing dataset {key}...")
             out_path = Path(out_path) / key
             generate_nonce_for_dataset(
                 dataset,
+                out_path,
                 batch_size=1000,
                 out_path=out_path,
                 limit=args.data_limit
@@ -337,6 +355,7 @@ def main():
         print("\n\n**** Processing dataset ...")
         generate_nonce_for_dataset(
             dataset,
+            out_path,
             batch_size=1000,
             out_path=out_path,
             limit=args.data_limit
