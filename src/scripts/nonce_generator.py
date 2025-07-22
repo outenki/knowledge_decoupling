@@ -279,6 +279,8 @@ def generate_nonce_for_dataset(
                 update_dict=nonce_word_bank
             )
         print(f"Generated nonce word bank with {len(nonce_word_bank)} entries.")
+        json.dump(nonce_word_bank, open(Path(out_path) / "nonce_word_bank.json", "w"), indent=4)
+        print(f"Saved nonce word bank to {Path(out_path) / 'nonce_word_bank.json'}")
 
     print("\n\n**** Generating nonce sentence...")
     process_fn = partial(map_process, nonce_word_bank=nonce_word_bank)
