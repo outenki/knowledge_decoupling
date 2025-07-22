@@ -6,6 +6,7 @@ from datasets import load_dataset, load_from_disk
 from math import ceil
 from pathlib import Path
 from functools import partial
+import json
 
 import tqdm
 import spacy
@@ -257,22 +258,27 @@ def generate_nonce_for_dataset(
 
     print("\n\n**** Generating nonce word bank...")
     nonce_word_bank = {}
-    # Sample 1% to generate nonce word bank
-    bank_dataset = dataset.train_test_split(test_size=0.01, shuffle=True, seed=42)["test"]
-    _batch_size = min(batch_size, len(bank_dataset))
-    _batch_number = ceil(bank_dataset.num_rows / _batch_size)
-    print(f"Processing {bank_dataset.num_rows} samples in {_batch_number} batches of size {_batch_size}...")
-    for i in range(_batch_number):
-        print(f"*** Processing batch {i + 1}/{_batch_number}...")
-        texts = load_texts_from_dataset(bank_dataset, i, _batch_size)
-        docs = NLP.pipe(texts, batch_size=64)
-        nonce_word_bank = generate_nonce_word_bank(
-            docs,
-            _batch_size,
-            lemma_blacklist,
-            update_dict=nonce_word_bank
-        )
-    print(f"Generated nonce word bank with {len(nonce_word_bank)} entries.")
+    if (Path(out_path) / "nonce_word_bank.json").exists():
+        print(f"**Loading existing nonce_word_bank from {out_path}...")
+        with open(Path(out_path) / "nonce_word_bank.json", "r") as f:
+            nonce_word_bank = json.load(f)
+    else:
+        # Sample 1% to generate nonce word bank
+        bank_dataset = dataset.train_test_split(test_size=0.01, shuffle=True, seed=42)["test"]
+        _batch_size = min(batch_size, len(bank_dataset))
+        _batch_number = ceil(bank_dataset.num_rows / _batch_size)
+        print(f"Processing {bank_dataset.num_rows} samples in {_batch_number} batches of size {_batch_size}...")
+        for i in range(_batch_number):
+            print(f"*** Processing batch {i + 1}/{_batch_number}...")
+            texts = load_texts_from_dataset(bank_dataset, i, _batch_size)
+            docs = NLP.pipe(texts, batch_size=64)
+            nonce_word_bank = generate_nonce_word_bank(
+                docs,
+                _batch_size,
+                lemma_blacklist,
+                update_dict=nonce_word_bank
+            )
+        print(f"Generated nonce word bank with {len(nonce_word_bank)} entries.")
 
     print("\n\n**** Generating nonce sentence...")
     process_fn = partial(map_process, nonce_word_bank=nonce_word_bank)
