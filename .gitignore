@@ -1,6 +1,5 @@
 src/output
 data/
-data/
 *.pyc
 .vscode/
 uv.lock
