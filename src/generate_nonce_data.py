@@ -20,6 +20,8 @@ from lib.parser import extract_token_morph_features, is_content_word, is_vowel
 spacy.require_gpu()
 NLP = spacy.load("en_core_web_trf", disable=["ner", "textcat", "tok2vec", "parser"])
 
+BATCH_SIZE = 10000   # Default batch size for processing texts
+
 if torch.backends.mps.is_available():
     device = torch.device("mps")
 elif torch.cuda.is_available():
@@ -338,7 +340,7 @@ def main():
             print(f"\n\n========= Processing dataset {key}... ==========")
             dataset_dict[key] = generate_nonce_for_dataset(
                 dataset,
-                batch_size=1000,
+                batch_size=BATCH_SIZE,
                 out_path=out_path,
                 limit=args.data_limit
             )
@@ -351,7 +353,7 @@ def main():
         print("\n\n**** Processing dataset ...")
         generate_nonce_for_dataset(
             dataset,
-            batch_size=1000,
+            batch_size=BATCH_SIZE,
             out_path=out_path,
             limit=args.data_limit
         ).save_to_disk(out_path)
