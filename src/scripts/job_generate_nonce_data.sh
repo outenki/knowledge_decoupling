@@ -12,7 +12,7 @@ module load singularity-ce
 cd /home/pj25000107/ku50001566/projects/knowledge_decoupling || exit 1
 
 singularity exec /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif \
-uv run python /home/pj25000107/ku50001566/projects/knowledge_decoupling/src/scripts/nonce_generator.py \
+uv run python /home/pj25000107/ku50001566/projects/knowledge_decoupling/src/generate_nonce_data.py \
     -dp wikimedia/wikipedia \
     -dn 20231101.en \
     -lf hf \
