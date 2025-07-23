@@ -1,6 +1,6 @@
 # %%
 import argparse
-from typing import Literal, Any
+from typing import Any
 from random import sample
 from datasets.dataset_dict import DatasetDict
 from datasets.arrow_dataset import Dataset
@@ -286,6 +286,8 @@ def generate_nonce_for_dataset(
     out_file = Path(out_path) / "dataset_with_nonce_sentences"
     print(f"\n\n**** Saving dataset with nonce sentences to {out_file}...")
     dataset.save_to_disk(str(out_file))
+    dataset.select(range(5)).to_json(Path(out_path) / "example_nonce_sentences.json")
+    print(f"Generated {len(dataset)} samples with nonce sentences.")
 
 
 def read_args():
