@@ -177,7 +177,7 @@ def generate_lemma_blacklist(
             lemma_blacklist = set([line.strip() for line in f.readlines()])
     else:
         # Generate lemma blacklist if it does not exist
-        print("\n\n** Generating lemma blacklist...")
+        print("** Generating lemma blacklist...")
         pos_counts = {}
         for i in range(batch_number):
             # For words whose POS tags are not consistent
@@ -254,7 +254,7 @@ def generate_nonce_for_dataset(
     print(f"***Processing {dataset.num_rows} samples in {batch_number} batches of size {batch_size}...")
 
     # ========== Generate lemma blacklist ==========
-    print("\n\n**** Generating lemma blacklist...")
+    print("**** Generating lemma blacklist...")
     lemma_blacklist = generate_lemma_blacklist(
         dataset,
         batch_size=batch_size,
@@ -263,7 +263,7 @@ def generate_nonce_for_dataset(
     )
 
     # ========== Generate nonce word bank ==========
-    print("\n\n**** Generating nonce word bank...")
+    print("**** Generating nonce word bank...")
     nonce_word_bank = generate_nonce_word_bank(
         dataset,
         batch_size=batch_size,
@@ -272,7 +272,7 @@ def generate_nonce_for_dataset(
     )
 
     # ========= Generate nonce sentences ==========
-    print("\n\n**** Generating nonce sentence...")
+    print("**** Generating nonce sentence...")
     process_fn = partial(map_process, nonce_word_bank=nonce_word_bank)
     dataset = dataset.map(
         process_fn,
@@ -323,7 +323,7 @@ def main():
     args = read_args()
 
     # ========  Load dataset ========
-    print("\n\n**** Loading dataset...")
+    print("**** Loading dataset...")
     dataset = load_custom_dataset(
         data_path=args.data_path,
         data_name=args.data_name,
@@ -337,7 +337,7 @@ def main():
     if isinstance(dataset, DatasetDict):
         dataset_dict = {}
         for key, dataset in dataset.items():
-            print(f"\n\n========= Processing dataset {key}... ==========")
+            print(f"========= Processing dataset {key}... ==========")
             dataset_dict[key] = generate_nonce_for_dataset(
                 dataset,
                 batch_size=BATCH_SIZE,
@@ -350,7 +350,7 @@ def main():
         dataset_dict = DatasetDict(dataset_dict)
         dataset_dict.save_to_disk(out_path)
     else:
-        print("\n\n**** Processing dataset ...")
+        print("**** Processing dataset ...")
         generate_nonce_for_dataset(
             dataset,
             batch_size=BATCH_SIZE,
