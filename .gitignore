@@ -1,2 +1,5 @@
 src/output
-.vscode/sftp.json
+data/
+data/
+*.pyc
+.vscode/

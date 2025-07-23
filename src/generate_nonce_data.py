@@ -1,8 +1,9 @@
 # %%
-from typing import Literal
+import argparse
+from typing import Literal, Any
 from random import sample
-from datasets import Dataset, DatasetDict
-from datasets import load_dataset, load_from_disk
+from datasets.dataset_dict import DatasetDict
+from datasets.arrow_dataset import Dataset
 from math import ceil
 from pathlib import Path
 from functools import partial
@@ -13,6 +14,9 @@ import spacy
 from spacy.tokens import Doc, Token
 import torch
 
+from lib.dataset import load_custom_dataset, load_texts_from_dataset_batch
+from lib.parser import extract_token_morph_features, is_content_word, is_vowel
+
 spacy.require_gpu()
 NLP = spacy.load("en_core_web_trf", disable=["ner", "textcat", "tok2vec", "parser"])
 
@@ -22,66 +26,10 @@ elif torch.cuda.is_available():
     device = torch.device("cuda")
 else:
     device = torch.device("cpu")
-
 print(f"Using device: {device}")
 
 
-def load_texts_from_dataset(dataset: Dataset, batch_idx: int, batch_size: int) -> list[str]:
-    """
-    Loads texts from a Hugging Face Dataset object.
-
-    Args:
-        dataset (Dataset): A Hugging Face Dataset object.
-
-    Returns:
-        list[str]: A list of texts from the dataset.
-    """
-    batch_size = min(len(dataset), batch_size)
-    rng = range(batch_idx * batch_size, (batch_idx + 1) * batch_size)
-    if isinstance(dataset, Dataset):
-        return dataset.select(rng)["text"]
-    else:
-        raise ValueError("Unsupported dataset type. Please provide a Hugging Face Dataset object.")
-
-
-def is_content_word(token: Token) -> bool:
-    return token.pos_ in (
-        "ADJ", "NOUN", "VERB", "PROPN", "NUM", "ADV"
-    )
-
-
-def is_vowel(c: str) -> bool:
-    return c.lower() in ("a", "o", "u", "e", "i", "è")
-
-
-def dep_dir(token) -> Literal["left", "right", "root"]:
-    """
-    Returns the direction of the dependency relation for a given token.
-
-    Args:
-        token (Token): A spaCy Token object.
-
-    Returns:
-        str: The direction of the dependency relation ('left', 'right', or 'root').
-    """
-    if token.dep_ == "ROOT":
-        return "root"
-    elif token.head == token:
-        return "root"
-    elif token.head.i < token.i:
-        return "right"
-    else:
-        return "left"
-
-
-def extract_token_morph_features(token: Token) -> tuple:
-    return (
-        token.text, token.lemma_,
-        (token.pos_, token.dep_, dep_dir(token), token.morph)
-    )
-
-
-def count_pos_tags(docs: list[Doc], total: int, update_dict: dict = None) -> dict:
+def count_pos_tags(docs, total: int, update_dict: dict | None = None) -> dict:
     """
     Counts the occurrences of each POS tag in a list of spaCy Doc objects.
 
@@ -118,7 +66,7 @@ def generate_nonce_words_blacklist_by_pos_tags_count(pos_counts: dict) -> list:
     return blacklist
 
 
-def generate_nonce_word_bank(docs: list[Doc], total: int, lemma_blacklist: list, update_dict: dict = None) -> dict:
+def generate_nonce_word_bank(docs, total: int, lemma_blacklist: list, update_dict: dict | None = None) -> dict:
     """
     Extracts morphological features from a Docs object.
     """
@@ -216,8 +164,7 @@ def generate_nonce_sentence(doc: Doc, nonce_word_bank: dict, max_n: int) -> list
 
 
 def generate_nonce_for_dataset(
-    dataset: Dataset, output_path: str, batch_size: int,
-    out_path: str, limit: int = None
+    dataset: Dataset | Any, batch_size: int, out_path: str, limit: int | None = None
 ):
     """
     Main function to generate nonce sentences from a list of texts.
@@ -231,23 +178,27 @@ def generate_nonce_for_dataset(
     Returns:
         list[str]: A list of generated nonce sentences.
     """
+    # Limit the number of samples to process
     if limit is not None:
         batch_size = min(batch_size, limit)
         dataset = dataset.select(range(limit))
+
     batch_number = ceil(dataset.num_rows / batch_size)
     print(f"***Processing {dataset.num_rows} samples in {batch_number} batches of size {batch_size}...")
 
-    # try to load existing lemma blacklist
     if (Path(out_path) / "lemma_blacklist").exists():
+        # try to load existing lemma blacklist
+        # If it exists, use it to speed up the process
         print(f"**Loading existing lemma blacklist from {out_path}...")
         with open(Path(out_path) / "lemma_blacklist", "r") as f:
             lemma_blacklist = [line.strip() for line in f.readlines()]
     else:
+        # Generate lemma blacklist if it does not exist
         print("\n\n** Generating lemma blacklist...")
         pos_counts = {}
         for i in range(batch_number):
             print(f"* Processing batch {i + 1}/{batch_number}...")
-            texts = load_texts_from_dataset(dataset, i, batch_size)
+            texts = load_texts_from_dataset_batch(dataset, i, batch_size)
             docs = NLP.pipe(texts, batch_size=64)
             pos_counts = count_pos_tags(docs, batch_size, update_dict=pos_counts)
         lemma_blacklist = generate_nonce_words_blacklist_by_pos_tags_count(pos_counts)
@@ -256,9 +207,12 @@ def generate_nonce_for_dataset(
             for lemma in lemma_blacklist:
                 f.write(f"{lemma}\n")
 
+    # ========== Generate nonce word bank ==========
     print("\n\n**** Generating nonce word bank...")
     nonce_word_bank = {}
     if (Path(out_path) / "nonce_word_bank.json").exists():
+        # Load existing nonce word bank if it exists
+        # This speeds up the process if the bank is already generated
         print(f"**Loading existing nonce_word_bank from {out_path}...")
         with open(Path(out_path) / "nonce_word_bank.json", "r") as f:
             nonce_word_bank = json.load(f)
@@ -270,7 +224,7 @@ def generate_nonce_for_dataset(
         print(f"Processing {bank_dataset.num_rows} samples in {_batch_number} batches of size {_batch_size}...")
         for i in range(_batch_number):
             print(f"*** Processing batch {i + 1}/{_batch_number}...")
-            texts = load_texts_from_dataset(bank_dataset, i, _batch_size)
+            texts = load_texts_from_dataset_batch(bank_dataset, i, _batch_size)
             docs = NLP.pipe(texts, batch_size=64)
             nonce_word_bank = generate_nonce_word_bank(
                 docs,
@@ -282,6 +236,7 @@ def generate_nonce_for_dataset(
         json.dump(nonce_word_bank, open(Path(out_path) / "nonce_word_bank.json", "w"), indent=4)
         print(f"Saved nonce word bank to {Path(out_path) / 'nonce_word_bank.json'}")
 
+    # ========= Generate nonce sentences ==========
     print("\n\n**** Generating nonce sentence...")
     process_fn = partial(map_process, nonce_word_bank=nonce_word_bank)
     dataset = dataset.map(
@@ -292,23 +247,21 @@ def generate_nonce_for_dataset(
         desc="Generating nonce sentences"
     )
 
-    out_path = Path(out_path)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    out_file = out_path / "dataset_with_nonce_sentences"
+    Path(out_path).mkdir(parents=True, exist_ok=True)
+    out_file = Path(out_path) / "dataset_with_nonce_sentences"
     print(f"\n\n**** Saving dataset with nonce sentences to {out_file}...")
-    dataset.save_to_disk(out_file)
+    dataset.save_to_disk(str(out_file))
 
 
-def main():
-    import argparse
+def read_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--data-path', '-dp', dest='data_path', type=str,
+        '--data-path', '-dp', dest='data_path', type=str, choices=["hf", "local"],
         help='Dataset path to load from.'
     )
     parser.add_argument(
         '--data-name', '-dn', dest='data_name', type=str,
-        help= 'Dataset name to load from.'
+        help='Dataset name to load from.'
     )
     parser.add_argument(
         '--data-type', '-dt', dest='data_type', type=str, required=False, default=None,
@@ -330,31 +283,29 @@ def main():
         '--out-path', '-o', dest='out_path', type=str,
         help='Path to save the dataset with nonce sentences.'
     )
-    args = parser.parse_args()
-    print("\n\n**** Loading dataset...")
-    if args.load_from == "local" and args.data_type is None:
-        print(f"Loading dataset {args.data_path} / {args.data_name} from local disk...")
-        data_path = Path(args.data_path) / args.data_name
-        dataset = load_from_disk(data_path)
-    elif args.load_from == "local" and args.data_type is not None:
-        print(f"Loading dataset {args.data_path} / {args.data_name} from local disk with type {args.data_type}...")
-        data_path = Path(args.data_path) / args.data_name
-        dataset: Dataset = load_dataset(args.data_type, data_files=data_path)
-    elif args.load_from == "hf":
-        print(f"Loading dataset {args.data_path} / {args.data_name} from Hugging Face...")
-        print(f"load_dataset('{args.data_path}', '{args.data_name}')")
-        dataset: Dataset = load_dataset(args.data_path, args.data_name)
-    else:
-        raise ValueError("Invalid load_from option.")
+    return parser.parse_args()
 
-    out_path = Path(args.out_path)
+
+def main():
+    args = read_args()
+
+    # ========  Load dataset ========
+    print("\n\n**** Loading dataset...")
+    dataset = load_custom_dataset(
+        data_path=args.data_path,
+        data_name=args.data_name,
+        data_type=args.data_type,
+        load_from=args.load_from
+    )
+
+    # ======== Generate nonce sentences ========
+    out_path = args.out_path
     if type(dataset) is DatasetDict:
         for key, dataset in dataset.items():
             print(f"\n\n**** Processing dataset {key}...")
-            out_path = Path(out_path) / key
+            out_path = str(Path(out_path) / str(key))
             generate_nonce_for_dataset(
                 dataset,
-                out_path,
                 batch_size=1000,
                 out_path=out_path,
                 limit=args.data_limit
@@ -363,7 +314,6 @@ def main():
         print("\n\n**** Processing dataset ...")
         generate_nonce_for_dataset(
             dataset,
-            out_path,
             batch_size=1000,
             out_path=out_path,
             limit=args.data_limit
