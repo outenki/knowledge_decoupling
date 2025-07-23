@@ -18,13 +18,18 @@ from pathlib import Path
 import random
 
 import spacy
+from spacy.tokens import Token
 from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
 import inflect
-
+import pyinflect
 
 from lib.dataset import load_custom_dataset
 from lib.text import clean_text, split_texts_to_sentences
+
+
+if not Token.has_extension("inflect"):
+    Token.set_extension("inflect", method=pyinflect.getInflection)
 
 
 spacy.require_gpu()
@@ -182,7 +187,7 @@ def main():
 
     Path(args.out_path).parent.mkdir(parents=True, exist_ok=True)
     agreement_data.save_to_disk(args.out_path)
-    agreement_data.select(range(5)).to_json(Path(args.out_path) / "example_number_agreement.json")
+    agreement_data.to_json(Path(args.out_path) / "evaluate_data.json")
 
     print(f"Generated {len(agreement_data)} samples for number agreement evaluation.")
 

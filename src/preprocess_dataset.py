@@ -95,9 +95,14 @@ def main():
         desc="Processing texts to sentences"
     )
 
+    _dict = processed_dataset.train_test_split(shuffle=True, test_size=0.1, seed=42)
+    processed_dataset_dict = DatasetDict({
+        "train": _dict["train"],
+        "val": _dict["test"]
+    })
     # Save the processed dataset if out_path is provided
     Path(args.out_path).parent.mkdir(parents=True, exist_ok=True)
-    processed_dataset.save_to_disk(args.out_path)
+    processed_dataset_dict.save_to_disk(args.out_path)
     print("Processed dataset saved to:", args.out_path)
 
     # Save some examples to verify

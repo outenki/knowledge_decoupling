@@ -81,7 +81,7 @@ def _generate_nonce_word_bank(docs, total: int, lemma_blacklist: list | set, upd
             morph_str = serialize_morph(morph)
             if morph_str not in features:
                 features[morph_str] = [(text, lemma)]
-            else:
+            elif (text, lemma) not in features[morph_str]:
                 features[morph_str].append((text, lemma))
     return features
 
@@ -116,7 +116,7 @@ def match_nonce_words(token: Token, nonce_word_bank: dict) -> list[str]:
 def map_process(example, nonce_word_bank):
     doc = NLP(example["text"])
     nonce = generate_nonce_sentence(doc, nonce_word_bank, 1)
-    example["nonce_sentence"] = nonce[0] if nonce else ""
+    example["nonce"] = nonce[0] if nonce else ""
     return example
 
 
@@ -151,13 +151,13 @@ def generate_nonce_sentence(doc: Doc, nonce_word_bank: dict, max_n: int) -> list
         _nonce_words = sample(_nonce_words, max_n) if len(_nonce_words) >= max_n else _nonce_words
         nonce_words.append(_nonce_words)
 
-    content_indexes = [token.i for token in content_words]
+    content_indices = [token.i for token in content_words]
     ori_words = [token.text for token in doc]
     nonce_sentences = []
     for _nonce_words in zip(*nonce_words):
         # generate nonce words to form a new sentence
         nonce_sent_words = ori_words.copy()
-        for i, index in enumerate(content_indexes):
+        for i, index in enumerate(content_indices):
             nonce_sent_words[index] = _nonce_words[i]
         nonce_sentences.append(" ".join(nonce_sent_words))
     return nonce_sentences
@@ -187,7 +187,6 @@ def generate_lemma_blacklist(
 
         lemma_blacklist = set(generate_nonce_words_blacklist_by_pos_tags_count(pos_counts))
 
-        Path(out_path_blacklist).mkdir(parents=True, exist_ok=True)
         with open(out_path_blacklist, "w") as f:
             for lemma in lemma_blacklist:
                 f.write(f"{lemma}\n")
@@ -213,7 +212,6 @@ def generate_nonce_word_bank(
         bank_dataset = dataset.train_test_split(test_size=0.01, shuffle=True, seed=42)["test"]
         _batch_size = min(batch_size, len(bank_dataset))
         _batch_number = ceil(bank_dataset.num_rows / _batch_size)
-        print(f"Processing {bank_dataset.num_rows} samples in {_batch_number} batches of size {_batch_size}...")
         for i in range(_batch_number):
             print(f"*** Processing batch {i + 1}/{_batch_number}...")
             texts = load_texts_from_dataset_batch(bank_dataset, i, _batch_size)
@@ -276,24 +274,20 @@ def generate_nonce_for_dataset(
     process_fn = partial(map_process, nonce_word_bank=nonce_word_bank)
     dataset = dataset.map(
         process_fn,
-        batched=False,
         num_proc=1,
         writer_batch_size=10_000,
         desc="Generating nonce sentences"
     )
+    dataset = dataset.filter(lambda x: x["nonce"] != "")
 
-    Path(out_path).mkdir(parents=True, exist_ok=True)
-    out_file = Path(out_path) / "dataset_with_nonce_sentences"
-    print(f"\n\n**** Saving dataset with nonce sentences to {out_file}...")
-    dataset.save_to_disk(str(out_file))
-    dataset.select(range(5)).to_json(Path(out_path) / "example_nonce_sentences.json")
     print(f"Generated {len(dataset)} samples with nonce sentences.")
+    return dataset
 
 
 def read_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--data-path', '-dp', dest='data_path', type=str, choices=["hf", "local"],
+        '--data-path', '-dp', dest='data_path', type=str,
         help='Dataset path to load from.'
     )
     parser.add_argument(
@@ -303,7 +297,7 @@ def read_args():
     parser.add_argument(
         '--data-type', '-dt', dest='data_type', type=str, required=False, default=None,
         help=(
-            'Type of the dataset to load.'
+            'Type of the dataset to load. '
             'If not provided, the dataset will be loaded as a Hugging Face Dataset.'
         )
     )
@@ -337,16 +331,22 @@ def main():
 
     # ======== Generate nonce sentences ========
     out_path = args.out_path
-    if type(dataset) is DatasetDict:
+    Path(out_path).mkdir(parents=True, exist_ok=True)
+    if isinstance(dataset, DatasetDict):
+        dataset_dict = {}
         for key, dataset in dataset.items():
-            print(f"\n\n**** Processing dataset {key}...")
-            out_path = str(Path(out_path) / str(key))
-            generate_nonce_for_dataset(
+            print(f"\n\n========= Processing dataset {key}... ==========")
+            dataset_dict[key] = generate_nonce_for_dataset(
                 dataset,
                 batch_size=1000,
                 out_path=out_path,
                 limit=args.data_limit
             )
+        if "train" in dataset_dict:
+            dataset_dict["train"].select(range(5)).to_json(Path(out_path) / "example_nonce_sent.json")
+        print(f"Saaving dataset with nonce sentences to {out_path}...")
+        dataset_dict = DatasetDict(dataset_dict)
+        dataset_dict.save_to_disk(out_path)
     else:
         print("\n\n**** Processing dataset ...")
         generate_nonce_for_dataset(
@@ -354,7 +354,7 @@ def main():
             batch_size=1000,
             out_path=out_path,
             limit=args.data_limit
-        )
+        ).save_to_disk(out_path)
 
 
 if __name__ == "__main__":
