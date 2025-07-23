@@ -1,4 +1,4 @@
-from typing import Any, Union
+from typing import Any
 from pathlib import Path
 from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
@@ -37,8 +37,11 @@ def load_texts_from_dataset_batch(dataset: Dataset, batch_idx: int, batch_size: 
     Returns:
         list[str]: A list of texts from the dataset.
     """
-    batch_size = min(len(dataset), batch_size)
-    rng = range(batch_idx * batch_size, (batch_idx + 1) * batch_size)
+    start = batch_idx * batch_size
+    end = min((batch_idx + 1) * batch_size, len(dataset))
+    if start >= len(dataset):
+        return []
+    rng = range(start, end)
     if isinstance(dataset, Dataset):
         return dataset.select(rng)["text"]
     else:
