@@ -210,8 +210,8 @@ def generate_nonce_word_bank(
         with open(out_path_word_bank, "r") as f:
             nonce_word_bank = json.load(f)
     else:
-        # Sample 1% to generate nonce word bank
-        bank_dataset = dataset.train_test_split(test_size=0.01, shuffle=True, seed=42)["test"]
+        # Sample 10% to generate nonce word bank
+        bank_dataset = dataset.train_test_split(test_size=0.1, shuffle=True, seed=42)["test"]
         _batch_size = min(batch_size, len(bank_dataset))
         _batch_number = ceil(bank_dataset.num_rows / _batch_size)
         for i in range(_batch_number):
