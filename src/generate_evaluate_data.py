@@ -186,5 +186,6 @@ def main():
 
     print(f"Generated {len(agreement_data)} samples for number agreement evaluation.")
 
+
 if __name__ == "__main__":
     main()
