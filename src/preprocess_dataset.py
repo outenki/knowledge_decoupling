@@ -102,6 +102,7 @@ def main():
 
     # Save some examples to verify
     processed_dataset.select(range(5)).to_json(Path(args.out_path) / "example_sentences.json")
+    print(f"Generated {len(processed_dataset)} sentences from the dataset.")
 
 
 if __name__ == "__main__":

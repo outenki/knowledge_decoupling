@@ -66,7 +66,7 @@ def generate_nonce_words_blacklist_by_pos_tags_count(pos_counts: dict) -> list:
     return blacklist
 
 
-def generate_nonce_word_bank(docs, total: int, lemma_blacklist: list, update_dict: dict | None = None) -> dict:
+def _generate_nonce_word_bank(docs, total: int, lemma_blacklist: list | set, update_dict: dict | None = None) -> dict:
     """
     Extracts morphological features from a Docs object.
     """
@@ -163,6 +163,73 @@ def generate_nonce_sentence(doc: Doc, nonce_word_bank: dict, max_n: int) -> list
     return nonce_sentences
 
 
+def generate_lemma_blacklist(
+    dataset: Dataset | Any, batch_size: int, out_path: str, batch_number: int
+) -> set:
+    out_path_blacklist = Path(out_path) / "lemma_blacklist"
+    if out_path_blacklist.exists():
+        # try to load existing lemma blacklist
+        # If it exists, use it to speed up the process
+        print(f"**Loading existing lemma blacklist from {out_path_blacklist}...")
+        with open(out_path_blacklist, "r") as f:
+            lemma_blacklist = set([line.strip() for line in f.readlines()])
+    else:
+        # Generate lemma blacklist if it does not exist
+        print("\n\n** Generating lemma blacklist...")
+        pos_counts = {}
+        for i in range(batch_number):
+            # For words whose POS tags are not consistent
+            # across the dataset, we will not use them as nonce words
+            print(f"* Processing batch {i + 1}/{batch_number}...")
+            texts = load_texts_from_dataset_batch(dataset, i, batch_size)
+            docs = NLP.pipe(texts, batch_size=64)
+            pos_counts = count_pos_tags(docs, batch_size, update_dict=pos_counts)
+
+        lemma_blacklist = set(generate_nonce_words_blacklist_by_pos_tags_count(pos_counts))
+
+        Path(out_path_blacklist).mkdir(parents=True, exist_ok=True)
+        with open(out_path_blacklist, "w") as f:
+            for lemma in lemma_blacklist:
+                f.write(f"{lemma}\n")
+        print(f"Generated lemma blacklist with {len(lemma_blacklist)} entries.")
+        print(f"Saved lemma blacklist to {out_path_blacklist}")
+    return lemma_blacklist
+
+
+def generate_nonce_word_bank(
+    dataset: Dataset | Any, batch_size: int, lemma_blacklist: list | set, out_path: str
+) -> dict:
+    nonce_word_bank = {}
+    out_path_word_bank = Path(out_path) / "nonce_word_bank.json"
+
+    if out_path_word_bank.exists():
+        # Load existing nonce word bank if it exists
+        # This speeds up the process if the bank is already generated
+        print(f"**Loading existing nonce_word_bank from {out_path_word_bank}...")
+        with open(out_path_word_bank, "r") as f:
+            nonce_word_bank = json.load(f)
+    else:
+        # Sample 1% to generate nonce word bank
+        bank_dataset = dataset.train_test_split(test_size=0.01, shuffle=True, seed=42)["test"]
+        _batch_size = min(batch_size, len(bank_dataset))
+        _batch_number = ceil(bank_dataset.num_rows / _batch_size)
+        print(f"Processing {bank_dataset.num_rows} samples in {_batch_number} batches of size {_batch_size}...")
+        for i in range(_batch_number):
+            print(f"*** Processing batch {i + 1}/{_batch_number}...")
+            texts = load_texts_from_dataset_batch(bank_dataset, i, _batch_size)
+            docs = NLP.pipe(texts, batch_size=64)
+            nonce_word_bank = _generate_nonce_word_bank(
+                docs,
+                _batch_size,
+                lemma_blacklist,
+                update_dict=nonce_word_bank
+            )
+        print(f"Generated nonce word bank with {len(nonce_word_bank)} entries.")
+        json.dump(nonce_word_bank, open(out_path_word_bank, "w"), indent=4)
+        print(f"Saved nonce word bank to {out_path_word_bank}")
+    return nonce_word_bank
+
+
 def generate_nonce_for_dataset(
     dataset: Dataset | Any, batch_size: int, out_path: str, limit: int | None = None
 ):
@@ -186,55 +253,23 @@ def generate_nonce_for_dataset(
     batch_number = ceil(dataset.num_rows / batch_size)
     print(f"***Processing {dataset.num_rows} samples in {batch_number} batches of size {batch_size}...")
 
-    if (Path(out_path) / "lemma_blacklist").exists():
-        # try to load existing lemma blacklist
-        # If it exists, use it to speed up the process
-        print(f"**Loading existing lemma blacklist from {out_path}...")
-        with open(Path(out_path) / "lemma_blacklist", "r") as f:
-            lemma_blacklist = [line.strip() for line in f.readlines()]
-    else:
-        # Generate lemma blacklist if it does not exist
-        print("\n\n** Generating lemma blacklist...")
-        pos_counts = {}
-        for i in range(batch_number):
-            print(f"* Processing batch {i + 1}/{batch_number}...")
-            texts = load_texts_from_dataset_batch(dataset, i, batch_size)
-            docs = NLP.pipe(texts, batch_size=64)
-            pos_counts = count_pos_tags(docs, batch_size, update_dict=pos_counts)
-        lemma_blacklist = generate_nonce_words_blacklist_by_pos_tags_count(pos_counts)
-        Path(out_path).mkdir(parents=True, exist_ok=True)
-        with open(Path(out_path) / "lemma_blacklist", "w") as f:
-            for lemma in lemma_blacklist:
-                f.write(f"{lemma}\n")
+    # ========== Generate lemma blacklist ==========
+    print("\n\n**** Generating lemma blacklist...")
+    lemma_blacklist = generate_lemma_blacklist(
+        dataset,
+        batch_size=batch_size,
+        out_path=out_path,
+        batch_number=batch_number
+    )
 
     # ========== Generate nonce word bank ==========
     print("\n\n**** Generating nonce word bank...")
-    nonce_word_bank = {}
-    if (Path(out_path) / "nonce_word_bank.json").exists():
-        # Load existing nonce word bank if it exists
-        # This speeds up the process if the bank is already generated
-        print(f"**Loading existing nonce_word_bank from {out_path}...")
-        with open(Path(out_path) / "nonce_word_bank.json", "r") as f:
-            nonce_word_bank = json.load(f)
-    else:
-        # Sample 1% to generate nonce word bank
-        bank_dataset = dataset.train_test_split(test_size=0.01, shuffle=True, seed=42)["test"]
-        _batch_size = min(batch_size, len(bank_dataset))
-        _batch_number = ceil(bank_dataset.num_rows / _batch_size)
-        print(f"Processing {bank_dataset.num_rows} samples in {_batch_number} batches of size {_batch_size}...")
-        for i in range(_batch_number):
-            print(f"*** Processing batch {i + 1}/{_batch_number}...")
-            texts = load_texts_from_dataset_batch(bank_dataset, i, _batch_size)
-            docs = NLP.pipe(texts, batch_size=64)
-            nonce_word_bank = generate_nonce_word_bank(
-                docs,
-                _batch_size,
-                lemma_blacklist,
-                update_dict=nonce_word_bank
-            )
-        print(f"Generated nonce word bank with {len(nonce_word_bank)} entries.")
-        json.dump(nonce_word_bank, open(Path(out_path) / "nonce_word_bank.json", "w"), indent=4)
-        print(f"Saved nonce word bank to {Path(out_path) / 'nonce_word_bank.json'}")
+    nonce_word_bank = generate_nonce_word_bank(
+        dataset,
+        batch_size=batch_size,
+        lemma_blacklist=lemma_blacklist,
+        out_path=out_path
+    )
 
     # ========= Generate nonce sentences ==========
     print("\n\n**** Generating nonce sentence...")
