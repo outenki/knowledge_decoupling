@@ -342,7 +342,7 @@ def main():
                 dataset,
                 batch_size=BATCH_SIZE,
                 out_path=out_path,
-                limit=args.data_limit
+                limit=args.data_limit if key == "train" else args.data_limit * 0.1
             )
         if "train" in dataset_dict:
             dataset_dict["train"].select(range(5)).to_json(Path(out_path) / "example_nonce_sent.json")
