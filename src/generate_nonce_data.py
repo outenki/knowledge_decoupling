@@ -231,7 +231,7 @@ def generate_nonce_word_bank(
 
 
 def generate_nonce_for_dataset(
-    dataset: Dataset | Any, batch_size: int, out_path: str, limit: int | None = None
+    dataset: Dataset | Any, batch_size: int, out_path: str, limit: int = 0
 ):
     """
     Main function to generate nonce sentences from a list of texts.
@@ -240,13 +240,13 @@ def generate_nonce_for_dataset(
         texts (list[str]): A list of input texts.
         batch_size (int): The number of texts to process in each batch.
         out_path (str): The path to save the dataset with nonce sentences.
-        limit (int, optional): The maximum number of samples to process. Defaults to None.
+        limit (int): The maximum number of samples to process. Defaults to 0.
 
     Returns:
         list[str]: A list of generated nonce sentences.
     """
     # Limit the number of samples to process
-    if limit is not None:
+    if limit > 0:
         batch_size = min(batch_size, limit, len(dataset))
         dataset = dataset.select(range(limit))
 
@@ -308,9 +308,8 @@ def read_args():
         help='Load dataset from Hugging Face or local path.'
     )
     parser.add_argument(
-        '--limit', '-l', dest='data_limit', type=int,
-        required=False, default=None,
-        help='Limit the number of samples to process.'
+        '--limit', '-l', dest='data_limit', type=int, default=0, required=False,
+        help='Limit the number of samples to process. 0 means no limit.'
     )
     parser.add_argument(
         '--out-path', '-o', dest='out_path', type=str,
@@ -321,6 +320,7 @@ def read_args():
 
 def main():
     args = read_args()
+    data_limit = args.data_limit
 
     # ========  Load dataset ========
     print("**** Loading dataset...")
@@ -342,7 +342,7 @@ def main():
                 dataset,
                 batch_size=BATCH_SIZE,
                 out_path=out_path,
-                limit=args.data_limit if key == "train" else args.data_limit * 0.1
+                limit=data_limit if key == "train" else int(data_limit * 0.1)
             )
         if "train" in dataset_dict:
             dataset_dict["train"].select(range(5)).to_json(Path(out_path) / "example_nonce_sent.json")
@@ -355,7 +355,7 @@ def main():
             dataset,
             batch_size=BATCH_SIZE,
             out_path=out_path,
-            limit=args.data_limit
+            limit=data_limit
         ).save_to_disk(out_path)
 
 
