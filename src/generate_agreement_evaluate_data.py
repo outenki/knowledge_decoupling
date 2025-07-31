@@ -119,6 +119,10 @@ Returns:
         for token in doc:
             if token.dep_ == "nsubj" and token.head.pos_ == "VERB" and token.head.i > token.i:
                 verb = token.head
+                if verb.i < 10:
+                    continue
+                if verb.text != verb.lemma_ and verb.text != verb._.inflect("VBZ"):
+                    continue
                 texts.append(doc.text)
                 prompts.append(str(doc[:verb.i]))
                 answers.append(verb.text)
