@@ -23,7 +23,7 @@ def load_custom_dataset(data_path: str, data_type: str | None, load_from: str) -
     elif load_from == "hf":
         print(f"Loading dataset {data_path} from Hugging Face...")
         if data_path == "wikitext":
-            return load_dataset("wikipedia", "20220301.en")
+            return load_dataset("wikimedia/wikipedia", "20231101.en")
         else:
             return load_dataset(data_path)
     else:
