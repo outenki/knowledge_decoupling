@@ -125,12 +125,14 @@ def main():
     train_dataset.set_format("torch")
     eval_dataset.set_format("torch")
 
+    log_path = f"{args.out_path}/logs"
+    Path(log_path).mkdir(parents=True, exist_ok=True)
     # === train model
     training_args = TrainingArguments(
         output_dir=args.out_path,
         per_device_train_batch_size=8,
         num_train_epochs=3,
-        logging_dir=f"{args.out_path}/logs",
+        logging_dir=log_path,
         logging_steps=500,
         eval_steps=500,
         save_steps=500,
