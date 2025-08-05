@@ -22,7 +22,10 @@ def load_custom_dataset(data_path: str, data_type: str | None, load_from: str) -
     # Load dataset from Hugging Face
     elif load_from == "hf":
         print(f"Loading dataset {data_path} from Hugging Face...")
-        return load_dataset(data_path)
+        if data_path == "wikitext":
+            return load_dataset("wikipedia", "20220301.en")
+        else:
+            return load_dataset(data_path)
     else:
         raise ValueError("Invalid load_from option.")
 
