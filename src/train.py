@@ -3,12 +3,36 @@ from pathlib import Path
 
 from transformers import GPT2Config, GPT2LMHeadModel
 from transformers.trainer import Trainer
+from transformers.trainer_callback import TrainerCallback
 from transformers.training_args import TrainingArguments
 from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
 import torch
 
 from lib.dataset import load_custom_dataset
+
+
+class LossLoggerCallback(TrainerCallback):
+    def __init__(self, log_path):
+        self.log_path = log_path
+        self.train_log = open(Path(log_path)/"train_loss.log", "w")
+        self.eval_log =  open(Path(log_path)/"eval_loss.log", "w")
+
+    def on_train_begin(self, args, state, control, **kwargs):
+        self.train_log.write(f"step\ttrain_loss\n")
+        self.eval_log.write(f"step\teval_loss\n")
+
+    def on_log(self, args, state, control, logs=None, **kwargs):
+        if logs is None:
+            return
+        if "loss" in logs:
+            self.train_log.write(f"{state.global_step}\t{logs['loss']}\n")
+        if "eval_loss" in logs:
+            self.eval_log.write(f"{state.global_step}\t{logs['eval_loss']}\n")
+
+    def on_train_end(self, args, state, control, **kwargs):
+        self.train_log.close()
+        self.eval_log.close()
 
 
 def read_args():
@@ -107,9 +131,11 @@ def main():
         per_device_train_batch_size=8,
         num_train_epochs=3,
         logging_dir=f"{args.out_path}/logs",
-        logging_steps=10,
+        logging_steps=500,
+        eval_steps=500,
+        save_steps=500,
         logging_strategy="steps",
-        save_strategy="epoch",
+        save_strategy="steps",
         eval_strategy="steps",
         report_to="none",
         fp16=torch.cuda.is_available(),
@@ -120,6 +146,7 @@ def main():
         args=training_args,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
+        callbacks=[LossLoggerCallback(f"{args.out_path}/logs")],
     )
 
     trainer.train()
