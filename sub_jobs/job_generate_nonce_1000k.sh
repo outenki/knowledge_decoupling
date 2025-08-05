@@ -5,7 +5,7 @@
 #PJM -L "jobenv=singularity"
 #PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/generate_nonce_1000k.err
 #PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/generate_nonce_1000k.out
-#PJM -N "_1M_gen_nonce"
+#PJM -N "gen_nonce_1M"
 
 module load singularity-ce
 
