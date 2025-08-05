@@ -15,7 +15,10 @@ import spacy
 from lib.dataset import load_custom_dataset
 from lib.text import clean_text, split_texts_to_sentences
 
-spacy.require_gpu()
+if spacy.prefer_gpu():
+    print("Using GPU")
+else:
+    print("Using CPU")
 NLP = spacy.load("en_core_web_trf", disable=["ner", "textcat", "tok2vec", "parser"])
 
 
