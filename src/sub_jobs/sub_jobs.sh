@@ -1,0 +1,3 @@
+pjsub job_train_on_nonce.sh
+pjsub job_train_on_wikitext.sh
+pjsub job_generate_nonce.sh
