@@ -45,7 +45,7 @@ def count_pos_tags(docs, total: int, update_dict: dict | None = None) -> dict:
     if update_dict is not None:
         pos_counts = update_dict
 
-    for doc in tqdm.tqdm(docs, total=total):
+    for doc in tqdm.tqdm(docs, total=total, desc="Counting POS tags"):
         for token in doc:
             lemma: str = token.lemma_
             pos: str = token.pos_
@@ -75,7 +75,7 @@ def _generate_nonce_word_bank(docs, total: int, lemma_blacklist: list | set, upd
     features = {}
     if update_dict is not None:
         features = update_dict
-    for doc in tqdm.tqdm(docs, total=total):
+    for doc in tqdm.tqdm(docs, total=total, desc="Generating nonce words"):
         for token in doc:
             text, lemma, morph = extract_token_morph_features(token)
             if lemma in lemma_blacklist:
