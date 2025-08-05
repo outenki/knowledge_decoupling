@@ -3,8 +3,8 @@
 #PJM -L "elapse=12:00:00"
 #PJM -L "gpu=1"
 #PJM -L "jobenv=singularity"
-#PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_preprocess_data.err
-#PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_preprocess_data.out
+#PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_preprocess_data_10k.err
+#PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_preprocess_data_10k.out
 #PJM -N "prep_data"
 
 module load singularity-ce
