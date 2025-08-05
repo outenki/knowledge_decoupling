@@ -1,3 +1,5 @@
-pjsub job_train_on_nonce.sh
-pjsub job_train_on_wikitext.sh
-pjsub job_generate_nonce.sh
+pjsub job_generate_nonce_10k.sh
+pjsub job_generate_nonce_50k.sh
+pjsub job_generate_nonce_100k.sh
+pjsub job_generate_nonce_500k.sh
+pjsub job_generate_nonce_1000k.sh
