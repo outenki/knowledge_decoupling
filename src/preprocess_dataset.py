@@ -26,10 +26,6 @@ def read_args():
         help='Dataset path to load from.'
     )
     parser.add_argument(
-        '--data-name', '-dn', dest='data_name', type=str,
-        help='Dataset name to load from.'
-    )
-    parser.add_argument(
         '--data-type', '-dt', dest='data_type', type=str, required=False, default=None,
         help=(
             'Type of the dataset to load.'
@@ -74,7 +70,6 @@ def main():
     # ======== Load dataset =========
     dataset = load_custom_dataset(
         data_path=args.data_path,
-        data_name=args.data_name,
         data_type=args.data_type,
         load_from=args.load_from
     )
