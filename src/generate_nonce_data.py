@@ -247,6 +247,7 @@ def generate_nonce_for_dataset(
     """
     # Limit the number of samples to process
     if limit > 0:
+        limit = min(limit, len(dataset))
         batch_size = min(batch_size, limit, len(dataset))
         dataset = dataset.select(range(limit))
 
