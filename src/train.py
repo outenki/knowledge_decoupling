@@ -16,11 +16,11 @@ class LossLoggerCallback(TrainerCallback):
     def __init__(self, log_path):
         self.log_path = log_path
         self.train_log = open(Path(log_path)/"train_loss.log", "w")
-        self.eval_log =  open(Path(log_path)/"eval_loss.log", "w")
+        self.eval_log = open(Path(log_path)/"eval_loss.log", "w")
 
     def on_train_begin(self, args, state, control, **kwargs):
-        self.train_log.write(f"step\ttrain_loss\n")
-        self.eval_log.write(f"step\teval_loss\n")
+        self.train_log.write("step\ttrain_loss\n")
+        self.eval_log.write("step\teval_loss\n")
 
     def on_log(self, args, state, control, logs=None, **kwargs):
         if logs is None:
@@ -80,16 +80,6 @@ def load_model_from_pre_trained(model_path: str) -> GPT2LMHeadModel:
     return GPT2LMHeadModel.from_pretrained(model_path)
 
 
-def get_device():
-    if torch.cuda.is_available():
-        device = torch.device("cuda")
-    elif torch.backends.mps.is_available():  # For Apple M1/M2
-        device = torch.device("mps")
-    else:
-        device = torch.device("cpu")
-    return device
-
-
 def main():
     args = read_args()
     Path(args.out_path).mkdir(parents=True, exist_ok=True)
@@ -133,9 +123,9 @@ def main():
         per_device_train_batch_size=8,
         num_train_epochs=3,
         logging_dir=log_path,
-        logging_steps=500,
-        eval_steps=500,
-        save_steps=500,
+        logging_steps=100,
+        eval_steps=100,
+        save_steps=100,
         logging_strategy="steps",
         save_strategy="steps",
         eval_strategy="steps",
