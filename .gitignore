@@ -3,3 +3,6 @@ data/
 *.pyc
 .vscode/
 uv.lock
+output/
+input/
+.DS_Store
