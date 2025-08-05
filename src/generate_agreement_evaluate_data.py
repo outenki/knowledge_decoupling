@@ -32,7 +32,10 @@ if not Token.has_extension("inflect"):
     Token.set_extension("inflect", method=pyinflect.getInflection)
 
 
-spacy.require_gpu()
+if spacy.prefer_gpu():
+    print("Using GPU")
+else:
+    print("Using CPU")
 NLP = spacy.load("en_core_web_trf", disable=["ner", "textcat", "tok2vec"])
 
 INFLECT_ENGINE = inflect.engine()

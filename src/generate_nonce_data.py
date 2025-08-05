@@ -17,7 +17,10 @@ import torch
 from lib.dataset import load_custom_dataset, load_texts_from_dataset_batch
 from lib.parser import extract_token_morph_features, is_content_word, is_vowel
 
-spacy.require_gpu()
+if spacy.prefer_gpu():
+    print("Using GPU")
+else:
+    print("Using CPU")
 NLP = spacy.load("en_core_web_trf", disable=["ner", "textcat", "tok2vec", "parser"])
 
 BATCH_SIZE = 10000   # Default batch size for processing texts
