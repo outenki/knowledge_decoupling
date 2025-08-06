@@ -1,5 +1,5 @@
-pjsub job_generate_nonce_10k.sh
-pjsub job_generate_nonce_50k.sh
 pjsub job_generate_nonce_100k.sh
-pjsub job_generate_nonce_500k.sh
-pjsub job_generate_nonce_1000k.sh
+pjsub job_generate_nonce_100k_200k.sh
+pjsub job_generate_nonce_200k_300k.sh
+pjsub job_generate_nonce_300k_400k.sh
+pjsub job_generate_nonce_400k_500k.sh

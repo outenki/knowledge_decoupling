@@ -308,6 +308,10 @@ def read_args():
         help='Load dataset from Hugging Face or local path.'
     )
     parser.add_argument(
+        '--start-from', '-sf', dest='start_from', type=int, default=0, required=False,
+        help='Load data from line.'
+    )
+    parser.add_argument(
         '--limit', '-l', dest='data_limit', type=int, default=0, required=False,
         help='Limit the number of samples to process. 0 means no limit.'
     )
@@ -318,9 +322,16 @@ def read_args():
     return parser.parse_args()
 
 
+def slice_dataset(dataset: Dataset, start: int, limit: int) -> Dataset:
+    assert start <= len(dataset)
+    end = start + limit
+    if end == start or end >= len(dataset):
+        end = len(dataset)
+    return dataset.select(range(start, end))
+
+
 def main():
     args = read_args()
-    data_limit = args.data_limit
 
     # ========  Load dataset ========
     print("**** Loading dataset...")
@@ -335,26 +346,29 @@ def main():
     Path(out_path).mkdir(parents=True, exist_ok=True)
     if isinstance(dataset, DatasetDict):
         dataset_dict = {}
-        for key, dataset in dataset.items():
+        for key, dt in dataset.items():
+            dt_limit = args.data_limit if key == "train" else int(args.data_limit * 0.1)
+            dt = slice_dataset(dt, args.start, dt_limit)
             print(f"========= Processing dataset {key}... ==========")
             dataset_dict[key] = generate_nonce_for_dataset(
-                dataset,
+                dt,
                 batch_size=BATCH_SIZE,
                 out_path=out_path,
-                limit=data_limit if key == "train" else int(data_limit * 0.1)
+                limit=dt_limit
             )
         if "train" in dataset_dict:
             dataset_dict["train"].select(range(5)).to_json(Path(out_path) / "example_nonce_sent.json")
-        print(f"Saaving dataset with nonce sentences to {out_path}...")
+        print(f"Saving dataset with nonce sentences to {out_path}...")
         dataset_dict = DatasetDict(dataset_dict)
         dataset_dict.save_to_disk(out_path)
     else:
         print("**** Processing dataset ...")
+        dataset = slice_dataset(dataset, args.start, args.data_limit)
         generate_nonce_for_dataset(
             dataset,
             batch_size=BATCH_SIZE,
             out_path=out_path,
-            limit=data_limit
+            limit=args.data_limit
         ).save_to_disk(out_path)
 
 

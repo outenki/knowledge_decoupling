@@ -3,8 +3,8 @@
 #PJM -L "elapse=12:00:00"
 #PJM -L "gpu=1"
 #PJM -L "jobenv=singularity"
-#PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_nonce.err
-#PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_nonce.out
+#PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/tokenize_data.err
+#PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/tokenize_data.out
 #PJM -N "nonce_train"
 
 module load singularity-ce

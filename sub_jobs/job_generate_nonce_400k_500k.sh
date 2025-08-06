@@ -11,4 +11,4 @@ module load singularity-ce
 
 cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts || exit 1
 
-singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif /bin/bash generate_nonce_data_1000k.sh
+singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif /bin/bash generate_nonce_data_400k_500k.sh
