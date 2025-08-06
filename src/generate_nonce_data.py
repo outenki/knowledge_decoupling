@@ -14,7 +14,7 @@ import spacy
 from spacy.tokens import Doc, Token
 import torch
 
-from lib.dataset import load_custom_dataset, load_texts_from_dataset_batch
+from lib.dataset import load_custom_dataset, load_texts_from_dataset_batch, slice_dataset
 from lib.parser import extract_token_morph_features, is_content_word, is_vowel
 
 if spacy.prefer_gpu():
@@ -320,14 +320,6 @@ def read_args():
         help='Path to save the dataset with nonce sentences.'
     )
     return parser.parse_args()
-
-
-def slice_dataset(dataset: Dataset, start: int, limit: int) -> Dataset:
-    assert start <= len(dataset)
-    end = start + limit
-    if end == start or end >= len(dataset):
-        end = len(dataset)
-    return dataset.select(range(start, end))
 
 
 def main():

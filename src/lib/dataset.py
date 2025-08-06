@@ -60,3 +60,11 @@ def tokenize_examples(examples, tokenizer, column_name: str, max_length: int):
     )
     out["labels"] = out["input_ids"]
     return out
+
+
+def slice_dataset(dataset: Dataset, start: int, limit: int) -> Dataset:
+    assert start <= len(dataset)
+    end = start + limit
+    if end <= start or end >= len(dataset):
+        end = len(dataset)
+    return dataset.select(range(start, end))
