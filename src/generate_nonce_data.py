@@ -348,7 +348,7 @@ def main():
         dataset_dict = {}
         for key, dt in dataset.items():
             dt_limit = args.data_limit if key == "train" else int(args.data_limit * 0.1)
-            dt = slice_dataset(dt, args.start, dt_limit)
+            dt = slice_dataset(dt, args.start_from, dt_limit)
             print(f"========= Processing dataset {key}... ==========")
             dataset_dict[key] = generate_nonce_for_dataset(
                 dt,
@@ -363,7 +363,7 @@ def main():
         dataset_dict.save_to_disk(out_path)
     else:
         print("**** Processing dataset ...")
-        dataset = slice_dataset(dataset, args.start, args.data_limit)
+        dataset = slice_dataset(dataset, args.start_from, args.data_limit)
         generate_nonce_for_dataset(
             dataset,
             batch_size=BATCH_SIZE,
