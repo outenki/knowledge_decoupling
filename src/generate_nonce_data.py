@@ -340,7 +340,8 @@ def main():
         dataset_dict = {}
         for key, dt in dataset.items():
             dt_limit = args.data_limit if key == "train" else int(args.data_limit * 0.1)
-            dt = slice_dataset(dt, args.start_from, dt_limit)
+            start_from = args.start_from if key == "train" else int(args.start_from * 0.1) 
+            dt = slice_dataset(dt, start_from, dt_limit)
             print(f"========= Processing dataset {key}... ==========")
             dataset_dict[key] = generate_nonce_for_dataset(
                 dt,
