@@ -3,9 +3,9 @@
 #PJM -L "elapse=12:00:00"
 #PJM -L "gpu=1"
 #PJM -L "jobenv=singularity"
-#PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/generate_nonce_10k.err
-#PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/generate_nonce_10k.out
-#PJM -N "gen_nonce_10k"
+#PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/generate_nonce_100k_200k.err
+#PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/generate_nonce_100k_200k.out
+#PJM -N "g_nonce_100k_200k"
 
 module load singularity-ce
 
