@@ -42,6 +42,7 @@ def main():
         # merge datasets
         sizes = " ".join([str(len(dt)) for dt in datasets])
         print(f"Dataset sizes: {sizes}")
+        print("Merging datasets...")
         merged = concatenate_datasets(datasets)
         print(f"Merged Dataset size: {len(merged)}")
     if isinstance(datasets[0], DatasetDict):
@@ -49,6 +50,7 @@ def main():
         for dc in datasets[0].keys():
             sizes = " ".join([str(len(dt[dc])) for dt in datasets])
             print(f"dataset[{dc}]: {sizes}")
+            print(f"Merging datasets {dc}...")
             merged[dc] = concatenate_datasets([dt[dc] for dt in datasets])
             print(f"merged[{dc}]: {len(merged[dc])}")
         merged = DatasetDict(merged)
