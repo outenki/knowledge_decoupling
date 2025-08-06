@@ -1,15 +1,16 @@
 import argparse
 from pathlib import Path
+from math import ceil
 
+import torch
 from transformers import GPT2Config, GPT2LMHeadModel
 from transformers.trainer import Trainer
 from transformers.trainer_callback import TrainerCallback
 from transformers.training_args import TrainingArguments
 from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
-import torch
 
-from lib.dataset import load_custom_dataset
+from lib.dataset import load_custom_dataset, slice_dataset
 
 
 class LossLoggerCallback(TrainerCallback):
@@ -54,6 +55,10 @@ def read_args():
         help='Path to pre-trained model'
     )
     parser.add_argument(
+        '--data-limit', '-dl', dest='data_limit', type=int, required=False, default=0,
+        help='Path to pre-trained model'
+    )
+    parser.add_argument(
         '--out-path', '-o', dest='out_path', type=str,
         help='Path to save the dataset with nonce sentences.'
     )
@@ -94,14 +99,22 @@ def main():
     model.save_pretrained(Path(args.out_path) / "init_model")
 
     # === load data
-    data = load_custom_dataset(args.data_path, None, "local")
+    dataset = load_custom_dataset(args.data_path, None, "local")
 
-    if isinstance(data, Dataset):
-        data_dict = data.train_test_split(test_size=0.1, shuffle=True, seed=42)
-    elif isinstance(data, DatasetDict):
-        data_dict = data
+    if isinstance(dataset, Dataset):
+        if args.data_limit > 0:
+            data_limit = ceil(args.data_limit * 1.1)
+            dataset = slice_dataset(dataset, 0, data_limit)
+        data_dict = dataset.train_test_split(test_size=0.1, shuffle=True, seed=42)
+    elif isinstance(dataset, DatasetDict):
+        data_dict = dataset
+        for k, dt in data_dict.items():
+            if k == "train":
+                data_dict[k] = slice_dataset(dt, 0, args.data_limit)
+            else:
+                data_dict[k] = slice_dataset(dt, 0, 1000)
     else:
-        raise TypeError(f"Invalid data type {type(data)}")
+        raise TypeError(f"Invalid data type {type(dataset)}")
 
     train_dataset: Dataset | None = None
     eval_dataset: Dataset | None = None
@@ -114,6 +127,9 @@ def main():
         eval_dataset = data_dict["test"]
     train_dataset.set_format("torch")
     eval_dataset.set_format("torch")
+
+    print(f"Training data size: {len(train_dataset)}")
+    print(f"Eval data size: {len(eval_dataset)}")
 
     log_path = f"{args.out_path}/logs"
     Path(log_path).mkdir(parents=True, exist_ok=True)
