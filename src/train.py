@@ -160,7 +160,7 @@ def main():
         eval_steps=100,
         save_steps=100,
         logging_strategy="steps",
-        save_strategy="steps",
+        save_strategy="no",
         eval_strategy="steps",
         report_to="none",
         fp16=torch.cuda.is_available(),
