@@ -7,7 +7,6 @@ for model_name in gpt-mini gpt-medium gpt-large;do
             echo "====== Evaluating $model_name trained with $data_name $size ======"
             uv run python $BASE_PATH/src/agreement_evaluation.py \
                 --model-path $BASE_PATH/output/$model_name/${data_name}_${size} \
-                --model-type pt \
                 --val-data $BASE_PATH/data/evaluate_data/agreement_evaluate_data.json \
                 -o $BASE_PATH/output/"$model_name"/${data_name}_${size}
         done
