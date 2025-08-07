@@ -4,7 +4,8 @@ DATA_NAME=nonce
 CONFIG_NAME="gpt-large"
 
 #           10k   50k   100k   200k   300k   400k   500k
-for size in 10000 50000 100000 200000 300000 400000 500000
+# for size in 10000 50000 100000 200000 300000 400000 500000
+for size in 400000 500000
 do
     echo "====== training on ${DATA_NAME}_$size ======"
     /home/pj25000107/ku50001566/.local/bin/uv run python $SCRIPT_PATH/train.py \
