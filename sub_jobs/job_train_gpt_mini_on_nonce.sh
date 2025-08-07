@@ -11,4 +11,4 @@ module load singularity-ce
 
 cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts || exit 1
 
-singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif /bin/bash train_on_nonce_gpt_mini.sh
+singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif /bin/bash train_gpt_mini_on_nonce.sh
