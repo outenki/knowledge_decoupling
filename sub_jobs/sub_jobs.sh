@@ -1,4 +1,6 @@
+pjsub job_train_on_wikitext_mini.sh
 pjsub job_train_on_wikitext_medium.sh
 pjsub job_train_on_wikitext_large.sh
+pjsub job_train_on_nonce_gpt_mini.sh
 pjsub job_train_on_nonce_gpt_medium.sh
 pjsub job_train_on_nonce_gpt_large.sh
