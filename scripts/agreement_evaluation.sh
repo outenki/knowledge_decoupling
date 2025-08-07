@@ -1,32 +1,14 @@
 #!/bin/bash
-# for model_path in nonce_10k nonce_100k wikitext_10k wikitext_100k; do
-#     for cfg in 6-6-384 12-12-768; do
-#         echo "========== Evaluating model: $model_path/$cfg ============="
-#         uv run python agreement_evaluation.py \
-#             --model-path data/"$model_path"/$cfg/ckpt.pt \
-#             --model-type pt \
-#             --val-data data/evaluate_data/agreement_evaluate_data.json \
-#             -o data/"$model_path"/$cfg
-#     done
-# done
-
-
-# model_path="openwebtext"
-# echo "========== Evaluating model: $model_path ============="
-# uv run python agreement_evaluation.py \
-#     --model-path data/"$model_path"/nanogpt-openwebtext.safetensors \
-#     --model-type st \
-#     --val-data data/evaluate_data/agreement_evaluate_data.json \
-#     -o data/"$model_path"
-
-
-# hugging face models
-for model_path in "openai-community/gpt2" "erwanf/gpt2-mini" "sshleifer/tiny-gpt2"
-do
-    echo "========== Evaluating model: $model_path ============="
-    python agreement_evaluation.py \
-        --model-path "openai-community/gpt2" \
-        --model-type hf \
-        --val-data data/evaluate_data/agreement_evaluate_data.json \
-        -o data/$(basename $model_path)
+BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
+for model_name in gpt-mini gpt-medium gpt-large;do
+    for data_name in wikitext nonce;do
+        #           10k   50k   100k   200k   300k   400k   500k
+        for size in 10000 50000 100000 200000 300000 400000 500000;do
+            uv run python agreement_evaluation.py \
+                --model-path $BASE_PATH/output/$model_name/${data_name}_${size} \
+                --model-type pt \
+                --val-data $BASE_PATH/data/evaluate_data/agreement_evaluate_data.json \
+                -o $BASE_PATH/output/"$model_name"/${data_name}_${size}
+        done
+    done
 done
