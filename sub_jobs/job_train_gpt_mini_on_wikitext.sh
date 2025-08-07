@@ -3,8 +3,8 @@
 #PJM -L "elapse=12:00:00"
 #PJM -L "gpu=1"
 #PJM -L "jobenv=singularity"
-#PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_wikitext_mm.err
-#PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_wikitext_mm.out
+#PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_gpt_mini_on_wikitext.err
+#PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_gpt_mini_on_wikitext.out
 #PJM -N "wikitext_mm_train"
 
 module load singularity-ce
