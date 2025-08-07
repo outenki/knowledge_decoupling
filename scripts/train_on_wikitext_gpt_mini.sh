@@ -2,6 +2,7 @@
 SCRIPT_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling/src
 DATA_NAME=wikitext
 
+#           10k   50k   100k   200k   300k   400k   500k
 for size in 10000 50000 100000 200000 300000 400000 500000
 do
     echo "====== training on wikitext_$size ======"

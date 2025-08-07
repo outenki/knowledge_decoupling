@@ -66,11 +66,28 @@ def read_args():
 
 
 def model_config(model_name: str) -> GPT2Config | None:
+    if model_name == "gpt-large":
+        return GPT2Config(
+            vocab_size=50257,
+            n_positions=1024,
+            n_embd=768,
+            n_layer=12,
+            n_head=12,
+        )
+
+    if model_name == "gpt-medium":
+        return GPT2Config(
+            vocab_size=50257,
+            n_positions=512,
+            n_embd=384,
+            n_layer=6,
+            n_head=6,
+        )
+
     if model_name == "gpt-mini":
         return GPT2Config(
             vocab_size=50257,
             n_positions=128,
-            n_ctx=128,
             n_embd=256,
             n_layer=4,
             n_head=4,
