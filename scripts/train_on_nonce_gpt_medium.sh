@@ -1,6 +1,7 @@
 #!/bin/bash
 SCRIPT_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling/src
 DATA_NAME=nonce
+CONFIG_NAME=gpt-medium
 
 #           10k   50k   100k   200k   300k   400k   500k
 for size in 10000 50000 100000 200000 300000 400000 500000
@@ -10,6 +11,6 @@ do
         -dp $SCRIPT_PATH/../input/${DATA_NAME} \
         -dl $size \
         -if config \
-        -cn gpt-middle \
-        -o $SCRIPT_PATH/../output/gpt-mini/${DATA_NAME}_$size
+        -cn CONFIG_NAME \
+        -o $SCRIPT_PATH/../output/${CONFIG_NAME}/${DATA_NAME}_$size
 done
