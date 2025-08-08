@@ -3,7 +3,6 @@ data/
 *.pyc
 .vscode/
 uv.lock
-output/*/*.safetensors
-output/bak
+output/
 input/
 .DS_Store
