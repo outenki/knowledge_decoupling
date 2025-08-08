@@ -4,5 +4,6 @@ data/
 .vscode/
 uv.lock
 output/*/*.safetensors
+output/bak
 input/
 .DS_Store
