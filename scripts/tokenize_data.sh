@@ -23,10 +23,10 @@ SCRIPT_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling/src
 
 # ************** 0808 *************
 # ** wikitext raw data (long)    **
-echo "==== tokenizing nonce ======"
+echo "==== tokenizing wikitext raw ======"
 /home/pj25000107/ku50001566/.local/bin/uv run python $SCRIPT_PATH/tokenize_data.py \
     -dp wikitext \
     -lf hf \
-    -dc nonce \
+    -dc text \
     -dml 1024 \
     -o ../input/wikitext-raw
