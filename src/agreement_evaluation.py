@@ -11,7 +11,6 @@ from pathlib import Path
 import tqdm
 
 from transformers import GPT2Tokenizer, GPT2LMHeadModel
-from transformers import AutoTokenizer, AutoModelForCausalLM
 
 import pandas as pd
 from lib.utils import get_device
@@ -41,14 +40,15 @@ def score_option(prompt: str, continuation: str, tokenizer, model) -> float | No
 
     block_size = getattr(model.config, "n_positions", None)
     if block_size is not None and input_ids.size(1) > block_size:
-        return None  # 超出最大长度限制
+        # input is too long
+        return None
 
     input_ids = input_ids.to(model.device)
     prompt_ids = prompt_ids.to(model.device)
 
     with torch.no_grad():
         outputs = model(input_ids=input_ids, labels=input_ids)
-        loss = outputs.loss  # 平均交叉熵损失
+        loss = outputs.loss
 
     num_target_tokens = input_ids.size(1) - prompt_ids.size(1)
     total_log_prob = -loss.item() * num_target_tokens
@@ -77,8 +77,7 @@ def score_samples(samples, tokenizer, model) -> list[dict]:
         else:
             sample["pred"] = option2
 
-        if sample["pred"] == sample["answer"]:
-            sample["correct"] = True
+        sample["correct"] = sample["pred"] == sample["answer"]
 
         if sample["option1"] == sample["answer"]:
             sample["difference"] = sample["score1"] - sample["score2"]
@@ -137,14 +136,12 @@ def main():
                 continue
             try:
                 sample = json.loads(line)
-                if not isinstance(sample, dict) or "prompt" not in sample or "option1" not in sample or "option2" not in sample:
-                    raise ValueError("Each line must be a JSON object with 'prompt', 'option1', and 'option2'.")
+                assert isinstance(sample, dict)
+                assert "prompt" in sample and "option1" in sample and "option2" in sample
                 eval_samples.append(sample)
             except json.JSONDecodeError as e:
                 print(f"Error decoding JSON: {e}")
                 continue
-    if not isinstance(eval_samples, list):
-        raise ValueError("Evaluation data must be a list of samples.")
 
     total_count = len(eval_samples)
     print(f"Total evaluation samples: {total_count}")
