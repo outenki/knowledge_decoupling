@@ -1,6 +1,7 @@
 import argparse
 from pathlib import Path
 from math import ceil
+from functools import partial
 
 import torch
 from transformers import GPT2Config, GPT2LMHeadModel
@@ -102,6 +103,19 @@ def load_model_from_pre_trained(model_path: str) -> GPT2LMHeadModel:
     return GPT2LMHeadModel.from_pretrained(model_path)
 
 
+def _chunk_input_ids(examples, max_length):
+    tokens = examples["input_ids"]
+    all_ids = []
+    for ids in tokens:
+        all_ids.extend(ids)
+
+    all_chunks = []
+    for i in range(0, len(ids), max_length):
+        chunk = all_ids[i:i+max_length]
+        if len(chunk) == max_length:  # 保证长度一致
+            all_chunks.append(chunk)
+    return {"input_ids": all_chunks}
+
 def main():
     args = read_args()
     Path(args.out_path).mkdir(parents=True, exist_ok=True)
@@ -133,19 +147,25 @@ def main():
     else:
         raise TypeError(f"Invalid data type {type(dataset)}")
 
-    train_dataset: Dataset | None = None
-    eval_dataset: Dataset | None = None
     train_dataset = data_dict["train"]
-    if "val" in data_dict:
-        eval_dataset = data_dict["val"]
-    elif "eval" in data_dict:
-        eval_dataset = data_dict["eval"]
-    elif "test" in data_dict:
-        eval_dataset = data_dict["test"]
-    else:
+    eval_dataset = data_dict.get("val") or data_dict.get("eval") or data_dict.get("test")
+    if eval_dataset is None:
         data_dict = train_dataset .train_test_split(test_size=0.01, shuffle=True, seed=42)
         train_dataset = data_dict["train"]
         eval_dataset = data_dict["test"]
+
+    _chunk_fn = partial(_chunk_input_ids, max_length=model.config.n_positions)
+    # === sliding window
+    train_dataset = train_dataset.map(
+        _chunk_fn,
+        batched=True,
+        remove_columns=["input_ids"]
+    )
+    eval_dataset = eval_dataset.map(
+        _chunk_fn,
+        batched=True,
+        remove_columns=["input_ids"]
+    )
 
     train_dataset.set_format("torch")
     eval_dataset.set_format("torch")
@@ -163,7 +183,6 @@ def main():
         logging_dir=log_path,
         logging_steps=100,
         eval_steps=100,
-        save_steps=100,
         logging_strategy="steps",
         save_strategy="no",
         eval_strategy="steps",
