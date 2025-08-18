@@ -1,7 +1,7 @@
 #!/bin/bash
 #PJM -L "rscgrp=b-batch"
 #PJM -L "elapse=12:00:00"
-#PJM -L "gpu=1"
+#PJM -L "gpu=4"
 #PJM -L "jobenv=singularity"
 #PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_gpt_large_on_wikitext.err
 #PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_gpt_large_on_wikitext.out

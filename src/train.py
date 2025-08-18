@@ -140,8 +140,13 @@ def main():
         eval_dataset = data_dict["val"]
     elif "eval" in data_dict:
         eval_dataset = data_dict["eval"]
-    else:
+    elif "test" in data_dict:
         eval_dataset = data_dict["test"]
+    else:
+        data_dict = train_dataset .train_test_split(test_size=0.01, shuffle=True, seed=42)
+        train_dataset = data_dict["train"]
+        eval_dataset = data_dict["test"]
+
     train_dataset.set_format("torch")
     eval_dataset.set_format("torch")
 

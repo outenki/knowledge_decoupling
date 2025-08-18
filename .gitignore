@@ -6,3 +6,4 @@ uv.lock
 output/
 input/
 .DS_Store
+logs/

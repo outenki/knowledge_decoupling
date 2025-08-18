@@ -103,18 +103,25 @@ def load_model_from_pre_trained(model_path: str) -> GPT2LMHeadModel:
     return GPT2LMHeadModel.from_pretrained(model_path)
 
 
-def _chunk_input_ids(examples, max_length):
-    tokens = examples["input_ids"]
-    all_ids = []
-    for ids in tokens:
-        all_ids.extend(ids)
+def _chunk_input_ids(examples, block_size):
 
-    all_chunks = []
-    for i in range(0, len(ids), max_length):
-        chunk = all_ids[i:i+max_length]
-        if len(chunk) == max_length:  # 保证长度一致
-            all_chunks.append(chunk)
-    return {"input_ids": all_chunks}
+    input_ids = []
+    for ids in examples["input_ids"]:
+        input_ids += ids
+        
+    total_length = len(input_ids)
+
+    # We drop the last chunk if it's smaller than block_size
+    total_length = (total_length // block_size) * block_size
+
+    result = {}
+    result["input_ids"] = [
+        input_ids[i: i + block_size]
+        for i in range(0, total_length, block_size)
+    ]
+    result["labels"] = result["input_ids"].copy()
+    return result
+
 
 def main():
     args = read_args()
@@ -157,14 +164,18 @@ def main():
     _chunk_fn = partial(_chunk_input_ids, max_length=model.config.n_positions)
     # === sliding window
     train_dataset = train_dataset.map(
-        _chunk_fn,
+        _chunk_input_ids,
         batched=True,
-        remove_columns=["input_ids"]
+        batch_size=1000,
+        remove_columns=["input_ids"],
+        fn_kwargs={"block_size": model.config.n_positions}
     )
     eval_dataset = eval_dataset.map(
-        _chunk_fn,
+        _chunk_input_ids,
         batched=True,
-        remove_columns=["input_ids"]
+        batch_size=1000,
+        remove_columns=["input_ids"],
+        fn_kwargs={"block_size": model.config.n_positions}
     )
 
     train_dataset.set_format("torch")
