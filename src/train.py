@@ -55,6 +55,10 @@ def read_args():
         help='Path to pre-trained model'
     )
     parser.add_argument(
+        '--epochs', '-e', dest='epochs', type=int, required=False, default=3,
+        help='Path to pre-trained model'
+    )
+    parser.add_argument(
         '--data-limit', '-dl', dest='data_limit', type=int, required=False, default=0,
         help='Path to pre-trained model'
     )
@@ -159,7 +163,7 @@ def main():
     training_args = TrainingArguments(
         output_dir=args.out_path,
         per_device_train_batch_size=8,
-        num_train_epochs=3,
+        num_train_epochs=args.epochs,
         logging_dir=log_path,
         logging_steps=100,
         eval_steps=100,
@@ -180,6 +184,7 @@ def main():
     )
 
     trainer.train()
+    print(f"Save model to: {args.out_path}")
     model.save_pretrained(Path(args.out_path))
 
 

@@ -1,16 +1,16 @@
 #!/bin/bash
 SCRIPT_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling/src
-DATA_NAME=wikitext-raw
+DATA_NAME=nonce
 CONFIG_NAME="gpt-mini"
-EPOCHS=6
+EPOCHS=3
+MAX_DATA_LEN=128
 
-#           1k   5k   10k   20k   30k   40k   50k
-for size in 1000 5000 10000 20000 30000 40000 50000
-# for size in 1000
+#           10k   50k   100k   200k   300k   400k   500k
+for size in 10000 50000 100000 200000 300000 400000 500000
 do
     echo "====== training on ${DATA_NAME}_$size ======"
-    /home/pj25000107/ku50001566/.local/bin/uv run python $SCRIPT_PATH/train_trunc.py \
-        -dp $SCRIPT_PATH/../input/${DATA_NAME} \
+    /home/pj25000107/ku50001566/.local/bin/uv run python $SCRIPT_PATH/train.py \
+        -dp $SCRIPT_PATH/../input/${DATA_NAME}_${MAX_DATA_LEN} \
         -dl $size \
         -if config \
         -cn $CONFIG_NAME \
