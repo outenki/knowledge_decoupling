@@ -25,7 +25,7 @@ NLP = spacy.load("en_core_web_trf", disable=["ner", "textcat", "tok2vec", "parse
 def read_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--data-path', '-dp', dest='data_path', type=str,
+        '--data-name', '-dp', dest='data_name', type=str,
         help='Dataset path to load from.'
     )
     parser.add_argument(
@@ -40,8 +40,7 @@ def read_args():
         help='Load dataset from Hugging Face or local path.'
     )
     parser.add_argument(
-        '--limit', '-l', dest='data_limit', type=int,
-        required=False, default=None,
+        '--limit', '-l', dest='data_limit', type=int, required=False, default=None,
         help='Limit the number of samples to process.'
     )
     parser.add_argument(
@@ -72,7 +71,7 @@ def main():
 
     # ======== Load dataset =========
     dataset = load_custom_dataset(
-        data_path=args.data_path,
+        data_name=args.data_name,
         data_type=args.data_type,
         load_from=args.load_from
     )

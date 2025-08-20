@@ -148,7 +148,6 @@ def main():
 
     # ======== Load dataset =========
     dataset = load_custom_dataset(
-        data_path=args.data_path,
         data_name=args.data_name,
         data_type=args.data_type,
         load_from=args.load_from
