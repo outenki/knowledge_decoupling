@@ -1,8 +1,8 @@
-from pathlib import Path
 import argparse
 from functools import partial
 
 from transformers import GPT2Tokenizer
+from datasets import Dataset
 
 from lib.dataset import load_custom_dataset
 
@@ -74,8 +74,15 @@ def group_texts_to_blocks(examples, block_size: int):
 
 def main():
     args = read_args()
-    datasets = load_custom_dataset(args.data_name, args.data_type, args.load_from)
 
+    datasets = load_custom_dataset(args.data_name, args.data_type, args.load_from)
+    # size = 600000
+    # if isinstance(datasets, Dataset):
+    #     datasets = datasets.select(range(size))  # For testing
+    # elif isinstance(datasets, dict) and "train" in datasets:
+    #     datasets["train"] = datasets["train"].select(range(size))  # For testing
+
+    tokenized_datasets = datasets
     if args.tokenize:
         # === Tokenize dataset
         tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
@@ -101,7 +108,7 @@ def main():
             map_func, batched=True,
             batch_size=3000,
             desc=f"Chunking data to block size {block_size}",
-            remove_columns=["input_ids", "labels"]
+            remove_columns=tokenized_datasets["train"].column_names
         )
         lm_datasets.save_to_disk(args.output_path + f"-bs{block_size}")
         return
@@ -112,10 +119,9 @@ def main():
             map_func, batched=True,
             batch_size=3000,
             desc=f"Chunking data to block size {block_size}",
-            remove_columns=["input_ids", "labels"]
+            remove_columns=tokenized_datasets["train"].column_names
         )
         lm_datasets.save_to_disk(args.output_path + f"-bs{block_size}")
-
 
 
 if __name__ == "__main__":
