@@ -29,7 +29,16 @@ def read_args():
         help='Column of dataset to use.'
     )
     parser.add_argument(
-        '--block-size', '-bs', dest='block_size', type=str, choices=["all", "128", "512", "1024"],
+        '--tokenize', '-t', dest='tokenize', action='store_true',
+        help='Tokenize data'
+    )
+    parser.add_argument(
+        '--slice', '-s', dest='slice', action='store_true',
+        help='Chunk data to blocks'
+    )
+    parser.add_argument(
+        '--block-size', '-bs', dest='block_size', type=int,
+        required=False, default=None,
         help='Max length of data'
     )
     parser.add_argument(
@@ -40,9 +49,14 @@ def read_args():
 
 
 def tokenize_examples(examples, tokenizer, column_name: str):
-    out = tokenizer(examples[column_name], return_attention_mask=False)
-    out["labels"] = out["input_ids"]
-    return out
+    result = tokenizer(
+        examples[column_name],
+        padding=False,
+        truncation=False,
+        return_attention_mask=False
+    )
+    result["labels"] = [ids[:] for ids in result["input_ids"]]
+    return result
 
 
 def group_texts_to_blocks(examples, block_size: int):
@@ -53,44 +67,52 @@ def group_texts_to_blocks(examples, block_size: int):
     result = {
         "input_ids": [concatenated[i:i+block_size] for i in range(0, total_length, block_size)]
     }
-    result["labels"] = result["input_ids"].copy()
+    result["labels"] = result["input_ids"]
 
     return result
 
 
 def main():
     args = read_args()
-    Path(args.output_path).mkdir(parents=True, exist_ok=True)
     datasets = load_custom_dataset(args.data_name, args.data_type, args.load_from)
 
-    # === Tokenize dataset
-    tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
-    tokenizer.pad_token = tokenizer.eos_token
-    map_func = partial(tokenize_examples, tokenizer=tokenizer, column_name=args.data_column,)
+    if args.tokenize:
+        # === Tokenize dataset
+        tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+        tokenizer.pad_token = tokenizer.eos_token
+        map_func = partial(tokenize_examples, tokenizer=tokenizer, column_name=args.data_column,)
 
-    tokenized_datasets = datasets.map(
-        map_func,
-        desc="Tokenizing data",
-        batched=True,
-        remove_columns=[args.data_column]
-    )
+        tokenized_datasets = datasets.map(
+            map_func,
+            desc="Tokenizing data",
+            batched=True,
+            remove_columns=[args.data_column]
+        )
+        tokenized_datasets.save_to_disk(args.output_path + "_tokenized")
+
+    if not args.slice:
+        return
 
     # === Slice and concatenate data blocks
-    if args.block_size != "all":
-        block_size = int(args.block_size)
+    if args.block_size:
+        block_size = args.block_size
         map_func = partial(group_texts_to_blocks, block_size=block_size)
         lm_datasets = tokenized_datasets.map(
             map_func, batched=True,
+            batch_size=3000,
             desc=f"Chunking data to block size {block_size}",
+            remove_columns=["input_ids", "labels"]
         )
-        lm_datasets.save_to_disk(args.output_path)
+        lm_datasets.save_to_disk(args.output_path + f"-bs{block_size}")
         return
 
     for block_size in (128, 512, 1024):
         map_func = partial(group_texts_to_blocks, block_size=block_size)
         lm_datasets = tokenized_datasets.map(
             map_func, batched=True,
+            batch_size=3000,
             desc=f"Chunking data to block size {block_size}",
+            remove_columns=["input_ids", "labels"]
         )
         lm_datasets.save_to_disk(args.output_path + f"-bs{block_size}")
 

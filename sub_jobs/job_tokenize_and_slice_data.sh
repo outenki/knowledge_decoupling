@@ -11,4 +11,4 @@ module load singularity-ce
 
 cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts || exit 1
 
-singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif /bin/bash tokenize_data.sh
+singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif /bin/bash tokenize_and_slice_data.sh

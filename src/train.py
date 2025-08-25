@@ -131,9 +131,10 @@ def main():
         data_dict = dataset
         for k, dt in data_dict.items():
             if k == "train":
-                data_dict[k] = slice_dataset(dt, 0, args.data_limit)
+                if args.data_limit > 0:
+                    data_dict[k] = slice_dataset(dt, 0, args.data_limit)
             else:
-                data_dict[k] = slice_dataset(dt, 0, 1000)
+                data_dict[k] = slice_dataset(dt, 0, min(1000, args.data_limit))
     else:
         raise TypeError(f"Invalid data type {type(dataset)}")
 
@@ -142,6 +143,8 @@ def main():
     train_dataset = data_dict["train"]
     if "val" in data_dict:
         eval_dataset = data_dict["val"]
+    elif "validation" in data_dict:
+        eval_dataset = data_dict["validation"]
     elif "eval" in data_dict:
         eval_dataset = data_dict["eval"]
     elif "test" in data_dict:

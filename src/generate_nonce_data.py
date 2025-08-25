@@ -151,9 +151,9 @@ def generate_nonce_sentence(doc: Doc, nonce_word_bank: dict, max_n: int) -> list
             # if no nonce words found, skip this sentence and return an empty list
             # make sure the nonce data is nonsensical enough
             return []
-        if len(_nonce_words) < max_n:
-            max_n = len(_nonce_words)
-        _nonce_words = sample(_nonce_words, max_n) if len(_nonce_words) >= max_n else _nonce_words
+
+        max_n = min(len(_nonce_words), max_n)
+        _nonce_words = sample(_nonce_words, max_n)
         nonce_words.append(_nonce_words)
 
     content_indices = [token.i for token in content_words]

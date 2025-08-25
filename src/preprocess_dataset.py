@@ -25,7 +25,7 @@ NLP = spacy.load("en_core_web_trf", disable=["ner", "textcat", "tok2vec", "parse
 def read_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--data-name', '-dp', dest='data_name', type=str,
+        '--data-name', '-dn', dest='data_name', type=str,
         help='Dataset path to load from.'
     )
     parser.add_argument(
