@@ -15,13 +15,6 @@ import spacy
 from lib.dataset import load_custom_dataset
 from lib.text import clean_text, split_texts_to_sentences
 
-if spacy.prefer_gpu():
-    print("Using GPU")
-else:
-    print("Using CPU")
-NLP = spacy.load("en_core_web_trf", disable=["ner", "textcat", "tok2vec", "parser"])
-
-
 def read_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -86,7 +79,7 @@ def main():
     processed_dataset = dataset.map(
         batch_split_texts_to_sentences,
         batched=True,
-        batch_size=10,
+        batch_size=1000,
         remove_columns=dataset.column_names,
         keep_in_memory=False,
         desc="Processing texts to sentences"

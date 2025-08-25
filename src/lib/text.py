@@ -8,7 +8,17 @@ if spacy.prefer_gpu():
     print("Using GPU")
 else:
     print("Using CPU")
-NLP = spacy.load("en_core_web_trf", disable=["ner", "textcat", "tok2vec"])
+NLP = spacy.load(
+    "en_core_web_trf",
+    disable=[
+        "ner", "textcat", "tok2vec",
+        "tagger", "parser", "lemmatizer",
+        "attribute_ruler", "morphologizer",
+        "entity_linker", "entity_ruler",
+        "merge_noun_chunks", "merge_entities",
+        "merge_subtokens"
+    ]
+)
 
 
 def clean_text(text: str) -> str:
