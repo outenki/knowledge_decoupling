@@ -10,10 +10,10 @@ import argparse
 from pathlib import Path
 from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
-import spacy
 
 from lib.dataset import load_custom_dataset
 from lib.text import clean_text, split_texts_to_sentences
+
 
 def read_args():
     parser = argparse.ArgumentParser()

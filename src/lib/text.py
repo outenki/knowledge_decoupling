@@ -1,24 +1,16 @@
-from datasets.arrow_dataset import Dataset
-
 import spacy
+
+from spacy.lang.en import English
 from spacy.tokens import Doc
+from tqdm import tqdm
 
 
 if spacy.prefer_gpu():
     print("Using GPU")
 else:
     print("Using CPU")
-NLP = spacy.load(
-    "en_core_web_trf",
-    disable=[
-        "ner", "textcat", "tok2vec",
-        "tagger", "parser", "lemmatizer",
-        "attribute_ruler", "morphologizer",
-        "entity_linker", "entity_ruler",
-        "merge_noun_chunks", "merge_entities",
-        "merge_subtokens"
-    ]
-)
+NLP = English()
+NLP.add_pipe("sentencizer")
 
 
 def clean_text(text: str) -> str:
@@ -60,8 +52,11 @@ def split_texts_to_sentences(texts: list, min_len: int = 0) -> list:
     Returns:
         list: A list of lists, where each inner list contains sentences from the corresponding text.
     """
-    docs = NLP.pipe(texts)
+    docs = NLP.pipe(texts, batch_size=50)
     sentences = []
-    for doc in docs:
-        sentences += [sent.text.strip() for sent in doc.sents if sent.text.strip() if len(sent) > min_len]
+    for doc in tqdm(docs, total=len(texts), desc="Splitting texts"):
+        for sent in doc.sents:
+            s = sent.text.strip()
+            if len(s) > min_len:
+                sentences.append(s)
     return sentences
