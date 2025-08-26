@@ -13,7 +13,7 @@ do
     echo "start at $(date)"
     /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/preprocess_wikimedia.py \
         -dn $BASE_PATH/data/$DATA_NAME \
-        -o $BASE_PATH/data/${DATA_NAME}-nonce-part$part \
+        -o $BASE_PATH/data/wikimedia-nonce/part$part \
         -sf $i \
         -l $SIZE
     echo "end at $(date)"
