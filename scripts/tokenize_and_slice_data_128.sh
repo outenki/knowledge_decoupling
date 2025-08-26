@@ -10,7 +10,7 @@ BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
 # slice
 DATA_NAME=wikimedia
 /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/tokenize_and_slice_data.py \
-    -dn $BASE_PATH/data/wikimedia_tokenized -lf local -dc text -s -o $BASE_PATH/input/$DATA_NAME
+    -dn $BASE_PATH/data/wikimedia_tokenized -lf local -dc text -s -bs 128 -o $BASE_PATH/input/$DATA_NAME
 
 # 0820
 # DATA_NAME=wikitext-103
