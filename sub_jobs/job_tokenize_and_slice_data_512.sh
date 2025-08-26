@@ -5,7 +5,7 @@
 #PJM -L "jobenv=singularity"
 #PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/tokenize_data_512.err
 #PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/tokenize_data_512.out
-#PJM -N "tokenize"
+#PJM -N "tokenize_512"
 
 module load singularity-ce
 

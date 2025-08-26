@@ -5,10 +5,10 @@ from spacy.tokens import Doc
 from tqdm import tqdm
 
 
-if spacy.prefer_gpu():
-    print("Using GPU")
-else:
-    print("Using CPU")
+# if spacy.prefer_gpu():
+#     print("Using GPU")
+# else:
+#     print("Using CPU")
 NLP = English()
 NLP.add_pipe("sentencizer")
 

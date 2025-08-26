@@ -1,28 +1,31 @@
 #!/bin/bash
-BASE_PATH=/Users/ou/Developer/projects/knowledge_decoupling
+BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
 DATA_NAME=preprocessed-wikimedia
+ITER_NUM=122
+SIZE=100000
+START=$(($1 * $SIZE * $ITER_NUM))
+END=$(($(($1 + 1)) * $SIZE * $ITER_NUM -1))
 
-# echo "====== gpt ======"
+for i in $(seq $START $SIZE $END)
+do
+    part=$(($i / $SIZE))
+    echo "\n====== preprocess $part ======"
+    echo "start at $(date)"
+    /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/preprocess_wikimedia.py \
+        -dn $BASE_PATH/data/$DATA_NAME \
+        -o $BASE_PATH/data/${DATA_NAME}-nonce-part$part \
+        -sf $i \
+        -l $SIZE
+    echo "end at $(date)"
+done
+
+# echo
+# echo "====== mine ======"
 # echo "start at $(date)"
-# python $BASE_PATH/src/temp.py \
-#     -dp $BASE_PATH/data/$DATA_NAME \
+# /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/generate_nonce_data.py \
+#     -dn $BASE_PATH/data/$DATA_NAME \
 #     -lf local \
-#     -o $BASE_PATH/data/${DATA_NAME}-gpt-nonce
-# echo "end at $(date)"
-
-echo "\n====== mine ======"
-echo "start at $(date)"
-python $BASE_PATH/src/generate_nonce_data.py \
-    -dn $BASE_PATH/data/$DATA_NAME \
-    -lf local \
-    -o $BASE_PATH/data/${DATA_NAME}-mine-nonce \
-    -l 100000
-echo "end at $(date)"
-
-# echo "\n====== old ======"
-# echo "start at $(date)"
-# python $BASE_PATH/src/old.py \
-#     -dp $BASE_PATH/data/$DATA_NAME \
-#     -lf local \
-#     -o $BASE_PATH/data/${DATA_NAME}-old-nonce
+#     -o $BASE_PATH/data/${DATA_NAME}-nonce \
+#     -sf 200000 \
+#     -l 100000
 # echo "end at $(date)"
