@@ -54,7 +54,7 @@ def split_texts_to_sentences(texts: list, min_len: int = 0) -> list:
     """
     docs = NLP.pipe(texts, batch_size=50)
     sentences = []
-    for doc in tqdm(docs, total=len(texts), desc="Splitting texts"):
+    for doc in docs:
         for sent in doc.sents:
             s = sent.text.strip()
             if len(s) > min_len:
