@@ -296,6 +296,7 @@ def main():
         data_type=args.data_type,
         load_from=args.load_from
     )
+    print(f"Dataset loaded with {dataset.num_rows} samples.")
 
     # ======== Generate nonce sentences ========
     if isinstance(dataset, DatasetDict):
@@ -305,6 +306,7 @@ def main():
             start_from = args.start_from if key == "train" else int(args.start_from * 0.1) 
             dt = slice_dataset(dt, start_from, dt_limit)
             print(f"========= Processing dataset {key}... ==========")
+            print(f"Dataset {key} has {dt.num_rows} samples after slicing.")
             dataset_dict[key] = generate_nonce_for_dataset(
                 dt,
                 batch_size=BATCH_SIZE,
@@ -314,15 +316,20 @@ def main():
             dataset_dict["train"].select(range(5)).to_json(Path(out_path) / "example_nonce_sent.json")
         print(f"Saving dataset with nonce sentences to {out_path}...")
         dataset_dict = DatasetDict(dataset_dict)
+        print("Dataset structure:", dataset_dict)
         dataset_dict.save_to_disk(out_path)
     else:
         print("**** Processing dataset ...")
         dataset = slice_dataset(dataset, args.start_from, args.data_limit)
-        generate_nonce_for_dataset(
+        print(f"Dataset has {dataset.num_rows} samples after slicing.")
+        dataset = generate_nonce_for_dataset(
             dataset,
             batch_size=BATCH_SIZE,
             out_path=out_path,
-        ).save_to_disk(out_path)
+        )
+        print(f"Dataset has {dataset.num_rows} samples after generating nonce sentences.")
+        print(f"Saving dataset with nonce sentences to {out_path}...")
+        dataset.save_to_disk(out_path)
 
 
 if __name__ == "__main__":

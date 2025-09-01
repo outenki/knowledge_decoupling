@@ -107,6 +107,12 @@ def load_model_from_pre_trained(model_path: str) -> GPT2LMHeadModel:
 
 
 def main():
+    print("CUDA available:", torch.cuda.is_available())
+    print("GPU count:", torch.cuda.device_count())
+
+    for i in range(torch.cuda.device_count()):
+        print(f"GPU {i}: {torch.cuda.get_device_name(i)}")
+
     args = read_args()
     Path(args.out_path).mkdir(parents=True, exist_ok=True)
 
@@ -162,17 +168,26 @@ def main():
 
     log_path = f"{args.out_path}/logs"
     Path(log_path).mkdir(parents=True, exist_ok=True)
+
+    train_dataset_size = len(train_dataset)
+    per_device_train_batch_size = 8
+    gradient_accumulation_steps = 4
+    steps_per_epoch = train_dataset_size // (per_device_train_batch_size * gradient_accumulation_steps)
+    save_steps = steps_per_epoch // 10   # 0.1 epoch
+    logging_steps = steps_per_epoch // 100
     # === train model
     training_args = TrainingArguments(
         output_dir=args.out_path,
-        per_device_train_batch_size=8,
+        per_device_train_batch_size=per_device_train_batch_size,
+        gradient_accumulation_steps=gradient_accumulation_steps,
+        per_device_eval_batch_size=per_device_train_batch_size,
         num_train_epochs=args.epochs,
         logging_dir=log_path,
-        logging_steps=100,
-        eval_steps=100,
-        save_steps=100,
+        logging_steps=logging_steps,
+        eval_steps=logging_steps,
+        save_steps=save_steps,
         logging_strategy="steps",
-        save_strategy="no",
+        save_strategy="steps",
         eval_strategy="steps",
         report_to="none",
         fp16=torch.cuda.is_available(),

@@ -3,9 +3,9 @@ from pathlib import Path
 
 from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
-from datasets import concatenate_datasets
+from datasets import concatenate_datasets, load_from_disk
 
-from lib.dataset import load_custom_dataset, slice_dataset
+from lib.dataset import slice_dataset
 
 
 def read_args():
@@ -13,10 +13,6 @@ def read_args():
     parser.add_argument(
         '--data-dir', '-dd', dest='data_dir', type=str, required=True,
         help='Dir of datasets'
-    )
-    parser.add_argument(
-        '--dataset-names', '-dn', dest='dataset_names', type=str, required=True,
-        help='Names of datasets to merge. Split names with `,` (no spaces)'
     )
     parser.add_argument(
         '--output-path', '-o', dest='out_path', type=str, required=True,
@@ -28,14 +24,17 @@ def read_args():
 def main():
     args = read_args()
     Path(args.out_path).mkdir(parents=True, exist_ok=True)
-    dataset_names = args.dataset_names.split(",")
 
     datasets = []
-    for dn in dataset_names:
-        data_path = Path(args.data_dir) / dn
-        dataset = load_custom_dataset(data_path, None, "local")
-        print(f"Loading dataset from {data_path}(size: {len(dataset)})")
-        datasets.append(dataset)
+    for data_path in Path(args.data_dir).iterdir():
+        if not data_path.is_dir():
+            continue
+        try:
+            dataset = load_from_disk(str(data_path))
+            print(f"Loaded dataset from {data_path}(size: {len(dataset)})")
+            datasets.append(dataset)
+        except Exception as e:
+            print(f"Failed to load dataset from {data_path}: {e}")
 
     merged = {}
     if isinstance(datasets[0], Dataset):

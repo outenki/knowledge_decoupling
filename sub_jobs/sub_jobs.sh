@@ -1,9 +1,6 @@
-pjsub job_train_gpt_mini_on_wikitext_full.sh
-pjsub job_train_gpt_medium_on_wikitext_full.sh
-pjsub job_train_gpt_large_on_wikitext_full.sh
-
-# pjsub job_generate_nonce_500k_1000k.sh
-# pjsub job_generate_nonce_1000k_1500k.sh
-# pjsub job_generate_nonce_1500k_2000k.sh
-# pjsub job_generate_nonce_2000k_2500k.sh
-# pjsub job_generate_nonce_2500k_3000k.sh
+pjsub job_generate_nonce_5.sh
+pjsub job_generate_nonce_6.sh
+pjsub job_generate_nonce_7.sh
+pjsub job_generate_nonce_8.sh
+pjsub job_generate_nonce_9.sh
+pjsub job_generate_nonce_10.sh
