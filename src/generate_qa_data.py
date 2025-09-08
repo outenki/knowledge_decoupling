@@ -9,11 +9,11 @@ from dataset import load_dataset, Dataset
 def read_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--data-name', '-d', dest='data_name', type=str, required=True,
+        '--data-name', '-dn', dest='data_name', type=str, required=True,
         help='Name of the dataset to load from Hugging Face"
     )
     parser.add_argument(
-        '--subset-name', '-d', dest='subset_name', type=str, required=True,
+        '--subset-name', '-sn', dest='subset_name', type=str, required=True,
         help='Name of the sebset"
     )
     parser.add_argument(
