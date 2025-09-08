@@ -3,7 +3,7 @@ import json
 from tqdm import tqdm
 from pathlib import Path
 
-from dataset import load_dataset, Dataset
+from datasets import load_dataset, Dataset
 
 
 def read_args():
@@ -14,7 +14,7 @@ def read_args():
     )
     parser.add_argument(
         '--subset-name', '-sn', dest='subset_name', type=str, required=True,
-        help='Name of the sebset"
+        help='Name of the sebset'
     )
     parser.add_argument(
         '--output-path', '-o', dest='output_path', type=str, required=True,
