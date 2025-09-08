@@ -10,7 +10,7 @@ def read_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--data-name', '-dn', dest='data_name', type=str, required=True,
-        help='Name of the dataset to load from Hugging Face"
+        help='Name of the dataset to load from Hugging Face'
     )
     parser.add_argument(
         '--subset-name', '-sn', dest='subset_name', type=str, required=True,
