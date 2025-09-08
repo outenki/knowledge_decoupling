@@ -61,28 +61,17 @@ def score_samples(samples, tokenizer, model) -> list[dict]:
     filtered_samples = []
     for sample in tqdm.tqdm(samples, total=len(samples), desc="scoring samples"):
         prompt = sample["prompt"]
-        option1 = sample["option1"]
-        option2 = sample["option2"]
+        options = sample["options"]
 
-        score1 = score_option(prompt, option1, tokenizer, model)
-        score2 = score_option(prompt, option2, tokenizer, model)
-
-        if score1 is None or score2 is None:
+        scores = [score_option(prompt, option, tokenizer, model) for option in options]
+        if any(score is None for score in scores):
             continue
-        sample["score1"] = score1
-        sample["score2"] = score2
 
-        if score1 > score2:
-            sample["pred"] = option1
-        else:
-            sample["pred"] = option2
-
-        sample["correct"] = sample["pred"] == sample["answer"]
-
-        if sample["option1"] == sample["answer"]:
-            sample["difference"] = sample["score1"] - sample["score2"]
-        else:
-            sample["difference"] = sample["score2"] - sample["score1"]
+        sample["scores"] = scores
+        sample["pred_score"] = max(scores)
+        sample["pred"] = options[scores.index(max(scores))]
+        sample["answer_score"] = scores[options.index(sample["answer"])]
+        sample["is_correct"] = sample["pred"] == sample["answer"]
 
         filtered_samples.append(sample)
     return filtered_samples
