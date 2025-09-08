@@ -41,7 +41,8 @@ def generate_qa_data(dataset: Dataset) -> dict:
 
 
 args = read_args()
-Path(args.output_path).parent.mkdir(parents=True, exist_ok=True)
+print(f"making dirs: {args.output_path}")
+Path(args.output_path).mkdir(parents=True, exist_ok=True)
 
 
 dataset_dict = load_dataset(args.data_name, args.subset_name)
