@@ -40,6 +40,7 @@ def generate_qa_data(dataset: Dataset) -> dict:
     return qa_data
 
 
+args = read_args()
 Path(args.output_path).parent.mkdir(parents=True, exist_ok=True)
 
 
