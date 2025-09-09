@@ -4,13 +4,14 @@ Input: a dataset with sentences and a model.
 Output: a dataset with sentences and the model's predictions.
 """
 
-import torch
 import argparse
 import json
 from pathlib import Path
 import tqdm
 
+import torch
 from transformers import GPT2Tokenizer, GPT2LMHeadModel
+from torch.nn import CrossEntropyLoss
 
 import pandas as pd
 from lib.utils import get_device
@@ -40,20 +41,32 @@ def score_option(prompt: str, continuation: str, tokenizer, model) -> float | No
 
     block_size = getattr(model.config, "n_positions", None)
     if block_size is not None and input_ids.size(1) > block_size:
-        # input is too long
-        return None
+        return None  # skip too long samples
 
     input_ids = input_ids.to(model.device)
-    prompt_ids = prompt_ids.to(model.device)
+    prompt_len = prompt_ids.size(1)
 
     with torch.no_grad():
-        outputs = model(input_ids=input_ids, labels=input_ids)
-        loss = outputs.loss
+        outputs = model(input_ids=input_ids)
+        logits = outputs.logits  # [batch, seq_len, vocab_size]
 
-    num_target_tokens = input_ids.size(1) - prompt_ids.size(1)
-    total_log_prob = -loss.item() * num_target_tokens
+        # 对应 target = input_ids[:, 1:], logits = logits[:, :-1, :]
+        shift_logits = logits[:, :-1, :].contiguous()
+        shift_labels = input_ids[:, 1:].contiguous()
 
-    return total_log_prob
+        # mask: 只计算 continuation 部分的 loss
+        cont_mask = torch.zeros_like(shift_labels, dtype=torch.bool)
+        cont_mask[:, prompt_len-1:] = True   # prompt_len-1 因为 labels 是 shifted
+
+        loss_fct = CrossEntropyLoss(reduction="none")
+        token_losses = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
+        token_losses = token_losses.view(shift_labels.size())
+
+        # 只取 continuation 部分的 loss
+        cont_losses = token_losses[cont_mask]
+        avg_log_prob = -cont_losses.mean().item()  # 平均 log-prob
+
+    return avg_log_prob
 
 
 def score_samples(samples, tokenizer, model) -> list[dict]:
@@ -85,8 +98,7 @@ def analyze_results(samples) -> dict:
     correct = 0
     total = 0
     for sample in samples:
-        predicted = sample["option1"] if sample["score1"] > sample["score2"] else sample["option2"]
-        is_correct = (predicted == sample["answer"])
+        is_correct = (sample["pred"] == sample["answer"])
         correct += int(is_correct)
         total += 1
     accuracy = correct / total if total > 0 else 0
@@ -120,17 +132,19 @@ def main():
     print(f"Loading evaluation data from {eval_data_path}...")
     eval_samples = []
     with open(eval_data_path, "r") as f:
-        for line in tqdm.tqdm(f.readlines(), desc="Loading evaluation data"):
-            if not line.strip():
-                continue
-            try:
-                sample = json.loads(line)
-                assert isinstance(sample, dict)
-                assert "prompt" in sample and "option1" in sample and "option2" in sample
-                eval_samples.append(sample)
-            except json.JSONDecodeError as e:
-                print(f"Error decoding JSON: {e}")
-                continue
+        eval_samples = json.load(f)
+        assert isinstance(eval_samples, list)
+        # for line in tqdm.tqdm(f.readlines(), desc="Loading evaluation data"):
+        #     if not line.strip():
+        #         continue
+        #     try:
+        #         sample = json.loads(line)
+        #         assert isinstance(sample, dict)
+        #         assert "prompt" in sample and "option1" in sample and "option2" in sample
+        #         eval_samples.append(sample)
+        #     except json.JSONDecodeError as e:
+        #         print(f"Error decoding JSON: {e}")
+        #         continue
 
     total_count = len(eval_samples)
     print(f"Total evaluation samples: {total_count}")
