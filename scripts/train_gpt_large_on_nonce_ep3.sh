@@ -13,6 +13,6 @@ do
         -dl $size \
         -if config \
         -cn $CONFIG_NAME \
-        -e $EPOCHS \
-        -o $SCRIPT_PATH/../output/$CONFIG_NAME/${DATA_NAME}_${size}_${EPOCHS}
+        -e $((EPOCHS-PRE_EPOCHS)) \
+        -o $SCRIPT_PATH/../output/$CONFIG_NAME/$OUTPUT_NAME
 done

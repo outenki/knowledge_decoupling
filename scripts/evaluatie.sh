@@ -9,14 +9,14 @@ eval_name=qa_arc_challenge
 
 echo
 echo "====== Evaluating hugging face gpt2 ======"
-python $BASE_PATH/src/agreement_evaluation.py \
+python $BASE_PATH/src/evaluate.py \
     --model-path gpt2 \
     --val-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
     -o $BASE_PATH/output/0830/gpt-large/gpt2/$eval_name
 for data_name in wikimedia-bs1024-1 wikimedia-nonce-bs1024-1 wikimedia-nonce-bs1024-3;do
     echo
     echo "====== Evaluating $data_name ======"
-    python $BASE_PATH/src/agreement_evaluation.py \
+    python $BASE_PATH/src/evaluate.py \
         --model-path $BASE_PATH/output/0830/$model_name/$data_name \
         --val-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
         -o $BASE_PATH/output/0830/"$model_name"/$data_name/$eval_name
@@ -25,13 +25,13 @@ done
 # 0820
 # for model_name in gpt-mini gpt-medium gpt-large;do
 #     echo "====== Evaluating untrained $model_name ======"
-#     uv run python $BASE_PATH/src/agreement_evaluation.py \
+#     uv run python $BASE_PATH/src/evaluate.py \
 #         --model-path $BASE_PATH/output/$model_name/init_model \
 #         --val-data $BASE_PATH/data/evaluate_data/agreement_evaluate_data.json \
 #         -o $BASE_PATH/output/"$model_name"/init_model
 
 #     echo "====== Evaluating $model_name ======"
-#     uv run python $BASE_PATH/src/agreement_evaluation.py \
+#     uv run python $BASE_PATH/src/evaluate.py \
 #         --model-path $BASE_PATH/output/$model_name/wikitext-103-ep3 \
 #         --val-data $BASE_PATH/data/evaluate_data/agreement_evaluate_data.json \
 #         -o $BASE_PATH/output/"$model_name"/wikitext-103-ep3
@@ -39,7 +39,7 @@ done
 
 # for model_name in gpt-mini gpt-medium gpt-large;do
 #     echo "====== Evaluating untrained $model_name ======"
-#     uv run python $BASE_PATH/src/agreement_evaluation.py \
+#     uv run python $BASE_PATH/src/evaluate.py \
 #         --model-path $BASE_PATH/output/$model_name/init_model \
 #         --val-data $BASE_PATH/data/evaluate_data/agreement_evaluate_data.json \
 #         -o $BASE_PATH/output/"$model_name"/init_model
@@ -49,7 +49,7 @@ done
 #             #           10k   50k   100k   200k   300k   400k   500k
 #             for size in 10000 50000 100000 200000 300000 400000 500000; do
 #                 echo "====== Evaluating $model_name trained with $data_name $size epoch ${epoch}======"
-#                 uv run python $BASE_PATH/src/agreement_evaluation.py \
+#                 uv run python $BASE_PATH/src/evaluate.py \
 #                     --model-path $BASE_PATH/output/$model_name/${data_name}_${size}_${epoch} \
 #                     --val-data $BASE_PATH/data/evaluate_data/agreement_evaluate_data.json \
 #                     -o $BASE_PATH/output/"$model_name"/${data_name}_${size}_${epoch}
