@@ -55,6 +55,10 @@ def read_args():
         help='Path to pre-trained model'
     )
     parser.add_argument(
+        '--checkpoint', '-cp', dest='checkpoint', type=str, required=False, default=None,
+        help='Path to checkpoint'
+    )
+    parser.add_argument(
         '--epochs', '-e', dest='epochs', type=int, required=False, default=3,
         help='Path to pre-trained model'
     )
@@ -201,7 +205,12 @@ def main():
         callbacks=[LossLoggerCallback(f"{args.out_path}/logs")],
     )
 
-    trainer.train()
+    checkpoint = args.checkpoint
+    if not Path(checkpoint).exists() or not Path(checkpoint).is_dir():
+        checkpoint = None
+    else:
+        print(f"Resuming from checkpoint: {checkpoint}")
+    trainer.train(resume_from_checkpoint=checkpoint)
     print(f"Save model to: {args.out_path}")
     model.save_pretrained(Path(args.out_path))
 
