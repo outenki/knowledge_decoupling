@@ -3,9 +3,11 @@
 BASE_PATH=/Users/ou/Developer/projects/knowledge_decoupling
 # 0831
 model_name=gpt-large
-eval_name=qa_arc_challenge
+# eval_name=qa_arc_challenge
 # eval_name=qa_arc_easy
 # eval_name=fce
+# eval_name=qa_boolq
+eval_name=qa_qasc
 
 echo
 echo "====== Evaluating hugging face gpt2 ======"
@@ -13,7 +15,7 @@ python $BASE_PATH/src/evaluate.py \
     --model-path gpt2 \
     --val-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
     -o $BASE_PATH/output/0830/gpt-large/gpt2/$eval_name
-for data_name in wikimedia-bs1024-1 wikimedia-nonce-bs1024-1 wikimedia-nonce-bs1024-3;do
+for data_name in init_model wikimedia-bs1024-1 wikimedia-nonce-bs1024-1 wikimedia-nonce-bs1024-3;do
     echo
     echo "====== Evaluating $data_name ======"
     python $BASE_PATH/src/evaluate.py \
