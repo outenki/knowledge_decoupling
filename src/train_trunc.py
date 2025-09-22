@@ -49,7 +49,7 @@ def read_args():
     )
     parser.add_argument(
         '--config-name', '-cn', dest='config_name', type=str, required=False, default=None,
-        help='Limit the number of samples to process.'
+        help='Model configs.'
     )
     parser.add_argument(
         '--pre-model', '-pm', dest='pre_model', type=str, required=False, default=None,
@@ -57,7 +57,7 @@ def read_args():
     )
     parser.add_argument(
         '--data-limit', '-dl', dest='data_limit', type=int, required=False, default=0,
-        help='Path to pre-trained model'
+        help='Limit the size of training data.'
     )
     parser.add_argument(
         '--out-path', '-o', dest='out_path', type=str,
