@@ -5,10 +5,10 @@ description = "Base package management file for nlp research using singularity"
 readme = "README.md"
 requires-python = ">=3.11,<3.12"
 dependencies = [
-    "torch ==2.4.0+cu121; sys_platform == 'linux' and platform_machine == 'x86_64'",
-    "torch ==2.4.0; sys_platform == 'darwin' or (sys_platform == 'linux' and platform_machine == 'aarch64')",
-    "torchvision ==0.19.0+cu121; sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "torch >=2.6.0; sys_platform == 'linux' and platform_machine == 'x86_64'",
+    "torchvision >=0.19.0; sys_platform == 'linux' and platform_machine == 'x86_64'",
     "torchvision ==0.19.0; sys_platform == 'darwin' or (sys_platform == 'linux' and platform_machine == 'aarch64')",
+    "flash-attn",
     "numpy <2.0.0",
     "matplotlib >=3.9.1",
     "seaborn >=0.13.2",

@@ -107,7 +107,7 @@ def load_model_from_config(config_name: str) -> GPT2LMHeadModel:
 
 
 def load_model_from_pre_trained(model_path: str) -> GPT2LMHeadModel:
-    return GPT2LMHeadModel.from_pretrained(model_path)
+    return GPT2LMHeadModel.from_pretrained(model_path, ignore_mismatched_sizes=True)
 
 
 def main():
@@ -123,8 +123,10 @@ def main():
     # === Load model
     model: GPT2LMHeadModel | None = None
     if args.init_from == "config":
+        print("Loading model from config:", args.config_name)
         model = load_model_from_config(args.config_name)
     elif args.init_from == "pre":
+        print("Loading pre-trained model from:", args.pre_model)
         model = load_model_from_pre_trained(args.pre_model)
     assert model is not None
     model.save_pretrained(Path(args.out_path) / "init_model")
@@ -177,11 +179,14 @@ def main():
     per_device_train_batch_size = 8
     gradient_accumulation_steps = 4
     steps_per_epoch = train_dataset_size // (per_device_train_batch_size * gradient_accumulation_steps)
+    # save_steps = steps_per_epoch // torch.cuda.device_count() // 3   # save on every 0.3 epoch
+    # logging_steps = steps_per_epoch * args.epochs // 100 // torch.cuda.device_count()
     save_steps = steps_per_epoch // 10   # 0.1 epoch
-    logging_steps = steps_per_epoch // 100
+    logging_steps = steps_per_epoch // 10
     # === train model
     training_args = TrainingArguments(
         output_dir=args.out_path,
+        save_safetensors=True,
         per_device_train_batch_size=per_device_train_batch_size,
         gradient_accumulation_steps=gradient_accumulation_steps,
         per_device_eval_batch_size=per_device_train_batch_size,
@@ -206,8 +211,9 @@ def main():
     )
 
     checkpoint = args.checkpoint
-    if not Path(checkpoint).exists() or not Path(checkpoint).is_dir():
+    if not checkpoint or not Path(checkpoint).exists() or not Path(checkpoint).is_dir():
         checkpoint = None
+        print(f"Starting from random model")
     else:
         print(f"Resuming from checkpoint: {checkpoint}")
     trainer.train(resume_from_checkpoint=checkpoint)
