@@ -7,23 +7,25 @@ model_name=gpt-large
 # eval_name=qa_arc_easy
 # eval_name=fce
 # eval_name=qa_boolq
-eval_name=qa_qasc
-
-echo
-echo "====== Evaluating hugging face gpt2 ======"
-python $BASE_PATH/src/evaluate.py \
-    --model-path gpt2 \
-    --val-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
-    -o $BASE_PATH/output/0830/gpt-large/gpt2/$eval_name
-for data_name in init_model wikimedia-bs1024-1 wikimedia-nonce-bs1024-1 wikimedia-nonce-bs1024-3;do
+# eval_name=qa_qasc
+for eval_name in qa_arc_challenge qa_arc_easy fce qa_boolq qa_qasc; do
     echo
-    echo "====== Evaluating $data_name ======"
+    echo "============ $eval_name ============"
+    echo "====== Evaluating hugging face gpt2 ======"
     python $BASE_PATH/src/evaluate.py \
-        --model-path $BASE_PATH/output/0830/$model_name/$data_name \
+        --model-path gpt2 \
         --val-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
-        -o $BASE_PATH/output/0830/"$model_name"/$data_name/$eval_name
+        -o $BASE_PATH/output/0830/gpt-large/gpt2/$eval_name
+    # for data_name in init_model wikimedia-bs1024-ep1 wikimedia-nonce-bs1024-ep1 wikimedia-nonce-bs1024-ep3;do
+    for data_name in wikimedia-bs1024-ep2;do
+        echo
+        echo "====== Evaluating $data_name ======"
+        python $BASE_PATH/src/evaluate.py \
+            --model-path $BASE_PATH/output/0830/$model_name/$data_name \
+            --val-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
+            -o $BASE_PATH/output/0830/"$model_name"/$data_name/$eval_name
+    done
 done
-
 # 0820
 # for model_name in gpt-mini gpt-medium gpt-large;do
 #     echo "====== Evaluating untrained $model_name ======"
