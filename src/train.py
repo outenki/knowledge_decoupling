@@ -208,6 +208,7 @@ def main():
     checkpoint = args.checkpoint
     if not Path(checkpoint).exists() or not Path(checkpoint).is_dir():
         checkpoint = None
+        print("Training from random")
     else:
         print(f"Resuming from checkpoint: {checkpoint}")
     trainer.train(resume_from_checkpoint=checkpoint)
