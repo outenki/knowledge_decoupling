@@ -1,21 +1,18 @@
 #!/bin/bash
-SCRIPT_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling/src
+BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
+SCRIPT_PATH=$BASE_PATH/src
 DATA_NAME=wikimedia-nonce-bs1024
 CONFIG_NAME="gpt-large"
-EPOCHS=3
-PRE_EPOCHS=1
-PRE_DATE=0830
-OUTPUT_NAME=${DATA_NAME}_${EPOCHS}
-CHECKPOINT=$SCRIPT_PATH/../output/$PRE_DATE/$CONFIG_NAME/${DATA_NAME}_${PRE_EPOCHS}/checkpoint-7977
+EPOCHS=1
+PRE_MODEL=$BASE_PATH/output/0830/gpt-large/wikimedia-nonce-bs1024-ep1
+CHECKPOINT=/home/pj25000107/ku50001566/projects/knowledge_decoupling/output/gpt-large/wikimedia-nonce-bs1024-ep1/checkpoint-63
 
 echo "====== training on ${DATA_NAME}_full ======"
-echo "Using checkpoint: $CHECKPOINT"
-echo start time: $(date +"%T")
+echo start time: $(date +"%D %T")
 /home/pj25000107/ku50001566/.local/bin/uv run python $SCRIPT_PATH/train.py \
     -dp $SCRIPT_PATH/../input/${DATA_NAME} \
     -if config \
     -cn $CONFIG_NAME \
-    -cp $CHECKPOINT \
-    -e $((EPOCHS-PRE_EPOCHS)) \
-    -o $SCRIPT_PATH/../output/$CONFIG_NAME/${DATA_NAME}_${EPOCHS}
-echo end time: $(date +"%T")
+    -e $EPOCHS \
+    -o $SCRIPT_PATH/../output/$CONFIG_NAME/${DATA_NAME}-ep${EPOCHS}
+echo end time: $(date +"%D %T")

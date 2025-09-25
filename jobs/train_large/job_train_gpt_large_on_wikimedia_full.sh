@@ -4,7 +4,7 @@
 #PJM -L "gpu=4"
 #PJM -L "jobenv=singularity"
 #PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_gpt_large_on_wikimedia_full.err
-#PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_gpt_large_on_wikitmediafull.out
+#PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_gpt_large_on_wikimedia_full.out
 #PJM -N "tl_wk_fl"
 
 module load singularity-ce
