@@ -5,6 +5,7 @@ import argparse
 from pathlib import Path
 from functools import partial
 import os
+import ssl
 
 from datasets.dataset_dict import DatasetDict
 from datasets.arrow_dataset import Dataset
@@ -14,6 +15,15 @@ from lemminflect import getInflection
 from lib.basic_words.basic_words_850 import BASIC_WORDS_850
 from lib.basic_words.oxford_3000 import OXFORD_3000
 from lib.dataset import load_custom_dataset, load_texts_from_dataset_batch, slice_dataset
+
+
+try:
+    _create_unverified_https_context = ssl._create_unverified_context
+except AttributeError:
+    # Python < 2.7.9 没有 ssl._create_unverified_context
+    pass
+else:
+    ssl._create_default_https_context = _create_unverified_https_context
 
 nltk.download('wordnet')
 nltk.download('omw-1.4')

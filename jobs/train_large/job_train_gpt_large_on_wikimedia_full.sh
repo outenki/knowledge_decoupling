@@ -3,9 +3,9 @@
 #PJM -L "elapse=100:00:00"
 #PJM -L "gpu=4"
 #PJM -L "jobenv=singularity"
-#PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_gpt_large_on_wikimedia_full.err
-#PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_gpt_large_on_wikimedia_full.out
-#PJM -N "tl_wk_fl"
+#PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_gpt_large_on_wikimedia_full_ep2.err
+#PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_gpt_large_on_wikimedia_full_ep2.out
+#PJM -N "tl_wk_fl_ep2"
 
 module load singularity-ce
 
