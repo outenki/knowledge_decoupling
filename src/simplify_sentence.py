@@ -18,7 +18,6 @@ from lib.dataset import load_custom_dataset, slice_dataset
 nltk.download('wordnet')
 nltk.download('omw-1.4')
 
-
 nlp = spacy.load("en_core_web_sm")
 
 
@@ -29,7 +28,11 @@ def spacy_to_wordnet_pos(spacy_pos):
         return wn.VERB
     elif spacy_pos.startswith("J"):
         return wn.ADJ
+    elif spacy_pos.startswith("ADJ"):
+        return wn.ADJ
     elif spacy_pos.startswith("R"):
+        return wn.ADV
+    elif spacy_pos.startswith("ADV"):
         return wn.ADV
     else:
         return None
@@ -51,25 +54,44 @@ def get_simple_candidate(token, basic_vocab):
     if lemma in basic_vocab:
         return lemma
 
-    candidates = set()
-    for syn in wn.synsets(lemma):
+    candidates = []
+    spacy_pos = spacy_to_wordnet_pos(token.pos_)
+
+    for syn in wn.synsets(lemma, pos=spacy_pos):
         if not syn:
-            continue
-        spacy_pos = spacy_to_wordnet_pos(token.pos_)
-        if spacy_pos and syn.pos() and spacy_pos != syn.pos():
             continue
         for sn in syn.lemma_names():
             if "_" in sn:
                 continue
             if sn in basic_vocab:
-                candidates.add(sn)
+                candidates.append(sn)
+    candidates = list(set(candidates))
 
     if not candidates:
         return None
 
+    best_cand = None
+    best_sim = -1.0
+    for cand in candidates:
+        for cand_syn in wn.synsets(cand, pos=spacy_pos):
+            if not cand_syn:
+                continue
+            for word_syn in wn.synsets(lemma, pos=spacy_pos):
+                if not word_syn:
+                    continue
+                try:
+                    sim = cand_syn.wup_similarity(word_syn)
+                except Exception:
+                    sim = None
+                if sim and sim > best_sim:
+                    best_sim = sim
+                    best_cand = cand
+
     # take the shortest one
-    best = sorted(candidates, key=lambda x: (len(x.split()), len(x)))[0]
-    return best
+    if best_cand:
+        # best_cand = sorted(candidates, key=lambda x: (len(x.split()), len(x)))[0]
+        best_cand = candidates[0]
+    return best_cand
 
 
 def inflect_candidate(lemma, target_tag):
