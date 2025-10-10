@@ -1,6 +1,25 @@
 #!/bin/bash
 BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
 
+# 0926
+DATA_NAME=simplyfied_wikimedia_ox3000
+/home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/tokenize_and_slice_data.py \
+    -dn $BASE_PATH/data/$DATA_NAME \
+    -lf local \
+    -dc text \
+    -s -bs 1024 \
+    -t \
+    -o $BASE_PATH/input/$DATA_NAME
+
+DATA_NAME=simplyfied_wikimedia_bw850
+/home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/tokenize_and_slice_data.py \
+    -dn $BASE_PATH/data/$DATA_NAME \
+    -lf local \
+    -dc text \
+    -s -bs 1024 \
+    -t \
+    -o $BASE_PATH/input/$DATA_NAME
+
 # 0821
 # tokenize
 # DATA_NAME=wikimedia
@@ -8,9 +27,9 @@ BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
 #     -dn $DATA_NAME -lf hf -dc text -t -o $BASE_PATH/data/$DATA_NAME
 
 # slice
-DATA_NAME=wikimedia
-/home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/tokenize_and_slice_data.py \
-    -dn $BASE_PATH/data/wikimedia_tokenized -lf local -dc text -s -bs 1024 -o $BASE_PATH/input/$DATA_NAME
+# DATA_NAME=wikimedia
+# /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/tokenize_and_slice_data.py \
+#     -dn $BASE_PATH/data/wikimedia_tokenized -lf local -dc text -s -bs 1024 -o $BASE_PATH/input/$DATA_NAME
 
 # 0820
 # DATA_NAME=wikitext-103

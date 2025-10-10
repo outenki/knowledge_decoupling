@@ -105,7 +105,8 @@ def main():
         block_size = args.block_size
         map_func = partial(group_texts_to_blocks, block_size=block_size)
         lm_datasets = tokenized_datasets.map(
-            map_func, batched=True,
+            map_func,
+            batched=True,
             batch_size=3000,
             desc=f"Chunking data to block size {block_size}",
             remove_columns=tokenized_datasets["train"].column_names
@@ -116,7 +117,8 @@ def main():
     for block_size in (128, 512, 1024):
         map_func = partial(group_texts_to_blocks, block_size=block_size)
         lm_datasets = tokenized_datasets.map(
-            map_func, batched=True,
+            map_func,
+            batched=True,
             batch_size=3000,
             desc=f"Chunking data to block size {block_size}",
             remove_columns=tokenized_datasets["train"].column_names
