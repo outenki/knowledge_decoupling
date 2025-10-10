@@ -167,6 +167,7 @@ def main():
     print(f"Saving summary results to {out_file}...")
     with open(out_file, "w") as f:
         json.dump(results, f, indent=4)
+    print("accuracy:", results["accuracy"])
 
 
 if __name__ == "__main__":
