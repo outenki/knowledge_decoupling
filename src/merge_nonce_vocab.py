@@ -80,3 +80,7 @@ def main():
     if word_bank:
         with open(output_word_bank, "w") as f:
             json.dump(word_bank, f, indent=4)
+
+
+print("test")
+main()
