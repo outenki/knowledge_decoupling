@@ -8,3 +8,4 @@ input/
 .DS_Store
 logs/
 sub_jobs/.*
+jobs/**/.*

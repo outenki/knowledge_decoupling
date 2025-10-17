@@ -1,6 +1,7 @@
 import argparse
 from pathlib import Path
 from math import ceil
+import random
 
 import torch
 from transformers import GPT2Config, GPT2LMHeadModel
@@ -110,6 +111,15 @@ def load_model_from_pre_trained(model_path: str) -> GPT2LMHeadModel:
     return GPT2LMHeadModel.from_pretrained(model_path, ignore_mismatched_sizes=True)
 
 
+def random_sample(dataset, number: int) -> Dataset:
+    if not isinstance(dataset, Dataset):
+        raise TypeError(f"Invalid data type {type(dataset)}")
+    if number >= len(dataset):
+        return dataset
+    indices = random.sample(range(len(dataset)), number)
+    return dataset.select(indices)
+        
+
 def main():
     print("CUDA available:", torch.cuda.is_available())
     print("GPU count:", torch.cuda.device_count())
@@ -137,16 +147,18 @@ def main():
     if isinstance(dataset, Dataset):
         if args.data_limit > 0:
             data_limit = ceil(args.data_limit * 1.1)
-            dataset = slice_dataset(dataset, 0, data_limit)
-        data_dict = dataset.train_test_split(test_size=0.1, shuffle=True, seed=42)
+            # dataset = slice_dataset(dataset, 0, data_limit)
+            dataset = random_sample(dataset, data_limit)
+        data_dict = dataset.train_test_split(train_size=args.data_limit, shuffle=True, seed=42)
     elif isinstance(dataset, DatasetDict):
         data_dict = dataset
         for k, dt in data_dict.items():
-            if k == "train":
-                if args.data_limit > 0:
-                    data_dict[k] = slice_dataset(dt, 0, args.data_limit)
-            else:
-                data_dict[k] = slice_dataset(dt, 0, min(1000, args.data_limit))
+            if args.data_limit > 0:
+                if k == "train":
+                    data_dict[k] = random_sample(dt, args.data_limit)
+                else:
+                    data_limit = args.data_limit // 10
+                    data_dict[k] = random_sample(dt, data_limit)
     else:
         raise TypeError(f"Invalid data type {type(dataset)}")
 
@@ -179,10 +191,10 @@ def main():
     per_device_train_batch_size = 8
     gradient_accumulation_steps = 4
     steps_per_epoch = train_dataset_size // (per_device_train_batch_size * gradient_accumulation_steps)
-    # save_steps = steps_per_epoch // torch.cuda.device_count() // 3   # save on every 0.3 epoch
-    # logging_steps = steps_per_epoch * args.epochs // 100 // torch.cuda.device_count()
-    save_steps = steps_per_epoch // 10   # 0.1 epoch
-    logging_steps = steps_per_epoch // 10
+    save_steps = steps_per_epoch // torch.cuda.device_count() // 20   # save on every 0.05 epoch
+    logging_steps = steps_per_epoch // torch.cuda.device_count() // 50
+    # save_steps = steps_per_epoch // 10   # 0.1 epoch
+    # logging_steps = steps_per_epoch // 10
     # === train model
     training_args = TrainingArguments(
         output_dir=args.out_path,
