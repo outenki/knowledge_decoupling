@@ -24,6 +24,8 @@ def load_custom_dataset(data_name: str, data_type: str | None, load_from: str) -
         print(f"Loading dataset {data_name} from Hugging Face...")
         if data_name == "wikimedia":
             return load_dataset("wikimedia/wikipedia", "20231101.en")
+        if data_name == "smolLM2":
+            return load_dataset("EleutherAI/SmolLM2-135M-10B")
         if data_name == "wikipedia":
             return load_dataset("wikipedia", "20220301.en")
         if data_name == "wikitext-103":

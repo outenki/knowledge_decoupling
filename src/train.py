@@ -44,16 +44,8 @@ def read_args():
         help='Dataset path to load from.'
     )
     parser.add_argument(
-        '--init-from', '-if', dest='init_from', choices=["config", "pre"],
-        help='Initialize model from config or pre-trained model.'
-    )
-    parser.add_argument(
         '--config-name', '-cn', dest='config_name', type=str, required=False, default=None,
         help='Limit the number of samples to process.'
-    )
-    parser.add_argument(
-        '--pre-model', '-pm', dest='pre_model', type=str, required=False, default=None,
-        help='Path to pre-trained model'
     )
     parser.add_argument(
         '--checkpoint', '-cp', dest='checkpoint', type=str, required=False, default=None,
@@ -107,10 +99,6 @@ def load_model_from_config(config_name: str) -> GPT2LMHeadModel:
     return GPT2LMHeadModel(model_config(config_name))
 
 
-def load_model_from_pre_trained(model_path: str) -> GPT2LMHeadModel:
-    return GPT2LMHeadModel.from_pretrained(model_path, ignore_mismatched_sizes=True)
-
-
 def random_sample(dataset, number: int) -> Dataset:
     if not isinstance(dataset, Dataset):
         raise TypeError(f"Invalid data type {type(dataset)}")
@@ -132,12 +120,8 @@ def main():
 
     # === Load model
     model: GPT2LMHeadModel | None = None
-    if args.init_from == "config":
-        print("Loading model from config:", args.config_name)
-        model = load_model_from_config(args.config_name)
-    elif args.init_from == "pre":
-        print("Loading pre-trained model from:", args.pre_model)
-        model = load_model_from_pre_trained(args.pre_model)
+    print("Loading model from config:", args.config_name)
+    model = load_model_from_config(args.config_name)
     assert model is not None
     model.save_pretrained(Path(args.out_path) / "init_model")
 
@@ -190,12 +174,14 @@ def main():
     train_dataset_size = len(train_dataset)
     per_device_train_batch_size = 8
     gradient_accumulation_steps = 4
-    steps_per_epoch = train_dataset_size // (per_device_train_batch_size * gradient_accumulation_steps)
-    save_steps = steps_per_epoch // torch.cuda.device_count() // 20   # save on every 0.05 epoch
-    logging_steps = steps_per_epoch // torch.cuda.device_count() // 50
-    # save_steps = steps_per_epoch // 10   # 0.1 epoch
-    # logging_steps = steps_per_epoch // 10
-    # === train model
+    world_size = max(1, torch.cuda.device_count())
+
+    effective_batch_size = per_device_train_batch_size * gradient_accumulation_steps * world_size
+    steps_per_epoch = train_dataset_size // effective_batch_size
+
+    save_steps = max(1, steps_per_epoch // 20)
+    logging_steps = max(1, steps_per_epoch // 20)
+
     training_args = TrainingArguments(
         output_dir=args.out_path,
         save_safetensors=True,

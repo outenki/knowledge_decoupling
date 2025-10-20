@@ -32,7 +32,11 @@ def merge_lemma_blacklists(blacklist: set[str], path_to_new_blacklist: str | Pat
 
 def load_word_bank(path_to_word_bank: str | Path) -> dict:
     with open(path_to_word_bank, "r") as f:
-        word_bank = json.load(f)
+        try:
+            word_bank = json.load(f)
+        except json.JSONDecodeError as e:
+            print(f"Warning: Failed to load {path_to_word_bank}. Skipping...")
+            return {}
     return {k: set([tuple(t) for t in v]) for k, v in word_bank.items()}
 
 
@@ -41,6 +45,8 @@ def merge_word_bank(word_bank: dict, path_to_new_word_bank: str | Path) -> dict:
     for k, v in new_word_bank.items():
         if k in word_bank:
             word_bank[k] = word_bank[k] | v
+        else:
+            word_bank[k] = v
     return word_bank
 
 
@@ -73,14 +79,16 @@ def main():
         word_bank = merge_word_bank(word_bank, p)
 
     if lemma_blacklist:
+        print(f"Saving merged lemma_blacklist with {len(lemma_blacklist)} entries to {output_lemma_blacklist}")
         with open(output_lemma_blacklist, "w") as f:
             for lemma in lemma_blacklist:
                 f.write(f"{lemma}\n")
 
     if word_bank:
+        print(f"Saving merged nonce_word_bank with {len(word_bank)} entries to {output_word_bank}")
+        word_bank = {k: [list(t) for t in v] for k, v in word_bank.items()}
         with open(output_word_bank, "w") as f:
             json.dump(word_bank, f, indent=4)
 
 
-print("test")
 main()

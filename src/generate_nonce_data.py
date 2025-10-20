@@ -164,6 +164,7 @@ def _generate_nonce_word_bank(texts, lemma_blacklist: set, update_dict: dict | N
 # ================= Dataset Processing =================
 def map_process(examples, nonce_word_bank):
     # need the full pipeline for sentence segmentation
+    print("NLP pipe processing...")
     docs = NLP.pipe(examples["text"], batch_size=64)
     nonce = []
     for doc in docs:
@@ -174,7 +175,12 @@ def map_process(examples, nonce_word_bank):
 
 
 def generate_nonce_for_dataset(
-    dataset: Dataset | Any, batch_size: int, out_path: str
+    dataset: Dataset | Any, batch_size: int, out_path: str,
+    lemma_blacklist_path: str = "",
+    nonce_word_bank_path: str = "",
+    lemma_blacklist_generation: bool = True,
+    nonce_word_bank_generation: bool = True,
+    nonce_data_generation: bool = True
 ):
     """
     Main function to generate nonce sentences from a list of texts.
@@ -199,12 +205,15 @@ def generate_nonce_for_dataset(
     # ========== Generate lemma blacklist ==========
     out_path_blacklist = Path(out_path) / "lemma_blacklist"
     lemma_blacklist = set()
-    if out_path_blacklist.exists():
+    if lemma_blacklist_path and lemma_blacklist_path.exists():
         # try to load existing lemma blacklist
         # If it exists, use it to speed up the process
-        print(f"**Loading existing lemma blacklist from {out_path_blacklist}...")
-        with open(out_path_blacklist, "r") as f:
+        print(f"**Loading existing lemma blacklist from {lemma_blacklist_path}...")
+        with open(lemma_blacklist_path, "r") as f:
             lemma_blacklist = set([line.strip() for line in f.readlines()])
+        print(f"**done")
+    elif not lemma_blacklist_generation:
+        print("**Skipping lemma blacklist generation.")
     else:
         pos_counts = {}
         for i in range(batch_number):
@@ -218,13 +227,16 @@ def generate_nonce_for_dataset(
 
     # ========== Generate nonce word bank ==========
     out_path_word_bank = Path(out_path) / "nonce_word_bank.json"
-    if out_path_word_bank.exists():
+    if nonce_word_bank_path and nonce_word_bank_path.exists():
         # Load existing nonce word bank if it exists
         # This speeds up the process if the bank is already generated
-        print(f"**Loading existing nonce_word_bank from {out_path_word_bank}...")
-        with open(out_path_word_bank, "r") as f:
+        print(f"**Loading existing nonce_word_bank from {nonce_word_bank_path}...")
+        with open(nonce_word_bank_path, "r") as f:
             nonce_word_bank = json.load(f)
         nonce_word_bank = {k: set([tuple(t) for t in v]) for k, v in nonce_word_bank.items()}
+        print(f"**done")
+    elif not nonce_word_bank_generation:
+        print("**Skipping nonce word bank generation.")
     else:
         nonce_word_bank = {}
         for i in range(batch_number):
@@ -236,6 +248,9 @@ def generate_nonce_for_dataset(
         print(f"Saved nonce word bank to {out_path_word_bank}")
 
     # ========= Generate nonce sentences ==========
+    if not nonce_data_generation:
+        print("**Skipping nonce data generation.")
+        return None
     print("**** Generating nonce sentence...")
     process_fn = partial(map_process, nonce_word_bank=nonce_word_bank)
     dataset = dataset.map(
@@ -278,6 +293,26 @@ def read_args():
         help='Limit the number of samples to process. 0 means no limit.'
     )
     parser.add_argument(
+        '--lemma-blacklist', '-lb', dest='lemma_blacklist', type=str, default="",
+        help='Path to existing lemma blacklist.'
+    )
+    parser.add_argument(
+        '--nonce-word-bank', '-wb', dest='word_bank', type=str, default="",
+        help='Path to existing nonce word bank.'
+    )
+    parser.add_argument(
+        '--skip-lemma-blacklist', '-slb', dest='skip_lemma_blacklist_generation', action='store_true',
+        help='Skip lemma blacklist generation.'
+    )
+    parser.add_argument(
+        '--skip-word-bank', '-swb', dest='skip_nonce_word_bank_generation', action='store_true',
+        help='Skip nonce word bank generation.'
+    )
+    parser.add_argument(
+        '--skip-nonce-data', '-snd', dest='skip_nonce_data_generation', action='store_true',
+        help='Skip nonce data generation.'
+    )
+    parser.add_argument(
         '--out-path', '-o', dest='out_path', type=str,
         help='Path to save the dataset with nonce sentences.'
     )
@@ -286,6 +321,8 @@ def read_args():
 
 def main():
     args = read_args()
+    for key, value in vars(args).items():
+        print(f"{key}: {value}")
     out_path = args.out_path
     Path(out_path).mkdir(parents=True, exist_ok=True)
 
@@ -307,17 +344,25 @@ def main():
             dt = slice_dataset(dt, start_from, dt_limit)
             print(f"========= Processing dataset {key}... ==========")
             print(f"Dataset {key} has {dt.num_rows} samples after slicing.")
-            dataset_dict[key] = generate_nonce_for_dataset(
+            _dataset = generate_nonce_for_dataset(
                 dt,
                 batch_size=BATCH_SIZE,
                 out_path=out_path,
+                lemma_blacklist_path=Path(args.lemma_blacklist),
+                nonce_word_bank_path=Path(args.word_bank),
+                lemma_blacklist_generation=not args.skip_lemma_blacklist_generation,
+                nonce_word_bank_generation=not args.skip_nonce_word_bank_generation,
+                nonce_data_generation=not args.skip_nonce_data_generation
             )
+            if _dataset is not None:
+                dataset_dict[key] = _dataset
         if "train" in dataset_dict:
             dataset_dict["train"].select(range(5)).to_json(Path(out_path) / "example_nonce_sent.json")
-        print(f"Saving dataset with nonce sentences to {out_path}...")
-        dataset_dict = DatasetDict(dataset_dict)
-        print("Dataset structure:", dataset_dict)
-        dataset_dict.save_to_disk(out_path)
+        if dataset_dict:
+            print(f"Saving dataset with nonce sentences to {out_path}...")
+            dataset_dict = DatasetDict(dataset_dict)
+            print("Dataset structure:", dataset_dict)
+            dataset_dict.save_to_disk(out_path)
     else:
         print("**** Processing dataset ...")
         dataset = slice_dataset(dataset, args.start_from, args.data_limit)
@@ -326,10 +371,16 @@ def main():
             dataset,
             batch_size=BATCH_SIZE,
             out_path=out_path,
+            lemma_blacklist_path=Path(args.lemma_blacklist),
+            nonce_word_bank_path=Path(args.word_bank),
+            lemma_blacklist_generation=not args.skip_lemma_blacklist_generation,
+            nonce_word_bank_generation=not args.skip_nonce_word_bank_generation,
+            nonce_data_generation=not args.skip_nonce_data_generation
         )
-        print(f"Dataset has {dataset.num_rows} samples after generating nonce sentences.")
-        print(f"Saving dataset with nonce sentences to {out_path}...")
-        dataset.save_to_disk(out_path)
+        if dataset:
+            print(f"Dataset has {dataset.num_rows} samples after generating nonce sentences.")
+            print(f"Saving dataset with nonce sentences to {out_path}...")
+            dataset.save_to_disk(out_path)
 
 
 if __name__ == "__main__":

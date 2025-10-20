@@ -13,13 +13,11 @@ cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts/train_large
 
 # CONFIG_NAME=$1
 # DATA_NAME=$2
-# PRE_MODEL=$3
-# CHECKPOINT=$4
-# EPOCHS=$5
+# CHECKPOINT=$3
+# EPOCHS=$4
 singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif \
     /bin/bash train_gpt_continue.sh \
         gpt-large \
         simplyfied-wikimedia-bw850-bs1024 \
         /home/pj25000107/ku50001566/projects/knowledge_decoupling/output/gpt-large/simplyfied-wikimedia-bw850-bs1024-ep3 \
-        checkpoint-5088 \
         10
