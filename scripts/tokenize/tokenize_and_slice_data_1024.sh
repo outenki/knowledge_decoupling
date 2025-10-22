@@ -9,7 +9,7 @@ DATA_NAME=simplyfied_wikimedia_ox3000
     -dc text \
     -s -bs 1024 \
     -t \
-    -o $BASE_PATH/input/$DATA_NAME
+    -o $BASE_PATH/input/tokenized/$DATA_NAME
 
 DATA_NAME=simplyfied_wikimedia_bw850
 /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/tokenize_and_slice_data.py \
@@ -18,7 +18,7 @@ DATA_NAME=simplyfied_wikimedia_bw850
     -dc text \
     -s -bs 1024 \
     -t \
-    -o $BASE_PATH/input/$DATA_NAME
+    -o $BASE_PATH/input/tokenized/$DATA_NAME
 
 # 0821
 # tokenize
@@ -29,9 +29,9 @@ DATA_NAME=simplyfied_wikimedia_bw850
 # slice
 # DATA_NAME=wikimedia
 # /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/tokenize_and_slice_data.py \
-#     -dn $BASE_PATH/data/wikimedia_tokenized -lf local -dc text -s -bs 1024 -o $BASE_PATH/input/$DATA_NAME
+#     -dn $BASE_PATH/data/wikimedia_tokenized -lf local -dc text -s -bs 1024 -o $BASE_PATH/input/tokenized/$DATA_NAME
 
 # 0820
 # DATA_NAME=wikitext-103
 # /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/tokenize_and_slice_data.py \
-#     -dn $DATA_NAME -lf hf -dc text -t -s -o $BASE_PATH/input/$DATA_NAME
+#     -dn $DATA_NAME -lf hf -dc text -t -s -o $BASE_PATH/input/tokenized/$DATA_NAME

@@ -14,7 +14,7 @@ do
     part=$(($i / $SIZE))
     echo
     echo "====== preprocess $part ======"
-    /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/generate_nonce_data.py \
+    python $BASE_PATH/src/generate_nonce_data.py \
         -dn "EleutherAI/SmolLM2-135M-10B" \
         -lf hf \
         -o $BASE_PATH/data/$DATA_NAME/1020/test/part$part \
@@ -25,7 +25,7 @@ do
 done
 
 end_time=$(date +"%s")
-echo "end time: $(date -d @$end_time +"%D %T")"
+echo "end time: $(date -r $end_time '+%m/%d/%y %T')"
 diff_sec=$(( end_time - start_time ))
 hours=$(( diff_sec / 3600 ))
 minutes=$(( (diff_sec % 3600) / 60 ))
