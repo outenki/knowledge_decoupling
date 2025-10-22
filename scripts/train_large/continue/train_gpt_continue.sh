@@ -2,6 +2,8 @@
 
 BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
 SCRIPT_PATH=$BASE_PATH/src
+OUT_PATH=$BASE_PATH/output
+DATA_PATH=$BASE_PATH/input/tokenized
 CONFIG_NAME=$1
 DATA_NAME=$2
 CHECKPOINT=$3
@@ -14,12 +16,12 @@ echo "start time: $(date -d @$start_time +"%D %T")"
 
 
 /home/pj25000107/ku50001566/.local/bin/uv run python $SCRIPT_PATH/train.py \
-    -dp $SCRIPT_PATH/../input/${DATA_NAME} \
+    -dp $DATA_PATH/${DATA_NAME} \
     -cn $CONFIG_NAME \
     -cp $CHECKPOINT \
     -e $EPOCHS \
     -dl $DATA_LIMITE \
-    -o $SCRIPT_PATH/../output/$CONFIG_NAME/${DATA_NAME}-dl${DATA_LIMITE}-ep${EPOCHS}
+    -o $OUT_PATH/$CONFIG_NAME/${DATA_NAME}-dl${DATA_LIMITE}-ep${EPOCHS}
 
 end_time=$(date +"%s")
 echo "end time: $(date -d @$end_time +"%D %T")"
