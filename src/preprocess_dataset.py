@@ -54,6 +54,9 @@ def batch_split_texts_to_sentences(batch: Dataset) -> dict:
         dict: A dictionary with a 'text' key containing the list of sentences.
     """
     texts = batch['text']
+    sources = batch.get('source', None)
+    if sources:
+        texts = [t for s, t in zip(sources, texts) if s != "stack_edu" and s != "finemath" and s != "infimm_webmath"]
     cleaned_texts = [clean_text(text) for text in texts]
     sentences = split_texts_to_sentences(cleaned_texts)
     return {"text": sentences}
@@ -79,13 +82,13 @@ def main():
     processed_dataset = dataset.map(
         batch_split_texts_to_sentences,
         batched=True,
-        batch_size=1000,
+        batch_size=10000,
         remove_columns=dataset.column_names,
         keep_in_memory=False,
         desc="Processing texts to sentences"
     )
 
-    _dict = processed_dataset.train_test_split(shuffle=True, test_size=0.1, seed=42)
+    _dict = processed_dataset.train_test_split(shuffle=True, test_size=0.01, seed=42)
     processed_dataset_dict = DatasetDict({
         "train": _dict["train"],
         "val": _dict["test"]

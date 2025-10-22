@@ -52,11 +52,18 @@ def split_texts_to_sentences(texts: list, min_len: int = 0) -> list:
     Returns:
         list: A list of lists, where each inner list contains sentences from the corresponding text.
     """
-    docs = NLP.pipe(texts, batch_size=50)
-    sentences = []
-    for doc in docs:
-        for sent in doc.sents:
-            s = sent.text.strip()
-            if len(s) > min_len:
-                sentences.append(s)
-    return sentences
+    all_sentences = []
+
+    for text in texts:
+        if len(text) <= NLP.max_length:
+            doc = NLP(text)
+            all_sentences.extend([sent.text.strip() for sent in doc.sents if len(sent.text.strip()) > min_len])
+        else:
+            # 超长文本，按块处理
+            chunk_size = NLP.max_length - 1000  # 留出余量
+            for start in range(0, len(text), chunk_size):
+                end = min(start + chunk_size, len(text))
+                chunk = text[start:end]
+                doc = NLP(chunk)
+                all_sentences.extend([sent.text.strip() for sent in doc.sents if len(sent.text.strip()) > min_len])
+    return all_sentences

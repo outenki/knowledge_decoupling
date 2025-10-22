@@ -6,4 +6,4 @@ DATA_PATH=$BASE_PATH/data/$DATA_NAME
 DATA_COLUMN=$2
 BATCH_SIZE=$3
 /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/tokenize_and_slice_data.py \
-    -dn $DATA_NAME -lf hf -dc $DATA_COLUMN -t -s -bs 1024 -o $DATA_PATH-tokenized-bs$BATCH_SIZE
+    -dn $DATA_PATH -lf local -dc $DATA_COLUMN -s -bs 1024 -o $DATA_PATH-bs$BATCH_SIZE
