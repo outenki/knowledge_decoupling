@@ -1,10 +1,10 @@
 #!/bin/bash
 #PJM -L "rscgrp=a-batch"
-#PJM -L "elapse=24:00:00"
+#PJM -L "elapse=48:00:00"
 #PJM -L "vnode-core=10"
 #PJM -L "jobenv=singularity"
 #PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/generate_nonce_smolLM2_1.out
-#PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/generate_nonce_smolLM2_1.err
+#PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/generate_nonce_smolLM2_1.out
 #PJM -N "gn_sml_1"
 
 

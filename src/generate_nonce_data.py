@@ -26,7 +26,7 @@ from lib.parser import extract_token_morph_features, is_content_word, is_vowel
 
 CPU_NUM = multiprocessing.cpu_count()
 NLP = None
-BATCH_SIZE = 10_000
+BATCH_SIZE = 1_000
 NONCE_WORD_BANK = {}
 
 
