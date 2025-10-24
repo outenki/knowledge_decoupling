@@ -26,6 +26,7 @@ do
         -lf hf \
         -o $BASE_PATH/data/$DATA_NAME/1020/test/part$part \
         -sf $i \
+        -ss text \
         -lb $BASE_PATH/data/wikimedia-nonce/vocab/lemma_blacklist \
         -wb $BASE_PATH/data/wikimedia-nonce/vocab/nonce_word_bank.json \
         -l $SIZE

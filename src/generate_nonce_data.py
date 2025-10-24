@@ -12,12 +12,12 @@ import json
 import os
 import multiprocessing
 
-
 import tqdm
 import spacy
 from spacy.tokens import Token
 
-from lib.dataset import load_custom_dataset, load_texts_from_dataset_batch, slice_dataset
+from lib.dataset import load_custom_dataset, load_texts_from_dataset_batch
+from lib.dataset import slice_dataset, skip_dataset_by_column, simple_split_to_sents
 from lib.parser import extract_token_morph_features, is_content_word, is_vowel
 
 # if spacy.prefer_gpu():
@@ -27,7 +27,7 @@ from lib.parser import extract_token_morph_features, is_content_word, is_vowel
 
 CPU_NUM = multiprocessing.cpu_count()
 NLP = None
-BATCH_SIZE = 100_000
+BATCH_SIZE = 100
 
 
 def timed(label, start):
@@ -124,7 +124,6 @@ def generate_nonce_sentence(doc, nonce_word_bank: dict, max_n: int) -> list[str]
         nonce_sentences.append(" ".join(nonce_sent_words))
     timed("generating nonce sents:", t)
 
-
     # for combo in zip(*nonce_words_per_token):
     #     # generate nonce words to form a new sentence
     #     nonce_sent_words = ori_words.copy()
@@ -138,7 +137,7 @@ def generate_nonce_sentence(doc, nonce_word_bank: dict, max_n: int) -> list[str]
 # Blacklist words that should not be used as nonce words
 # e.g., words with multiple POS tags, stop words, etc.
 # We will generate the blacklist based on the dataset
-def count_pos_tags(texts, update_dict: dict | None = None) -> dict:
+def count_pos_tags(texts, multi_process: bool, update_dict: dict | None = None) -> dict:
     """
     Counts the occurrences of each POS tag in a list of spaCy Doc objects.
 
@@ -153,7 +152,7 @@ def count_pos_tags(texts, update_dict: dict | None = None) -> dict:
         "en_core_web_sm",
         disable=["parser", "ner", "textcat", "tok2vec", "morphologizer"]
     )
-    if args.mpulti_process:
+    if multi_process:
         docs = nlp.pipe(texts, batch_size=512, n_process=CPU_NUM)
     else:
         docs = nlp.pipe(texts, batch_size=512)
@@ -178,14 +177,14 @@ def generate_lemma_blacklist(
     return blacklist
 
 
-def _generate_nonce_word_bank(texts, lemma_blacklist: set, update_dict: dict | None = None) -> dict:
+def _generate_nonce_word_bank(texts, lemma_blacklist: set, multi_process, update_dict: dict | None = None) -> dict:
     """
     Extracts morphological features from a Docs object.
     """
     features = update_dict if update_dict else {}
     # need the full pipeline for sentence segmentation
     nlp = get_nlp()
-    if args.mpulti_process:
+    if multi_process:
         docs = nlp.pipe(texts, batch_size=64, n_process=CPU_NUM)
     else:
         docs = nlp.pipe(texts, batch_size=64)
@@ -199,35 +198,48 @@ def _generate_nonce_word_bank(texts, lemma_blacklist: set, update_dict: dict | N
             # given the same morph features, we want to have a list of words
             # to choose from when generating nonce words
             features.setdefault(morph_str, []).append((text, lemma))
-    return {m: list(set(f)) for m, f in  features.items()}
+    return {m: list(set(f)) for m, f in features.items()}
+
+
+def batch_split_texts_to_sentences(batch: Dataset) -> dict:
+    """
+    Splits a batch of texts into sentences.
+
+    Args:
+        batch (Dataset): A batch of dataset containing a 'text' column.
+
+    Returns:
+        dict: A dictionary with a 'text' key containing the list of sentences.
+    """
+    sentences = split_texts_to_sentences(cleaned_texts)
+    return {"text": sentences}
 
 
 # ================= Dataset Processing =================
-def map_process(examples, nonce_word_bank):
+def map_nonce_generation(examples, nonce_word_bank, multi_process):
     # need the full pipeline for sentence segmentation
-    t = time.perf_counter()
-    print("NLP pipe processing...")
     nlp = get_nlp()
-    timed("NLP pipinig finished:", t)
-    if args.mpulti_process:
+    if multi_process:
         docs = nlp.pipe(examples["text"], batch_size=64, n_process=CPU_NUM)
     else:
         docs = nlp.pipe(examples["text"], batch_size=64)
     nonce = []
     for doc in docs:
-        _nonce = generate_nonce_sentence(doc, nonce_word_bank, 1)
-        nonce.append(_nonce[0] if _nonce else "")
+        for sent in doc:
+            _nonce = generate_nonce_sentence(sent, nonce_word_bank, 1)
+            nonce.append(_nonce[0] if _nonce else "")
     examples["nonce"] = nonce
     return examples
 
 
 def generate_nonce_for_dataset(
     dataset: Dataset | Any, batch_size: int, out_path: str,
-    lemma_blacklist_path: str = "",
-    nonce_word_bank_path: str = "",
+    multi_process: bool,
+    lemma_blacklist_path: str | Path = "",
+    nonce_word_bank_path: str | Path = "",
     lemma_blacklist_generation: bool = True,
     nonce_word_bank_generation: bool = True,
-    nonce_data_generation: bool = True
+    nonce_data_generation: bool = True,
 ):
     """
     Main function to generate nonce sentences from a list of texts.
@@ -252,13 +264,13 @@ def generate_nonce_for_dataset(
     # ========== Generate lemma blacklist ==========
     out_path_blacklist = Path(out_path) / "lemma_blacklist"
     lemma_blacklist = set()
-    if lemma_blacklist_path and lemma_blacklist_path.exists():
+    if lemma_blacklist_path and Path(lemma_blacklist_path).exists():
         # try to load existing lemma blacklist
         # If it exists, use it to speed up the process
         print(f"**Loading existing lemma blacklist from {lemma_blacklist_path}...")
         with open(lemma_blacklist_path, "r") as f:
             lemma_blacklist = set([line.strip() for line in f.readlines()])
-        print(f"**done")
+        print("**done")
     elif not lemma_blacklist_generation:
         print("**Skipping lemma blacklist generation.")
     else:
@@ -266,7 +278,7 @@ def generate_nonce_for_dataset(
         for i in range(batch_number):
             print(f"Generating blacklist for batch {i + 1}/{batch_number}...")
             texts = load_texts_from_dataset_batch(dataset, i, batch_size)
-            pos_counts = count_pos_tags(texts, pos_counts)
+            pos_counts = count_pos_tags(texts, multi_process, pos_counts)
         lemma_blacklist = generate_lemma_blacklist(pos_counts)
         with open(out_path_blacklist, "w") as f:
             for lemma in lemma_blacklist:
@@ -274,14 +286,15 @@ def generate_nonce_for_dataset(
 
     # ========== Generate nonce word bank ==========
     out_path_word_bank = Path(out_path) / "nonce_word_bank.json"
-    if nonce_word_bank_path and nonce_word_bank_path.exists():
+    nonce_word_bank = None
+    if nonce_word_bank_path and Path(nonce_word_bank_path).exists():
         # Load existing nonce word bank if it exists
         # This speeds up the process if the bank is already generated
         print(f"**Loading existing nonce_word_bank from {nonce_word_bank_path}...")
         with open(nonce_word_bank_path, "r") as f:
             nonce_word_bank = json.load(f)
         nonce_word_bank = {k: list(set([tuple(t) for t in v])) for k, v in nonce_word_bank.items()}
-        print(f"**done")
+        print("**done")
     elif not nonce_word_bank_generation:
         print("**Skipping nonce word bank generation.")
     else:
@@ -289,7 +302,7 @@ def generate_nonce_for_dataset(
         for i in range(batch_number):
             print(f"Generating nonce bank for batch {i + 1}/{batch_number}...")
             texts = load_texts_from_dataset_batch(dataset, i, batch_size)
-            nonce_word_bank = _generate_nonce_word_bank(texts, lemma_blacklist, nonce_word_bank)
+            nonce_word_bank = _generate_nonce_word_bank(texts, lemma_blacklist, multi_process, nonce_word_bank)
         _nonce_word_bank = {k: tuple(v) for k, v in nonce_word_bank.items()}
         json.dump(_nonce_word_bank, open(out_path_word_bank, "w"), indent=4)
         print(f"Saved nonce word bank to {out_path_word_bank}")
@@ -298,8 +311,9 @@ def generate_nonce_for_dataset(
     if not nonce_data_generation:
         print("**Skipping nonce data generation.")
         return None
+    print("**** Preprocessing...")
     print("**** Generating nonce sentence...")
-    process_fn = partial(map_process, nonce_word_bank=nonce_word_bank)
+    process_fn = partial(map_nonce_generation, nonce_word_bank=nonce_word_bank, multi_process=multi_process)
     dataset = dataset.map(
         process_fn,
         num_proc=os.cpu_count(),
@@ -360,8 +374,20 @@ def read_args():
         help='Skip nonce data generation.'
     )
     parser.add_argument(
+        '--split-sents', '-ss', dest='split_sents', type=str, default="",
+        help='Split data to sents before generating.'
+    )
+    parser.add_argument(
         '--multi-process', '-mp', dest='multi_process', action='store_true',
         help='Use multi-processing for nonce sentence generation.'
+    )
+    parser.add_argument(
+        '--skip-key', '-sk', dest='skip_key',
+        help='Skip data based on column'
+    )
+    parser.add_argument(
+        '--skip-values', '-sv', nargs='+', dest='skip_values',
+        help='Skip data based on values of the skip_key'
     )
     parser.add_argument(
         '--out-path', '-o', dest='out_path', type=str,
@@ -375,6 +401,10 @@ def main():
     print(vars(args))
     out_path = args.out_path
     Path(out_path).mkdir(parents=True, exist_ok=True)
+    if args.multi_process:
+        print("Multi process for NLP.pipe")
+    else:
+        print("NON-Multi process for NLP.pipe")
 
     # ========  Load dataset ========
     print("**** Loading dataset...")
@@ -394,10 +424,15 @@ def main():
             dt = slice_dataset(dt, start_from, dt_limit)
             print(f"========= Processing dataset {key}... ==========")
             print(f"Dataset {key} has {dt.num_rows} samples after slicing.")
+            if args.skip_key and args.skip_values:
+                dt = skip_dataset_by_column(dt, args.skip_key, args.skip_values)
+            if args.split_sents:
+                dt = simple_split_to_sents(dt, args.split_sents, os.cpu_count(), BATCH_SIZE)
             _dataset = generate_nonce_for_dataset(
                 dt,
                 batch_size=BATCH_SIZE,
                 out_path=out_path,
+                multi_process=args.multi_process,
                 lemma_blacklist_path=Path(args.lemma_blacklist),
                 nonce_word_bank_path=Path(args.word_bank),
                 lemma_blacklist_generation=not args.skip_lemma_blacklist_generation,
@@ -416,11 +451,16 @@ def main():
     else:
         print("**** Processing dataset ...")
         dataset = slice_dataset(dataset, args.start_from, args.data_limit)
+        if args.skip_key and args.skip_values:
+            dataset = skip_dataset_by_column(dataset, args.skip_key, args.skip_values)
+        if args.split_sents:
+            dataset = simple_split_to_sents(dataset, args.split_sents, os.cpu_count(), BATCH_SIZE)
         print(f"Dataset has {dataset.num_rows} samples after slicing.")
         dataset = generate_nonce_for_dataset(
             dataset,
             batch_size=BATCH_SIZE,
             out_path=out_path,
+            multi_process=args.multi_process,
             lemma_blacklist_path=Path(args.lemma_blacklist),
             nonce_word_bank_path=Path(args.word_bank),
             lemma_blacklist_generation=not args.skip_lemma_blacklist_generation,

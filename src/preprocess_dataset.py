@@ -11,7 +11,7 @@ from pathlib import Path
 from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
 
-from lib.dataset import load_custom_dataset
+from lib.dataset import load_custom_dataset, skip_dataset_by_column
 from lib.text import clean_text, split_texts_to_sentences
 
 
@@ -37,6 +37,14 @@ def read_args():
         help='Limit the number of samples to process.'
     )
     parser.add_argument(
+        '--skip-key', '-sk', dest='skip_key',
+        help='Skip data based on column'
+    )
+    parser.add_argument(
+        '--skip-values', '-sv', nargs='+', dest='skip_values',
+        help='Skip data based on values of the skip_key'
+    )
+    parser.add_argument(
         '--out-path', '-o', dest='out_path', type=str,
         help='Path to save the dataset with nonce sentences.'
     )
@@ -54,9 +62,6 @@ def batch_split_texts_to_sentences(batch: Dataset) -> dict:
         dict: A dictionary with a 'text' key containing the list of sentences.
     """
     texts = batch['text']
-    sources = batch.get('source', None)
-    if sources:
-        texts = [t for s, t in zip(sources, texts) if s != "stack_edu" and s != "finemath" and s != "infimm_webmath"]
     cleaned_texts = [clean_text(text) for text in texts]
     sentences = split_texts_to_sentences(cleaned_texts)
     return {"text": sentences}
@@ -78,6 +83,9 @@ def main():
         dataset = dataset['train']
     if args.data_limit:
         dataset = dataset.select(range(args.data_limit))
+
+    if args.skip_key and args.skip_values:
+        dataset = skip_dataset_by_column(dataset, args.skip_key, args.skip_values)
 
     # ======== Clean and split texts into sentences =========
     processed_dataset = dataset.map(

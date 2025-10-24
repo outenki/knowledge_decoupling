@@ -1,9 +1,11 @@
 from typing import Any
 from pathlib import Path
+from functools import partial
 
 from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
 from datasets.load import load_dataset, load_from_disk
+from lib.text import simple_split_text
 
 
 def load_custom_dataset(data_name: str, data_type: str | None, load_from: str) -> Dataset | DatasetDict | Any:
@@ -59,9 +61,41 @@ def load_texts_from_dataset_batch(dataset: Dataset, batch_idx: int, batch_size: 
         raise ValueError("Unsupported dataset type. Please provide a Hugging Face Dataset object.")
 
 
+def skip_dataset_by_column(dataset: Dataset, column_name, column_values):
+    print("**** Skipping dataset ...")
+    size_before = len(dataset)
+    dataset = dataset.filter(lambda example: column_name in example and example[column_name] not in set(column_values))
+    size_after = len(dataset)
+    print(f"**** Datasize {size_before} -> {size_after} after skipping ...")
+    return dataset
+
+
 def slice_dataset(dataset: Dataset, start: int, limit: int) -> Dataset:
     assert start <= len(dataset)
     end = start + limit
     if end <= start or end >= len(dataset):
         end = len(dataset)
     return dataset.select(range(start, end))
+
+
+def _split_column_to_sents(examples, column: str):
+    # 返回新的列 "sentences"，每条文本拆成句子
+    all_sents = []
+    for text in examples[column]:
+        all_sents.extend(simple_split_text(text))
+    return {column: all_sents}
+
+
+def simple_split_to_sents(dataset: Dataset, column, num_proc=1, batch_size=1000) -> Dataset:
+    map_split_func = partial(_split_column_to_sents, column=column)
+    print("Splitting dataset to sentences")
+    dataset = dataset.map(
+        map_split_func,
+        num_proc=num_proc,
+        batch_size=batch_size,
+        batched=True,
+        remove_columns=dataset.column_names,
+        desc="Splitting data to sentences"
+    )
+    print(f"Output size of splitting: {len(dataset)}")
+    return dataset

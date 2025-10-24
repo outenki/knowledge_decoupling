@@ -1,8 +1,6 @@
-import spacy
-
 from spacy.lang.en import English
 from spacy.tokens import Doc
-from tqdm import tqdm
+import re
 
 
 # if spacy.prefer_gpu():
@@ -67,3 +65,15 @@ def split_texts_to_sentences(texts: list, min_len: int = 0) -> list:
                 doc = NLP(chunk)
                 all_sentences.extend([sent.text.strip() for sent in doc.sents if len(sent.text.strip()) > min_len])
     return all_sentences
+
+
+def simple_split_text(text: str) -> list[str]:
+    sents = re.split(r'(?<=[。！？.!?])\s*', text)
+    return [s for s in sents if s]
+
+
+def simple_split_texts(texts: list) -> list[str]:
+    res = []
+    for text in texts:
+        res.extend(simple_split_text(text))
+    return res
