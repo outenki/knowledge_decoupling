@@ -7,7 +7,6 @@ from datasets.arrow_dataset import Dataset
 from math import ceil
 from pathlib import Path
 from functools import partial
-import time
 import json
 import os
 import multiprocessing
@@ -28,11 +27,6 @@ from lib.parser import extract_token_morph_features, is_content_word, is_vowel
 CPU_NUM = multiprocessing.cpu_count()
 NLP = None
 BATCH_SIZE = 100
-
-
-def timed(label, start):
-    print(f"[⏱️ {label}] took {time.perf_counter() - start:.2f} seconds")
-    return time.perf_counter()
 
 
 def get_nlp():
@@ -94,7 +88,6 @@ def generate_nonce_sentence(doc, nonce_word_bank: dict, max_n: int) -> list[str]
 
     # get nonce words for each content word
     nonce_words_per_token = []
-    t = time.perf_counter()
     for token in content_words:
         candidates = match_nonce_words(token, nonce_word_bank, max_n)
         if not candidates:
@@ -110,19 +103,16 @@ def generate_nonce_sentence(doc, nonce_word_bank: dict, max_n: int) -> list[str]
         # nonce_words for token[2]: [n2_1, n1_2]
         # ...
         nonce_words_per_token.append(candidates)
-    timed("matching nonce words:", t)
 
     content_indices = [t.i for t in content_words]
     ori_words = [t.text for t in doc]
     nonce_sentences = []
-    t = time.perf_counter()
     for cand_i in range(max_n):
         nonce_sent_words = ori_words.copy()
         # replace content words with nonce candidates
         for cont_i, index in enumerate(content_indices):
             nonce_sent_words[index] = nonce_words_per_token[cand_i][cont_i]
         nonce_sentences.append(" ".join(nonce_sent_words))
-    timed("generating nonce sents:", t)
 
     # for combo in zip(*nonce_words_per_token):
     #     # generate nonce words to form a new sentence
