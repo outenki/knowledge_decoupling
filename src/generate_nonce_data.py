@@ -10,6 +10,8 @@ from functools import partial
 import time
 import json
 import os
+import multiprocessing
+
 
 import tqdm
 import spacy
@@ -23,6 +25,7 @@ from lib.parser import extract_token_morph_features, is_content_word, is_vowel
 # else:
 #     print("Using CPU")
 
+CPU_NUM = multiprocessing.cpu_count()
 NLP = None
 BATCH_SIZE = 100_000
 
@@ -150,7 +153,10 @@ def count_pos_tags(texts, update_dict: dict | None = None) -> dict:
         "en_core_web_sm",
         disable=["parser", "ner", "textcat", "tok2vec", "morphologizer"]
     )
-    docs = nlp.pipe(texts, batch_size=512)
+    if args.mpulti_process:
+        docs = nlp.pipe(texts, batch_size=512, n_process=CPU_NUM)
+    else:
+        docs = nlp.pipe(texts, batch_size=512)
 
     for doc in tqdm.tqdm(docs, total=len(texts), desc="Counting POS tags"):
         for token in doc:
@@ -179,7 +185,10 @@ def _generate_nonce_word_bank(texts, lemma_blacklist: set, update_dict: dict | N
     features = update_dict if update_dict else {}
     # need the full pipeline for sentence segmentation
     nlp = get_nlp()
-    docs = nlp.pipe(texts, batch_size=64)
+    if args.mpulti_process:
+        docs = nlp.pipe(texts, batch_size=64, n_process=CPU_NUM)
+    else:
+        docs = nlp.pipe(texts, batch_size=64)
     for doc in tqdm.tqdm(docs, total=len(texts), desc="Generating nonce words"):
         for token in doc:
             text, lemma, morph = extract_token_morph_features(token)
@@ -200,7 +209,10 @@ def map_process(examples, nonce_word_bank):
     print("NLP pipe processing...")
     nlp = get_nlp()
     timed("NLP pipinig finished:", t)
-    docs = nlp.pipe(examples["text"], batch_size=64)
+    if args.mpulti_process:
+        docs = nlp.pipe(examples["text"], batch_size=64, n_process=CPU_NUM)
+    else:
+        docs = nlp.pipe(examples["text"], batch_size=64)
     nonce = []
     for doc in docs:
         _nonce = generate_nonce_sentence(doc, nonce_word_bank, 1)
@@ -348,6 +360,10 @@ def read_args():
         help='Skip nonce data generation.'
     )
     parser.add_argument(
+        '--multi-process', '-mp', dest='multi_process', action='store_true',
+        help='Use multi-processing for nonce sentence generation.'
+    )
+    parser.add_argument(
         '--out-path', '-o', dest='out_path', type=str,
         help='Path to save the dataset with nonce sentences.'
     )
@@ -356,8 +372,7 @@ def read_args():
 
 def main():
     args = read_args()
-    for key, value in vars(args).items():
-        print(f"{key}: {value}")
+    print(vars(args))
     out_path = args.out_path
     Path(out_path).mkdir(parents=True, exist_ok=True)
 

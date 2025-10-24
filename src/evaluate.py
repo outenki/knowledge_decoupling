@@ -107,6 +107,7 @@ def analyze_results(samples) -> dict:
 
 def main():
     args = read_args()
+    print(vars(args))
 
     # ======== Check arguments ========
     model_path = args.model_path

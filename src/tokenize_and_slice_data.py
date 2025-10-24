@@ -74,6 +74,7 @@ def group_texts_to_blocks(examples, block_size: int):
 
 def main():
     args = read_args()
+    print(vars(args))
 
     datasets = load_custom_dataset(args.data_name, args.data_type, args.load_from)
     # size = 600000

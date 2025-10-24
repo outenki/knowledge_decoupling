@@ -189,6 +189,7 @@ def read_args():
 
 def main():
     args = read_args()
+    print(vars(args))
     out_path = args.out_path
     Path(out_path).mkdir(parents=True, exist_ok=True)
 

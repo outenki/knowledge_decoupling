@@ -64,6 +64,7 @@ def batch_split_texts_to_sentences(batch: Dataset) -> dict:
 
 def main():
     args = read_args()
+    print(vars(args))
 
     # ======== Load dataset =========
     dataset = load_custom_dataset(

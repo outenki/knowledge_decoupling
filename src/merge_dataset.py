@@ -23,6 +23,7 @@ def read_args():
 
 def main():
     args = read_args()
+    print(vars(args))
     Path(args.out_path).mkdir(parents=True, exist_ok=True)
 
     datasets = []

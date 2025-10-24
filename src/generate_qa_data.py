@@ -81,6 +81,7 @@ def generate_qa_data_from_qasc(dataset: Dataset) -> list[dict]:
 
 
 args = read_args()
+print(vars(args))
 print(f"making dirs: {args.output_path}")
 Path(args.output_path).mkdir(parents=True, exist_ok=True)
 

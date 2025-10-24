@@ -145,6 +145,7 @@ Returns:
 
 def main():
     args = read_args()
+    print(vars(args))
 
     # ======== Load dataset =========
     dataset = load_custom_dataset(

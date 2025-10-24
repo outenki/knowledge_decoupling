@@ -2,9 +2,14 @@ import argparse
 from pathlib import Path
 from math import ceil
 import random
+import json
+from dataclasses import asdict, is_dataclass
+
 
 import torch
-from transformers import GPT2Config, GPT2LMHeadModel
+from torch.optim import AdamW
+from torch.optim.lr_scheduler import LambdaLR
+from transformers import GPT2Config, GPT2LMHeadModel, get_scheduler
 from transformers.trainer import Trainer
 from transformers.trainer_callback import TrainerCallback
 from transformers.training_args import TrainingArguments
@@ -12,6 +17,20 @@ from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
 
 from lib.dataset import load_custom_dataset, slice_dataset
+
+
+DECAY_RATE = 0.9  # for WSD
+
+
+def training_args_to_dict(args) -> dict:
+    serializable_args = {}
+    args_dict = asdict(args) if is_dataclass(args) else vars(args)
+    for k, v in args_dict.items():
+        try:
+            json.dumps(v)
+            serializable_args[k] = v
+        except (TypeError, OverflowError):
+            serializable_args[k] = str(v)
 
 
 class LossLoggerCallback(TrainerCallback):
@@ -22,15 +41,19 @@ class LossLoggerCallback(TrainerCallback):
 
     def on_train_begin(self, args, state, control, **kwargs):
         self.train_log.write("step\ttrain_loss\n")
+        self.train_log.flush()
         self.eval_log.write("step\teval_loss\n")
+        self.eval_log.flush()
 
     def on_log(self, args, state, control, logs=None, **kwargs):
         if logs is None:
             return
         if "loss" in logs:
             self.train_log.write(f"{state.global_step}\t{logs['loss']}\n")
+            self.train_log.flush()
         if "eval_loss" in logs:
             self.eval_log.write(f"{state.global_step}\t{logs['eval_loss']}\n")
+            self.eval_log.flush()
 
     def on_train_end(self, args, state, control, **kwargs):
         self.train_log.close()
@@ -58,6 +81,10 @@ def read_args():
     parser.add_argument(
         '--data-limit', '-dl', dest='data_limit', type=int, required=False, default=0,
         help='Path to pre-trained model'
+    )
+    parser.add_argument(
+        '--speedup', '-su', dest='speedup', action='store_true',
+        help='Enable speedup options.'
     )
     parser.add_argument(
         '--out-path', '-o', dest='out_path', type=str,
@@ -116,12 +143,29 @@ def main():
         print(f"GPU {i}: {torch.cuda.get_device_name(i)}")
 
     args = read_args()
+    print(vars(args))
     Path(args.out_path).mkdir(parents=True, exist_ok=True)
 
     # === Load model
     model: GPT2LMHeadModel | None = None
     print("Loading model from config:", args.config_name)
     model = load_model_from_config(args.config_name)
+
+    if args.speedup:
+        print("Applying speedup options...")
+        # speed up with xformers
+        torch.backends.cuda.enable_flash_sdp(True)
+        torch.backends.cuda.enable_mem_efficient_sdp(True)
+        torch.backends.cuda.enable_math_sdp(True)
+        # speed up with flash attention 2
+        model.config.attn_implementation = "flash_attention_2"
+        # speed up with torch 2.0 compile
+        model = torch.compile(model)
+        # speed up with 8-bit quantization
+        from transformers import BitsAndBytesConfig
+        bnb_config = BitsAndBytesConfig(load_in_8bit=True)
+        model.config.quantization_config = bnb_config
+
     assert model is not None
     model.save_pretrained(Path(args.out_path) / "init_model")
 
@@ -198,7 +242,14 @@ def main():
         eval_strategy="steps",
         report_to="none",
         fp16=torch.cuda.is_available(),
+        remove_unused_columns=False,
+
+        # speed up with fused AdamW optimizer
+        optim="adamw_torch_fused",
     )
+    
+    with open(Path(args.out_path) / "training_args.json", "w") as f:
+        json.dump(training_args.to_dict(), f, indent=4)
 
     trainer = Trainer(
         model=model,
@@ -208,6 +259,36 @@ def main():
         callbacks=[LossLoggerCallback(f"{args.out_path}/logs")],
     )
 
+    # WSD settings
+    total_steps = len(trainer.get_train_dataloader()) * training_args.num_train_epochs
+    warmup_steps = training_args.warmup_steps or (total_steps // 20)
+    optimizer = AdamW(model.parameters(), lr=5e-4)
+    trainer.optimizer = optimizer
+
+    # cosine warmup
+    scheduler_cosine = get_scheduler(
+        "cosine",
+        optimizer=trainer.optimizer,
+        num_warmup_steps=warmup_steps,
+        num_training_steps=total_steps
+    )
+
+    def ws_decay(step):
+        # WSD
+        if step < warmup_steps:
+            return 1.0  # warmup阶段由cosine控制
+        else:
+            # WSD示例：每 epoch 衰减 0.9
+            epoch_step = len(trainer.get_train_dataloader())
+            return DECAY_RATE ** ((step - warmup_steps) / epoch_step)
+
+    scheduler_ws = LambdaLR(trainer.optimizer, lr_lambda=ws_decay)
+    trainer.lr_scheduler = scheduler_ws
+    
+    with open(Path(args.out_path) / "trainer.json", "w") as f:
+        json.dump(training_args_to_dict(trainer.args), f, indent=4)
+
+    # Load checkpoint if provided
     checkpoint = args.checkpoint
     if not checkpoint or not Path(checkpoint).exists() or not Path(checkpoint).is_dir():
         checkpoint = None
