@@ -1,11 +1,11 @@
 #!/bin/bash
-#PJM -L "rscgrp=b-batch"
-#PJM -L "elapse=100:00:00"
+#PJM -L "rscgrp=c-batch"
+#PJM -L "elapse=24:00:00"
 #PJM -L "gpu=4"
 #PJM -L "jobenv=singularity"
-#PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_gpt_large_on_smolLM2_nonce_size_ep3.err
-#PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_gpt_large_on_smolLM2_nonce_size_ep3.out
-#PJM -N "sm_ns_e3"
+#PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_gpt_large_on_smolLM2_wiki_size_ep1.err
+#PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_gpt_large_on_smolLM2_wiki_size_ep1.out
+#PJM -N "sm_ws_e1"
 
 module load singularity-ce
 
@@ -18,5 +18,5 @@ cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts/train_large
 singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif /bin/bash train_gpt_from_init.sh \
     gpt-large \
     smolLM2-bs1024 \
-    3 \
-    1_020_000
+    1 \
+    4_520_000

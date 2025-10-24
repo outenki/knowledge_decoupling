@@ -15,6 +15,7 @@ cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts/train_large
 # DATA_NAME=$2
 # CHECKPOINT=$3
 # EPOCHS=$4
+# DATA_LIMITE=${5:-0} (optional)
 singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif \
     /bin/bash train_gpt_continue.sh \
         gpt-large \

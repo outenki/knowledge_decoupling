@@ -13,12 +13,10 @@ cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts/train_large
 
 # CONFIG_NAME=$1
 # DATA_NAME=$2
-# CHECKPOINT=$3
-# EPOCHS=$4
-# DATA_LIMITE=$5
+# EPOCHS=$3
+# DATA_LIMITE=${4:-0}
 singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif /bin/bash train_gpt_from_init.sh \
     gpt-large \
     wikimedia-bs1024 \
-    /home/pj25000107/ku50001566/projects/knowledge_decoupling/output/gpt-large/wikimedia-bs1024-dl1_020_000-ep2/checkpoint-7486 \
     3 \
     1_020_000
