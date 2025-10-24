@@ -62,7 +62,7 @@ def load_texts_from_dataset_batch(dataset: Dataset, batch_idx: int, batch_size: 
 
 
 def skip_dataset_by_column(dataset: Dataset, column_name, column_values):
-    print("**** Skipping dataset ...")
+    print(f"**** Skipping dataset where column_name == {column_name} and values in [{column_values}]...")
     size_before = len(dataset)
     dataset = dataset.filter(lambda example: column_name in example and example[column_name] not in set(column_values))
     size_after = len(dataset)
