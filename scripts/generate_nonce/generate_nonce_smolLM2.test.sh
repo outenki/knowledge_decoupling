@@ -7,7 +7,14 @@ START=$(($1 * $SIZE * $ITER_NUM))
 END=$(($(($1 + 1)) * $SIZE * $ITER_NUM -1))
 
 start_time=$(date +"%s")
-echo "start time: $(date -d @$start_time +"%D %T")"
+
+if date -d "@$start_time" >/dev/null 2>&1; then
+    # GNU date (Linux)
+    echo "start time: $(date -d "@$start_time" +"%m/%d/%y %T")"
+else
+    # BSD date (macOS)
+    echo "start time: $(date -r $start_time +"%m/%d/%y %T")"
+fi
 
 for i in $(seq $START $SIZE $END)
 do
@@ -25,7 +32,14 @@ do
 done
 
 end_time=$(date +"%s")
-echo "end time: $(date -r $end_time '+%m/%d/%y %T')"
+
+if date -d "@$end_time" >/dev/null 2>&1; then
+    # GNU date (Linux)
+    echo "end time: $(date -d "@$end_time" +"%m/%d/%y %T")"
+else
+    # BSD date (macOS)
+    echo "end time: $(date -r $end_time +"%m/%d/%y %T")"
+fi
 diff_sec=$(( end_time - start_time ))
 hours=$(( diff_sec / 3600 ))
 minutes=$(( (diff_sec % 3600) / 60 ))
