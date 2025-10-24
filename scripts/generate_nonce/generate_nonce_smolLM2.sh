@@ -1,5 +1,5 @@
 #!/bin/bash
-BASE_PATH=/Users/ou/Developer/projects/knowledge_decoupling
+BASE_PATH/home/pj25000107/ku50001566/projects/knowledge_decoupling
 DATA_NAME=SmolLM2
 ITER_NUM=1
 SIZE=100
