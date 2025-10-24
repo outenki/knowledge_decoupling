@@ -1,8 +1,8 @@
 #!/bin/bash
 BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
 DATA_NAME=SmolLM2
-ITER_NUM=1
-SIZE=10
+ITER_NUM=10
+SIZE=100000
 START=$(($1 * $SIZE * $ITER_NUM))
 END=$(($(($1 + 1)) * $SIZE * $ITER_NUM -1))
 

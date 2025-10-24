@@ -26,7 +26,8 @@ from lib.parser import extract_token_morph_features, is_content_word, is_vowel
 
 CPU_NUM = multiprocessing.cpu_count()
 NLP = None
-BATCH_SIZE = 100
+BATCH_SIZE = 10_000
+NONCE_WORD_BANK = {}
 
 
 def get_nlp():
@@ -43,21 +44,19 @@ def serialize_morph(morph_tuple) -> str:
     return f"{pos}|{dep}|{dir}|{str(morph)}"
 
 
-def match_nonce_words(token: Token, nonce_word_bank: dict, max_n: int) -> list[str]:
+def match_nonce_words(token: Token, max_n: int) -> list[str]:
     """
     Matches a token with a list of words based on its pos and morph features
 
     Args:
         token (Token): A spaCy Token object.
-        nonce_word_bank (list): A dict of words with morphological features
-            as keys and (text, lemma) as values.
 
     Returns:
         list: A list of matched words.
     """
     text, lemma, morph = extract_token_morph_features(token)
     key = serialize_morph(morph)
-    candidates = nonce_word_bank.get(key, [])
+    candidates = NONCE_WORD_BANK.get(key, [])
     # 最大 max_n x 5 の候補単語からマーチする
     candidates = sample(candidates, min(len(candidates), max_n * 5))
     nonce_words = []
@@ -74,12 +73,11 @@ def match_nonce_words(token: Token, nonce_word_bank: dict, max_n: int) -> list[s
     return nonce_words
 
 
-def generate_nonce_sentence(doc, nonce_word_bank: dict, max_n: int) -> list[str]:
+def generate_nonce_sentence(doc, max_n: int) -> list[str]:
     """Generates a nonce sentence by replacing tokens in the document with nonce words.
     Args:
         doc (Doc): A spaCy Doc object.
-        nonce_word_bank (dict): A dict of nonce words with morphological features as keys.
-        n (int): The number of nonce words to generate for each token.
+        max_n (int): The number of nonce words to generate for each token.
     returns:
         list[str]: A list of nonce words forming a sentence.
     """
@@ -89,7 +87,7 @@ def generate_nonce_sentence(doc, nonce_word_bank: dict, max_n: int) -> list[str]
     # get nonce words for each content word
     nonce_words_per_token = []
     for token in content_words:
-        candidates = match_nonce_words(token, nonce_word_bank, max_n)
+        candidates = match_nonce_words(token, max_n)
         if not candidates:
             # if no nonce words found, skip this sentence and return an empty list
             # make sure the nonce data is nonsensical enough
@@ -98,9 +96,9 @@ def generate_nonce_sentence(doc, nonce_word_bank: dict, max_n: int) -> list[str]
         max_n = min(len(candidates), max_n)
         candidates = sample(candidates, max_n)
         # nonce_words_per_token:
-        # nonce_words for token[0]: [n0_1, n0_2, n0_3]
-        # nonce_words for token[1]: [n1_1, n1_2, n1_3, n1_4]
-        # nonce_words for token[2]: [n2_1, n1_2]
+        # nonce_words for content token[0]: [n0_1, n0_2, n0_3]
+        # nonce_words for content token[1]: [n1_1, n1_2, n1_3, n1_4]
+        # nonce_words for content token[2]: [n2_1, n1_2]
         # ...
         nonce_words_per_token.append(candidates)
 
@@ -111,8 +109,8 @@ def generate_nonce_sentence(doc, nonce_word_bank: dict, max_n: int) -> list[str]
         nonce_sent_words = ori_words.copy()
         # replace content words with nonce candidates
         for cont_i, index in enumerate(content_indices):
-            nonce_sent_words[index] = nonce_words_per_token[cand_i][cont_i]
-        nonce_sentences.append(" ".join(nonce_sent_words))
+            nonce_sent_words[index] = nonce_words_per_token[cont_i][cand_i]
+        nonce_sentences.append(" ".join(nonce_sent_words).lower())
 
     # for combo in zip(*nonce_words_per_token):
     #     # generate nonce words to form a new sentence
@@ -191,22 +189,8 @@ def _generate_nonce_word_bank(texts, lemma_blacklist: set, multi_process, update
     return {m: list(set(f)) for m, f in features.items()}
 
 
-def batch_split_texts_to_sentences(batch: Dataset) -> dict:
-    """
-    Splits a batch of texts into sentences.
-
-    Args:
-        batch (Dataset): A batch of dataset containing a 'text' column.
-
-    Returns:
-        dict: A dictionary with a 'text' key containing the list of sentences.
-    """
-    sentences = split_texts_to_sentences(cleaned_texts)
-    return {"text": sentences}
-
-
 # ================= Dataset Processing =================
-def map_nonce_generation(examples, nonce_word_bank, multi_process):
+def map_nonce_generation(examples, multi_process):
     # need the full pipeline for sentence segmentation
     nlp = get_nlp()
     if multi_process:
@@ -215,9 +199,8 @@ def map_nonce_generation(examples, nonce_word_bank, multi_process):
         docs = nlp.pipe(examples["text"], batch_size=64)
     nonce = []
     for doc in docs:
-        for sent in doc:
-            _nonce = generate_nonce_sentence(sent, nonce_word_bank, 1)
-            nonce.append(_nonce[0] if _nonce else "")
+        _nonce = generate_nonce_sentence(doc, 1)
+        nonce.append(_nonce[0] if _nonce else "")
     examples["nonce"] = nonce
     return examples
 
@@ -276,24 +259,24 @@ def generate_nonce_for_dataset(
 
     # ========== Generate nonce word bank ==========
     out_path_word_bank = Path(out_path) / "nonce_word_bank.json"
-    nonce_word_bank = None
+    global NONCE_WORD_BANK
     if nonce_word_bank_path and Path(nonce_word_bank_path).exists():
         # Load existing nonce word bank if it exists
         # This speeds up the process if the bank is already generated
         print(f"**Loading existing nonce_word_bank from {nonce_word_bank_path}...")
         with open(nonce_word_bank_path, "r") as f:
-            nonce_word_bank = json.load(f)
-        nonce_word_bank = {k: list(set([tuple(t) for t in v])) for k, v in nonce_word_bank.items()}
+            NONCE_WORD_BANK = json.load(f)
+        NONCE_WORD_BANK = {k: list(set([tuple(t) for t in v])) for k, v in NONCE_WORD_BANK.items()}
         print("**done")
     elif not nonce_word_bank_generation:
         print("**Skipping nonce word bank generation.")
     else:
-        nonce_word_bank = {}
+        NONCE_WORD_BANK = {}
         for i in range(batch_number):
             print(f"Generating nonce bank for batch {i + 1}/{batch_number}...")
             texts = load_texts_from_dataset_batch(dataset, i, batch_size)
-            nonce_word_bank = _generate_nonce_word_bank(texts, lemma_blacklist, multi_process, nonce_word_bank)
-        _nonce_word_bank = {k: tuple(v) for k, v in nonce_word_bank.items()}
+            NONCE_WORD_BANK = _generate_nonce_word_bank(texts, lemma_blacklist, multi_process, NONCE_WORD_BANK)
+        _nonce_word_bank = {k: tuple(v) for k, v in NONCE_WORD_BANK.items()}
         json.dump(_nonce_word_bank, open(out_path_word_bank, "w"), indent=4)
         print(f"Saved nonce word bank to {out_path_word_bank}")
 
@@ -303,7 +286,7 @@ def generate_nonce_for_dataset(
         return None
     print("**** Preprocessing...")
     print("**** Generating nonce sentence...")
-    process_fn = partial(map_nonce_generation, nonce_word_bank=nonce_word_bank, multi_process=multi_process)
+    process_fn = partial(map_nonce_generation, multi_process=multi_process)
     dataset = dataset.map(
         process_fn,
         num_proc=os.cpu_count(),

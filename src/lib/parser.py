@@ -34,6 +34,6 @@ def dep_dir(token) -> Literal["left", "right", "root"]:
 
 def extract_token_morph_features(token: Token) -> tuple:
     return (
-        token.text, token.lemma_,
+        token.text.lower(), token.lemma_.lower(),
         (token.pos_, token.dep_, dep_dir(token), token.morph)
     )
