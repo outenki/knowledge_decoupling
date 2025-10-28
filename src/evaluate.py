@@ -28,6 +28,10 @@ def read_args():
         help='Path to test data. (json)'
     )
     parser.add_argument(
+        '--speedup', '-su', dest='speedup', action='store_true',
+        help='Enable speedup options.'
+    )
+    parser.add_argument(
         '--out-path', '-o', dest='out_path', type=str, required=True,
         help='Path to save results.'
     )
@@ -123,7 +127,23 @@ def main():
     tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
     tokenizer.pad_token = tokenizer.eos_token
     print(f"Loading model from {model_path}...")
-    model = GPT2LMHeadModel.from_pretrained(model_path)
+    model = GPT2LMHeadModel.from_pretrained(model_path, device_map="auto", torch_dtype="auto")
+
+    if args.speedup:
+        print("Applying speedup options...")
+        # speed up with xformers
+        torch.backends.cuda.enable_flash_sdp(True)
+        torch.backends.cuda.enable_mem_efficient_sdp(True)
+        torch.backends.cuda.enable_math_sdp(True)
+        # speed up with flash attention 2
+        model.config.attn_implementation = "flash_attention_2"
+        # speed up with torch 2.0 compile
+        model = torch.compile(model)
+        # speed up with 8-bit quantization
+        # from transformers import BitsAndBytesConfig
+        # bnb_config = BitsAndBytesConfig(load_in_8bit=True)
+        # model.config.quantization_config = bnb_config
+
     model.to(device)
     model.eval()
 
@@ -135,17 +155,6 @@ def main():
     with open(eval_data_path, "r") as f:
         eval_samples = json.load(f)
         assert isinstance(eval_samples, list)
-        # for line in tqdm.tqdm(f.readlines(), desc="Loading evaluation data"):
-        #     if not line.strip():
-        #         continue
-        #     try:
-        #         sample = json.loads(line)
-        #         assert isinstance(sample, dict)
-        #         assert "prompt" in sample and "option1" in sample and "option2" in sample
-        #         eval_samples.append(sample)
-        #     except json.JSONDecodeError as e:
-        #         print(f"Error decoding JSON: {e}")
-        #         continue
 
     total_count = len(eval_samples)
     print(f"Total evaluation samples: {total_count}")
