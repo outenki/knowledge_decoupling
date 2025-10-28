@@ -1,12 +1,11 @@
 #!/bin/bash
 BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
-DATA_NAME=SmolLM2
+DATA_PATH=$BASE_PATH/data/SmolLM2/1020/test
+OUTPUT_PATH=$BASE_PATH/data/SmolLM2/tokenized_bs1024
 ITER_NUM=10
 SIZE=100000
 START=$(($1 * $SIZE * $ITER_NUM))
 END=$(($(($1 + 1)) * $SIZE * $ITER_NUM -1))
-MAX_N=8
-
 
 start_time=$(date +"%s")
 echo "start time: $(date -d @$start_time +"%D %T")"
@@ -15,19 +14,9 @@ for i in $(seq $START $SIZE $END)
 do
     part=$(($i / $SIZE))
     echo
-    echo "====== preprocess $part ======"
-    /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/generate_nonce_data.py \
-        -dn "EleutherAI/SmolLM2-135M-10B" \
-        -lf hf \
-        -sf $i \
-        -ss text \
-        -sk source \
-        -sv stack_edu infimm_webmath \
-        -lb $BASE_PATH/data/wikimedia-nonce/vocab/lemma_blacklist \
-        -wb $BASE_PATH/data/wikimedia-nonce/vocab/nonce_word_bank.json \
-        -l $SIZE \
-        -mn $MAX_N \
-        -o $BASE_PATH/data/$DATA_NAME/1027/test/mn_$MAX_N/part$part
+    echo "====== preprocess part$part ======"
+    /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/tokenize_and_slice_data.py \
+        -dn $DATA_PATH/part$part -lf local -dc text -t -s -bs 1024 -o $OUTPUT_PATH-part$part
 done
 
 end_time=$(date +"%s")
