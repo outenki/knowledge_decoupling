@@ -78,7 +78,7 @@ def slice_dataset(dataset: Dataset, start: int, limit: int) -> Dataset:
     return dataset.select(range(start, end))
 
 
-def _split_column_to_sents(examples, column: str):
+def split_column_to_sents(examples, column: str):
     # 返回新的列 "sentences"，每条文本拆成句子
     all_sents = []
     for text in examples[column]:
@@ -87,7 +87,7 @@ def _split_column_to_sents(examples, column: str):
 
 
 def simple_split_to_sents(dataset: Dataset, column, num_proc=1, batch_size=1000) -> Dataset:
-    map_split_func = partial(_split_column_to_sents, column=column)
+    map_split_func = partial(split_column_to_sents, column=column)
     print("Splitting dataset to sentences")
     dataset = dataset.map(
         map_split_func,

@@ -1,6 +1,6 @@
 #!/bin/bash
 BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
-DATA_PATH=$BASE_PATH/data/SmolLM2/1020/test
+DATA_PATH=$BASE_PATH/data/SmolLM2/1027/mn_8
 OUTPUT_PATH=$BASE_PATH/data/SmolLM2/tokenized_bs1024
 ITER_NUM=10
 SIZE=100000

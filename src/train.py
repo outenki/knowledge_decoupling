@@ -51,8 +51,11 @@ class LossLoggerCallback(TrainerCallback):
         if "loss" in logs:
             self.train_log.write(f"{state.global_step}\t{logs['loss']}\n")
             self.train_log.flush()
-        if "eval_loss" in logs:
-            self.eval_log.write(f"{state.global_step}\t{logs['eval_loss']}\n")
+        
+    def on_evaluate(self, args, state, control, metrics=None, **kwargs):
+        if metrics and "eval_loss" in metrics:
+            # 评估日志使用 state.global_step，确保与训练步骤对齐
+            self.eval_log.write(f"{state.global_step}\t{metrics['eval_loss']}\n")
             self.eval_log.flush()
 
     def on_train_end(self, args, state, control, **kwargs):
@@ -68,7 +71,7 @@ def read_args():
     )
     parser.add_argument(
         '--config-name', '-cn', dest='config_name', type=str, required=False, default=None,
-        help='Limit the number of samples to process.'
+        help='Config name of models.'
     )
     parser.add_argument(
         '--checkpoint', '-cp', dest='checkpoint', type=str, required=False, default=None,
@@ -80,7 +83,7 @@ def read_args():
     )
     parser.add_argument(
         '--data-limit', '-dl', dest='data_limit', type=int, required=False, default=0,
-        help='Path to pre-trained model'
+        help='Max number of samples for training. 0 for no limit.'
     )
     parser.add_argument(
         '--speedup', '-su', dest='speedup', action='store_true',
@@ -157,10 +160,13 @@ def main():
         torch.backends.cuda.enable_flash_sdp(True)
         torch.backends.cuda.enable_mem_efficient_sdp(True)
         torch.backends.cuda.enable_math_sdp(True)
+
         # speed up with flash attention 2
-        model.config.attn_implementation = "flash_attention_2"
+        model.config.attn_implementation = "flash_attention_3"
+
         # speed up with torch 2.0 compile
-        model = torch.compile(model)
+        # model = torch.compile(model)
+
         # speed up with 8-bit quantization
         from transformers import BitsAndBytesConfig
         bnb_config = BitsAndBytesConfig(load_in_8bit=True)
@@ -251,6 +257,7 @@ def main():
     with open(Path(args.out_path) / "training_args.json", "w") as f:
         json.dump(training_args.to_dict(), f, indent=4)
 
+    print("eval_dataset:", eval_dataset)
     trainer = Trainer(
         model=model,
         args=training_args,

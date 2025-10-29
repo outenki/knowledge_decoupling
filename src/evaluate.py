@@ -127,22 +127,12 @@ def main():
     tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
     tokenizer.pad_token = tokenizer.eos_token
     print(f"Loading model from {model_path}...")
-    model = GPT2LMHeadModel.from_pretrained(model_path, device_map="auto", torch_dtype="auto")
 
-    if args.speedup:
-        print("Applying speedup options...")
-        # speed up with xformers
-        torch.backends.cuda.enable_flash_sdp(True)
-        torch.backends.cuda.enable_mem_efficient_sdp(True)
-        torch.backends.cuda.enable_math_sdp(True)
-        # speed up with flash attention 2
-        model.config.attn_implementation = "flash_attention_2"
-        # speed up with torch 2.0 compile
-        model = torch.compile(model)
-        # speed up with 8-bit quantization
-        # from transformers import BitsAndBytesConfig
-        # bnb_config = BitsAndBytesConfig(load_in_8bit=True)
-        # model.config.quantization_config = bnb_config
+    model = GPT2LMHeadModel.from_pretrained(
+        model_path,
+        quantization_config=None,
+        device_map="auto",
+    )
 
     model.to(device)
     model.eval()

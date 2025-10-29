@@ -5,7 +5,7 @@ ITER_NUM=10
 SIZE=100000
 START=$(($1 * $SIZE * $ITER_NUM))
 END=$(($(($1 + 1)) * $SIZE * $ITER_NUM -1))
-MAX_N=8
+MAX_N=10
 
 
 start_time=$(date +"%s")
@@ -27,7 +27,7 @@ do
         -wb $BASE_PATH/data/wikimedia-nonce/vocab/nonce_word_bank.json \
         -l $SIZE \
         -mn $MAX_N \
-        -o $BASE_PATH/data/$DATA_NAME/1027/test/mn_$MAX_N/part$part
+        -o $BASE_PATH/data/$DATA_NAME/1027/mn_$MAX_N/part$part
 done
 
 end_time=$(date +"%s")
