@@ -7,11 +7,11 @@ SIZE=100000
 start_time=$(date +"%s")
 echo "start time: $(date -d @$start_time +"%D %T")"
 
-for part in 92 73
+for part in 5 10 26 37
 do
     echo
     echo "====== preprocess $part ======"
-    /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/generate_nonce_data.py \
+    /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/generate_nonce_data_long.py \
         -dn "EleutherAI/SmolLM2-135M-10B" \
         -lf hf \
         -o $BASE_PATH/data/$DATA_NAME/1020/test/part$part \

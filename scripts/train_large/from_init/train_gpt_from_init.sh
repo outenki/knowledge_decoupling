@@ -18,7 +18,7 @@ echo "start time: $(date -d @$start_time +"%D %T")"
     -cn $CONFIG_NAME \
     -e $EPOCHS \
     -dl $DATA_LIMITE \
-    -o $OUT_PATH/$CONFIG_NAME/${DATA_NAME}-dl${DATA_LIMITE}-ep${EPOCHS}-tr${SUFFIX}
+    -o $OUT_PATH/$CONFIG_NAME/${DATA_NAME}-dl${DATA_LIMITE}-ep${EPOCHS}-tr_b_${SUFFIX}
 
 end_time=$(date +"%s")
 echo "end time: $(date -d @$end_time +"%D %T")"

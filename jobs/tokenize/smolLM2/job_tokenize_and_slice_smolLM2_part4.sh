@@ -1,7 +1,7 @@
 #!/bin/bash
-#PJM -L "rscgrp=c-batch"
-#PJM -L "elapse=24:00:00"
-#PJM -L "gpu=4"
+#PJM -L "rscgrp=a-batch"
+#PJM -L "elapse=48:00:00"
+#PJM -L "vnode-core=10"
 #PJM -L "jobenv=singularity"
 #PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/tokenize_smolLM2_4.out
 #PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/tokenize_smolLM2_4.out

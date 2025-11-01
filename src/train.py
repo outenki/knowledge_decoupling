@@ -165,7 +165,7 @@ def main():
         model.config.attn_implementation = "flash_attention_3"
 
         # speed up with torch 2.0 compile
-        # model = torch.compile(model)
+        model = torch.compile(model)
 
         # speed up with 8-bit quantization
         from transformers import BitsAndBytesConfig
@@ -222,8 +222,8 @@ def main():
     Path(log_path).mkdir(parents=True, exist_ok=True)
 
     train_dataset_size = len(train_dataset)
-    per_device_train_batch_size = 8
-    gradient_accumulation_steps = 4
+    per_device_train_batch_size = 16
+    gradient_accumulation_steps = 16
     world_size = max(1, torch.cuda.device_count())
 
     effective_batch_size = per_device_train_batch_size * gradient_accumulation_steps * world_size
@@ -235,6 +235,8 @@ def main():
     training_args = TrainingArguments(
         output_dir=args.out_path,
         save_safetensors=True,
+        dataloader_pin_memory=True,
+        dataloader_num_workers=4,
         per_device_train_batch_size=per_device_train_batch_size,
         gradient_accumulation_steps=gradient_accumulation_steps,
         per_device_eval_batch_size=per_device_train_batch_size,
