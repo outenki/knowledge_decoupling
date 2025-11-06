@@ -3,7 +3,7 @@
 BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
 DATA_NAME=SmolLM2
 ITER_NUM=1
-SIZE=10000
+SIZE=1000
 START=$(($1 * $SIZE * $ITER_NUM))
 END=$(($(($1 + 1)) * $SIZE * $ITER_NUM -1))
 MAX_N=1
@@ -24,7 +24,7 @@ do
     echo
     echo "====== preprocess $part ======"
     # python $BASE_PATH/src/generate_nonce_data.py \
-    /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/generate_nonce_data_long.py \
+    /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/generate_nonce_data_long_test.py \
         -dn "EleutherAI/SmolLM2-135M-10B" \
         -lf hf \
         -sf $i \

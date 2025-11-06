@@ -8,7 +8,8 @@ CONFIG_NAME=$1
 DATA_NAME=$2
 CHECKPOINT=$3
 EPOCHS=$4
-DATA_LIMITE=${5:-0}
+DATA_LIMITE=${5}
+SUFFIX=${6:-""}
 
 echo "====== training on ${DATA_NAME}_full ======"
 start_time=$(date +"%s")
@@ -16,12 +17,13 @@ echo "start time: $(date -d @$start_time +"%D %T")"
 
 
 /home/pj25000107/ku50001566/.local/bin/uv run python $SCRIPT_PATH/train.py \
+    --speedup \
     -dp $DATA_PATH/${DATA_NAME} \
     -cn $CONFIG_NAME \
     -cp $CHECKPOINT \
     -e $EPOCHS \
     -dl $DATA_LIMITE \
-    -o $OUT_PATH/$CONFIG_NAME/${DATA_NAME}-dl${DATA_LIMITE}-ep${EPOCHS}
+    -o $OUT_PATH/$CONFIG_NAME/${DATA_NAME}-dl${DATA_LIMITE}-ep${EPOCHS}-tr_b_${SUFFIX}
 
 end_time=$(date +"%s")
 echo "end time: $(date -d @$end_time +"%D %T")"

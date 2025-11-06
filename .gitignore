@@ -9,3 +9,5 @@ input/
 logs/
 sub_jobs/.*
 jobs/**/.*
+scripts/speed_up/
+scripts/speed_up/

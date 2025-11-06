@@ -9,9 +9,12 @@ EPOCHS=$3
 DATA_LIMITE=${4:-0}
 SUFFIX=${5:-""}
 
+
 echo "====== training on ${DATA_NAME} ======"
 start_time=$(date +"%s")
 echo "start time: $(date -d @$start_time +"%D %T")"
+
+
 /home/pj25000107/ku50001566/.local/bin/uv run python $SCRIPT_PATH/train.py \
     --speedup \
     -dp $DATA_PATH/${DATA_NAME} \

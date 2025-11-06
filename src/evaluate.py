@@ -134,7 +134,6 @@ def main():
         device_map="auto",
     )
 
-    model.to(device)
     model.eval()
 
     num_params = sum(p.numel() for p in model.parameters())
