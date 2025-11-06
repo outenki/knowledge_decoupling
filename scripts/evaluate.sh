@@ -20,13 +20,20 @@ for eval_name in verb_agreement fce_5gram qa_arc_easy qa_arc_challenge qa_boolq 
     #     --val-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
     #     -o $BASE_PATH/output/0830/gpt-large/gpt2/$eval_name
 
-    for data_name in smolLM2-nonce-bs1024-dl1_020_000-ep3 smolLM2-nonce-bs1024-dl4_520_000-ep1 smolLM2-nonce-bs1024-dl0-ep1 smolLM2-bs1024-dl0-ep1;do
+    for data_name in \
+        smolLM2-nonce-bs1024-dl1_020_000-ep3 \
+        smolLM2-nonce-bs1024-dl4_520_000-ep1 \
+        smolLM2-nonce-bs1024-dl0-ep1 \
+        smolLM2-bs1024-dl1_020_000-ep3 \
+        smolLM2-bs1024-dl4_520_000-ep1 \
+        smolLM2-bs1024-dl0-ep1
+    do
         echo
         echo "====== Evaluating $data_name ======"
         uv run python $BASE_PATH/src/evaluate.py \
             --speedup \
-            --model-path $BASE_PATH/output/$model_name/smolLM2/$data_name \
+            --model-path $BASE_PATH/output/$model_name/smolLM2/$data_name/init_model \
             --val-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
-            -o $BASE_PATH/output/$model_name/smolLM2/$data_name/$eval_name
+            -o $BASE_PATH/output/$model_name/smolLM2/$data_name/evaluation/$eval_name
     done
 done
