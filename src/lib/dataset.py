@@ -24,15 +24,15 @@ def load_custom_dataset(data_name: str, data_type: str | None, load_from: str) -
     # Load dataset from Hugging Face
     elif load_from == "hf":
         print(f"Loading dataset {data_name} from Hugging Face...")
-        if data_name == "wikimedia":
+        if data_name.lower() == "wikimedia":
             return load_dataset("wikimedia/wikipedia", "20231101.en")
-        if data_name == "smolLM2":
+        if data_name.lower() == "smollm2":
             return load_dataset("EleutherAI/SmolLM2-135M-10B")
-        if data_name == "wikipedia":
+        if data_name.lower() == "wikipedia":
             return load_dataset("wikipedia", "20220301.en")
-        if data_name == "wikitext-103":
+        if data_name.lower() == "wikitext-103":
             return load_dataset("wikitext", "wikitext-103-v1")
-        if data_name == "wikitext-2":
+        if data_name.lower() == "wikitext-2":
             return load_dataset("wikitext", "wikitext-2-v1")
         else:
             return load_dataset(data_name)

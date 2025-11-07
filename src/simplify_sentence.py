@@ -6,6 +6,7 @@ from pathlib import Path
 from functools import partial
 import os
 import ssl
+from functools import lru_cache
 
 from datasets.dataset_dict import DatasetDict
 from datasets.arrow_dataset import Dataset
@@ -14,7 +15,8 @@ from lemminflect import getInflection
 
 from lib.basic_words.basic_words_850 import BASIC_WORDS_850
 from lib.basic_words.oxford_3000 import OXFORD_3000
-from lib.dataset import load_custom_dataset, slice_dataset
+from lib.dataset import load_custom_dataset, slice_dataset, skip_dataset_by_column
+from lib.text import simple_split_text
 
 
 try:
@@ -28,7 +30,17 @@ else:
 nltk.download('wordnet')
 nltk.download('omw-1.4')
 
-nlp = spacy.load("en_core_web_sm")
+BASIC_VOCAB = OXFORD_3000
+NUM_PROC = min(4, os.cpu_count())
+
+_nlp = None
+
+def get_nlp():
+    global _nlp
+    if _nlp is None:
+        print(f"Loading spaCy model in PID={os.getpid()}")
+        _nlp = spacy.load("en_core_web_sm")
+    return _nlp
 
 
 def spacy_to_wordnet_pos(spacy_pos):
@@ -48,7 +60,12 @@ def spacy_to_wordnet_pos(spacy_pos):
         return None
 
 
-def get_simple_candidate(token, basic_vocab):
+@lru_cache(maxsize=100_000)
+def get_synsets_cached(lemma, pos):
+    return wn.synsets(lemma, pos=pos)
+
+
+def get_simple_candidate(token):
     if token.is_punct or token.is_space:
         return token.text
 
@@ -61,19 +78,19 @@ def get_simple_candidate(token, basic_vocab):
         return token.text
 
     lemma = token.lemma_.lower()
-    if lemma in basic_vocab:
+    if lemma in BASIC_VOCAB:
         return lemma
 
     candidates = []
     spacy_pos = spacy_to_wordnet_pos(token.pos_)
 
-    for syn in wn.synsets(lemma, pos=spacy_pos):
+    for syn in get_synsets_cached(lemma, pos=spacy_pos):
         if not syn:
             continue
         for sn in syn.lemma_names():
             if "_" in sn:
                 continue
-            if sn in basic_vocab:
+            if sn in BASIC_VOCAB:
                 candidates.append(sn)
     candidates = list(set(candidates))
 
@@ -83,10 +100,10 @@ def get_simple_candidate(token, basic_vocab):
     best_cand = None
     best_sim = -1.0
     for cand in candidates:
-        for cand_syn in wn.synsets(cand, pos=spacy_pos):
+        for cand_syn in get_synsets_cached(cand, pos=spacy_pos):
             if not cand_syn:
                 continue
-            for word_syn in wn.synsets(lemma, pos=spacy_pos):
+            for word_syn in get_synsets_cached(lemma, pos=spacy_pos):
                 if not word_syn:
                     continue
                 try:
@@ -119,25 +136,32 @@ def inflect_candidate(lemma, target_tag):
     return lemma
 
 
-def simplify_sentences(examples, basic_vocab):
-    docs = nlp.pipe(examples)
-    text = [simplify_sentence(doc, basic_vocab) for doc in docs]
+def simplify_long_text(text: str):
+    # split text to sents
+    sents = simple_split_text(text)
+    nlp = get_nlp()
+    docs = nlp.pipe(sents, batch_size=128, n_process=4)
+    simplified = [simplify_sentence(doc) for doc in docs]
+    return ' '.join(simplified)
+
+def simplify_sentences(examples):
+    text = [simplify_long_text(example) for example in examples]
     return {
         "ori_text": examples,
         "text": text
     }
 
 
-def simplify_sentence(doc, basic_vocab):
+def simplify_sentence(doc):
     out_tokens = []
     for token in doc:
         if str(token).lower() in ("be", "am", "are", "is", "were", "was", "been"):
             out_tokens.append(token.text_with_ws)
             continue
 
-        candidate = get_simple_candidate(token, basic_vocab)
+        candidate = get_simple_candidate(token)
         if candidate is None:
-            return None
+            return ""
             # out_tokens.append(token.text_with_ws)
             # continue
 
@@ -181,6 +205,14 @@ def read_args():
         '--basic-vocab', '-bv', dest='basic_vocab', type=str, choices={"bw850", "ox3000"},
     )
     parser.add_argument(
+        '--skip-key', '-sk', dest='skip_key',
+        help='Skip data based on column'
+    )
+    parser.add_argument(
+        '--skip-values', '-sv', nargs='+', dest='skip_values',
+        help='Skip data based on values of the skip_key'
+    )
+    parser.add_argument(
         '--out-path', '-o', dest='out_path', type=str,
         help='Path to save the dataset with nonce sentences.'
     )
@@ -201,25 +233,27 @@ def main():
         load_from=args.load_from
     )
     print(f"Dataset loaded with {dataset.num_rows} samples.")
-    basic_vocab = None
+    global BASIC_VOCAB
     if args.basic_vocab == "bw850":
-        basic_vocab = BASIC_WORDS_850
+        BASIC_VOCAB = BASIC_WORDS_850
     if args.basic_vocab == "ox3000":
-        basic_vocab = OXFORD_3000
+        BASIC_VOCAB = OXFORD_3000
 
     # ======== simplify sentences ========
     if isinstance(dataset, DatasetDict):
         dataset_dict = {}
         for key, dt in dataset.items():
             dt_limit = args.data_limit if key == "train" else int(args.data_limit * 0.1)
+            if args.skip_key and args.skip_values:
+                dt = skip_dataset_by_column(dt, args.skip_key, args.skip_values)
             start_from = args.start_from if key == "train" else int(args.start_from * 0.1) 
             dt = slice_dataset(dt, start_from, dt_limit)
             print(f"========= Processing dataset {key}... ==========")
             print(f"Dataset {key} has {dt.num_rows} samples after slicing.")
-            process_fn = partial(simplify_sentences, basic_vocab=basic_vocab)
+            process_fn = partial(simplify_sentences)
             dataset_dict[key] = dt.map(
                 process_fn,
-                num_proc=os.cpu_count(),
+                num_proc=NUM_PROC,
                 batched=True,
                 writer_batch_size=1000,
                 input_columns=["text"],
@@ -235,11 +269,13 @@ def main():
     elif isinstance(dataset, Dataset):
         print("**** Processing dataset ...")
         dataset = slice_dataset(dataset, args.start_from, args.data_limit)
+        if args.skip_key and args.skip_values:
+            dataset = skip_dataset_by_column(dataset, args.skip_key, args.skip_values)
         print(f"Dataset has {dataset.num_rows} samples after slicing.")
-        process_fn = partial(simplify_sentences, basic_vocab=basic_vocab)
+        process_fn = partial(simplify_sentences)
         dataset = dataset.map(
             process_fn,
-            num_proc=os.cpu_count(),
+            num_proc=NUM_PROC,
             batched=True,
             writer_batch_size=1000,
             input_columns=["text"],

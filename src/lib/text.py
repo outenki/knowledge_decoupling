@@ -68,7 +68,7 @@ def split_texts_to_sentences(texts: list, min_len: int = 0) -> list:
 
 
 def simple_split_text(text: str) -> list[str]:
-    sents = re.split(r'(?<=[。！？.!?])\s*', text)
+    sents = re.split(r'(?<=[。！？.!?\n])\s*', text)
     return [s for s in sents if s]
 
 

@@ -5,7 +5,7 @@
 #PJM -L "jobenv=singularity"
 #PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_gpt_large_on_smolLM2_nonce_ep1_c.err
 #PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_gpt_large_on_smolLM2_nonce_ep1_c.out
-#PJM -N "smn_e1"
+#PJM -N "c_smn_e1"
 
 module load singularity-ce
 
@@ -18,6 +18,6 @@ cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts/train_large
 # SUFFIX=$5
 singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif /bin/bash train_gpt_from_init.sh \
     gpt-large \
-    smolLM2-nonce-bs1024 \
+    smolLM2-nonce-mn-bs1024 \
     1 \
     0

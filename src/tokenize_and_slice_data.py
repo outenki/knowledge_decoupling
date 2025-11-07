@@ -52,7 +52,7 @@ def main():
     # === TOKENIZATION ===
     tokenized_datasets = datasets
     if args.tokenize:
-        print(">>> 开始分词 ...")
+        print(">>> Tokenizing ...")
         tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
         tokenizer.pad_token = tokenizer.eos_token
 

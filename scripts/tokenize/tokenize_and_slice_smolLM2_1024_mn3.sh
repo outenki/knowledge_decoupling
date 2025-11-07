@@ -1,7 +1,7 @@
 #!/bin/bash
 BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
-DATA_PATH=$BASE_PATH/data/SmolLM2/sents/mn_3/nonce-parts
-OUTPUT_PATH=$BASE_PATH/data/SmolLM2/sents/mn_3/tokenized-nonce/
+DATA_PATH=$BASE_PATH/data/SmolLM2/sents/1027/mn_3/nonce-parts
+OUTPUT_PATH=$BASE_PATH/data/SmolLM2/sents/1027/mn_3/tokenized-nonce/
 ITER_NUM=10
 SIZE=100000
 START=$(($1 * $SIZE * $ITER_NUM))
