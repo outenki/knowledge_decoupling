@@ -54,21 +54,21 @@ def score_option(prompt: str, continuation: str, tokenizer, model) -> float | No
         outputs = model(input_ids=input_ids)
         logits = outputs.logits  # [batch, seq_len, vocab_size]
 
-        # 对应 target = input_ids[:, 1:], logits = logits[:, :-1, :]
+        # p(w_{i+1}|w_{i})を予測するので、logitを[:-1]にして、labelを[:1]にする
         shift_logits = logits[:, :-1, :].contiguous()
         shift_labels = input_ids[:, 1:].contiguous()
 
-        # mask: 只计算 continuation 部分的 loss
+        # mask: only calculate loss of continuation
         cont_mask = torch.zeros_like(shift_labels, dtype=torch.bool)
-        cont_mask[:, prompt_len-1:] = True   # prompt_len-1 因为 labels 是 shifted
+        cont_mask[:, prompt_len-1:] = True
 
         loss_fct = CrossEntropyLoss(reduction="none")
         token_losses = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
         token_losses = token_losses.view(shift_labels.size())
 
-        # 只取 continuation 部分的 loss
+        # only take the loss of continuation
         cont_losses = token_losses[cont_mask]
-        avg_log_prob = -cont_losses.mean().item()  # 平均 log-prob
+        avg_log_prob = -cont_losses.mean().item()  # average log-prob
 
     return avg_log_prob
 

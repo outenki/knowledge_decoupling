@@ -197,7 +197,7 @@ def safe_texts(texts, max_len):
         if len(t) <= max_len:
             yield t
         else:
-            yield ""  # 或直接 continue 跳过
+            yield ""
 
 def map_nonce_generation(examples, multi_process, max_n: int):
     # need the full pipeline for sentence segmentation

@@ -9,25 +9,27 @@ model_name=gpt-large
 # eval_name=fce
 # eval_name=qa_boolq
 # eval_name=qa_qasc
-for eval_name in verb_agreement fce_5gram qa_arc_easy qa_arc_challenge qa_qasc; do
+for eval_name in verb_agreement fce_5gram qa_arc_easy qa_arc_challenge qa_qasc qa_boolq qa_boolq_psg; do
 # for eval_name in qa_boolq qa_boolq_psg; do
     echo
     echo "============ $eval_name ============"
 
-    echo "====== Evaluating hugging face gpt2 ======"
-    uv run python $BASE_PATH/src/evaluate.py \
-        --model-path gpt2 \
-        --val-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
-        -o $BASE_PATH/output/0830/gpt-large/gpt2/$eval_name
+    # echo "====== Evaluating hugging face gpt2 ======"
+    # uv run python $BASE_PATH/src/evaluate.py \
+    #     --model-path gpt2 \
+    #     --val-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
+    #     -o $BASE_PATH/output/0830/gpt-large/gpt2/$eval_name
 
-    for data_name in \
-        smolLM2-nonce-bs1024-dl1_020_000-ep3 \
-        smolLM2-nonce-bs1024-dl4_520_000-ep1 \
-        smolLM2-nonce-bs1024-dl0-ep1 \
-        smolLM2-bs1024-dl1_020_000-ep3 \
-        smolLM2-bs1024-dl4_520_000-ep1 \
-        smolLM2-bs1024-dl0-ep1
-    do
+    # for data_name in \
+        # smolLM2-nonce-bs1024-dl1_020_000-ep3 \
+        # smolLM2-nonce-bs1024-dl4_520_000-ep1 \
+        # smolLM2-nonce-bs1024-dl0-ep1 \
+        # smolLM2-bs1024-dl1_020_000-ep3 \
+        # smolLM2-bs1024-dl4_520_000-ep1 \
+        # smolLM2-bs1024-dl0-ep1
+        # smolLM2-nonce-mn3-bs1024-dl0-ep1
+    # do
+    for data_name in smolLM2-nonce-mn3-bs1024-dl0-ep1; do
         echo
         echo "====== Evaluating $data_name ======"
         uv run python $BASE_PATH/src/evaluate.py \
@@ -35,10 +37,10 @@ for eval_name in verb_agreement fce_5gram qa_arc_easy qa_arc_challenge qa_qasc; 
             --model-path $BASE_PATH/output/$model_name/smolLM2/$data_name/init_model \
             --val-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
             -o $BASE_PATH/output/$model_name/smolLM2/$data_name/init_model/evaluation/$eval_name
-        uv run python $BASE_PATH/src/evaluate.py \
-            --speedup \
-            --model-path $BASE_PATH/output/$model_name/smolLM2/$data_name \
-            --val-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
-            -o $BASE_PATH/output/$model_name/smolLM2/$data_name/evaluation/$eval_name
+        # uv run python $BASE_PATH/src/evaluate.py \
+        #     --speedup \
+        #     --model-path $BASE_PATH/output/$model_name/smolLM2/$data_name \
+        #     --val-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
+        #     -o $BASE_PATH/output/$model_name/smolLM2/$data_name/evaluation/$eval_name
     done
 done

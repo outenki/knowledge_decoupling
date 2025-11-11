@@ -1,0 +1,8 @@
+pjsub simplify_with_ox3000_part9.sh
+pjsub simplify_with_ox3000_part24.sh
+pjsub simplify_with_ox3000_part35.sh
+pjsub simplify_with_ox3000_part68.sh
+pjsub simplify_with_ox3000_part69.sh
+pjsub simplify_with_ox3000_part73.sh
+pjsub simplify_with_ox3000_part79.sh
+pjsub simplify_with_ox3000_part86.sh

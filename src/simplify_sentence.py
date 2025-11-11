@@ -38,7 +38,6 @@ _nlp = None
 def get_nlp():
     global _nlp
     if _nlp is None:
-        print(f"Loading spaCy model in PID={os.getpid()}")
         _nlp = spacy.load("en_core_web_sm")
     return _nlp
 
@@ -136,11 +135,19 @@ def inflect_candidate(lemma, target_tag):
     return lemma
 
 
+def safe_texts(texts, max_len):
+    for t in texts:
+        if len(t) <= max_len:
+            yield t
+        else:
+            yield ""
+
+
 def simplify_long_text(text: str):
     # split text to sents
     sents = simple_split_text(text)
     nlp = get_nlp()
-    docs = nlp.pipe(sents, batch_size=128, n_process=4)
+    docs = nlp.pipe(safe_texts(sents, nlp.max_length), batch_size=128, n_process=4)
     simplified = [simplify_sentence(doc) for doc in docs]
     return ' '.join(simplified)
 

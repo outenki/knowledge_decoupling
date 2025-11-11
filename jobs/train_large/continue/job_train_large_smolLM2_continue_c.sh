@@ -20,7 +20,7 @@ cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts/train_large
 singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif \
     /bin/bash train_gpt_continue.sh \
         gpt-large \
-        smolLM2-bs1024 \
-        /home/pj25000107/ku50001566/projects/knowledge_decoupling/output/gpt-large/smolLM2-bs1024-dl0-ep1-tr/checkpoint-8514 \
+        smolLM2-nonce-mn3-bs1024 \
+        /home/pj25000107/ku50001566/projects/knowledge_decoupling/output/gpt-large/smolLM2-nonce-mn3-bs1024-dl0-ep1-tr_b_/checkpoint-10431 \
         1 \
         0

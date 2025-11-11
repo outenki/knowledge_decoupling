@@ -18,6 +18,6 @@ cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts/train_large
 # SUFFIX=$5
 singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif /bin/bash train_gpt_from_init.sh \
     gpt-large \
-    smolLM2-nonce-mn-bs1024 \
+    smolLM2-nonce-mn3-bs1024 \
     1 \
     0
