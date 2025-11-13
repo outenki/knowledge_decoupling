@@ -51,6 +51,8 @@ class LossLoggerCallback(TrainerCallback):
         if "loss" in logs:
             self.train_log.write(f"{state.global_step}\t{logs['loss']}\n")
             self.train_log.flush()
+            # self.eval_log.write(f"{state.global_step}\t{metrics['eval_loss']}\n")
+            # self.eval_log.flush()
         
     def on_evaluate(self, args, state, control, metrics=None, **kwargs):
         if metrics and "eval_loss" in metrics:
@@ -167,10 +169,6 @@ def main():
         # speed up with torch 2.0 compile
         model = torch.compile(model)
 
-        # speed up with 8-bit quantization
-        from transformers import BitsAndBytesConfig
-        bnb_config = BitsAndBytesConfig(load_in_8bit=True)
-        model.config.quantization_config = bnb_config
 
     assert model is not None
     model.save_pretrained(Path(args.out_path) / "init_model")
@@ -231,6 +229,9 @@ def main():
 
     save_steps = max(1, steps_per_epoch // 20)
     logging_steps = max(1, steps_per_epoch // 20)
+    print("save steps:", save_steps)
+    print("logging steps:", logging_steps)
+    print("eval steps:", logging_steps)
 
     training_args = TrainingArguments(
         output_dir=args.out_path,
@@ -272,27 +273,26 @@ def main():
     total_steps = len(trainer.get_train_dataloader()) * training_args.num_train_epochs
     warmup_steps = training_args.warmup_steps or (total_steps // 20)
     optimizer = AdamW(model.parameters(), lr=5e-4)
-    trainer.optimizer = optimizer
+    # trainer.optimizer = optimizer
 
-    # cosine warmup
-    scheduler_cosine = get_scheduler(
-        "cosine",
-        optimizer=trainer.optimizer,
-        num_warmup_steps=warmup_steps,
-        num_training_steps=total_steps
-    )
 
     def ws_decay(step):
         # WSD
         if step < warmup_steps:
-            return 1.0  # warmup阶段由cosine控制
-        else:
-            # WSD示例：每 epoch 衰减 0.9
-            epoch_step = len(trainer.get_train_dataloader())
-            return DECAY_RATE ** ((step - warmup_steps) / epoch_step)
+            # linear Warmup
+            return step / warmup_steps
+        
+        # Cosine as the baseline
+        cosine_ratio = max(0.0, 0.5 * (1.0 + torch.cos(torch.tensor(3.1415926535 * (step - warmup_steps) / (total_steps - warmup_steps)))))
+
+        epoch_step = len(trainer.get_train_dataloader())
+        wsd_factor = DECAY_RATE ** ((step - warmup_steps) / epoch_step)
+        
+        return cosine_ratio * wsd_factor
 
     scheduler_ws = LambdaLR(trainer.optimizer, lr_lambda=ws_decay)
-    trainer.lr_scheduler = scheduler_ws
+    trainer.optimizers = (optimizer, scheduler_ws)
+    # trainer.lr_scheduler = scheduler_ws
     
     with open(Path(args.out_path) / "trainer.json", "w") as f:
         json.dump(training_args_to_dict(trainer.args), f, indent=4)

@@ -2,5 +2,5 @@
     gpt-large \
     smolLM2-bs1024 \
     5 \
-    1_020_000 \
-    test_speedup
+    1_000 \
+    test

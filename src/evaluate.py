@@ -19,6 +19,9 @@ import pandas as pd
 from lib.utils import get_device
 
 
+random.seed(42)
+
+
 def read_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -28,6 +31,10 @@ def read_args():
     parser.add_argument(
         '--test-data', '-vd', dest='data_path', type=str, required=True,
         help='Path to test data. (json)'
+    )
+    parser.add_argument(
+        '--sample-num', '-sn', dest='sample_num', type=int, required=False,
+        help='Max number of samples to use.'
     )
     parser.add_argument(
         '--score-on', '-so', dest='score_on', type=str, required=True, choices={"options", "generation"},
@@ -137,13 +144,15 @@ def score_on_options(model, tokenizer, prompt, options, answer) -> dict:
     return sample
 
 
-def score_on_generation(model, tokenizer, prompt, answer) -> dict:
+def score_on_generation(model, tokenizer, prompt, answers) -> dict:
     res = {}
     pred = generate_answer(model, tokenizer, prompt).lower()
+    res["pred"] = pred
+    res["answers"] = answers
     res["pred_score"] = score_continuation(model, tokenizer, prompt, pred)
-    res["answer_score"] = score_continuation(model, tokenizer, prompt, answer)
-    res["is_correct"] = normalize_text(pred).startswith(normalize_text(answer))
-    res["f1"] = f1_score(pred, answer)
+    res["answer_score"] = max([score_continuation(model, tokenizer, prompt, answer) for answer in answers])
+    res["is_correct"] = any([normalize_text(pred).startswith(normalize_text(answer)) for answer in answers])
+    res["f1"] = max([f1_score(pred, answer) for answer in answers])
     return res
 
 
@@ -217,6 +226,8 @@ def main():
         eval_samples = json.load(f)
         assert isinstance(eval_samples, list)
 
+    if args.sample_num:
+        eval_samples = random.sample(eval_samples, args.sample_num)
     total_count = len(eval_samples)
     print(f"Total evaluation samples: {total_count}")
 
