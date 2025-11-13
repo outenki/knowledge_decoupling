@@ -90,7 +90,7 @@ def main():
             remove_columns=tokenized_datasets["train"].column_names
         )
 
-        bin_path = output_path / f"binarized_bs{bs}"
+        bin_path = output_path / f"tokenized_bs{bs}"
         print(f"  -> Save to: {bin_path}")
         lm_datasets.save_to_disk(str(bin_path))
 

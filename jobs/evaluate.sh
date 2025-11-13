@@ -1,11 +1,11 @@
 #!/bin/bash
-#PJM -L "rscgrp=b-batch"
+#PJM -L "rscgrp=c-batch"
 #PJM -L "elapse=12:00:00"
 #PJM -L "gpu=1"
 #PJM -L "jobenv=singularity"
-#PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_agreement_evaluation.err
-#PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_agreement_evaluation.out
-#PJM -N "agr_eval"
+#PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_evaluation.err
+#PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/jobevaluation.out
+#PJM -N "eval"
 
 module load singularity-ce
 

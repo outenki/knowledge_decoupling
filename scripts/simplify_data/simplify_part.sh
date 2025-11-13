@@ -21,7 +21,7 @@ echo "====== preprocess $part ======"
     -sv stack_edu infimm_webmath \
     -l $SIZE \
     -bv $BASIC_VOCAB \
-    -o $BASE_PATH/data/simplyfied_SmolLM2_$BASIC_VOCAB/nonce-parts/part$part
+    -o $BASE_PATH/data/simplyfied_SmolLM2_$BASIC_VOCAB/nonce-parts/part$PART
 
 end_time=$(date +"%s")
 echo "end time: $(date -d @$end_time +"%D %T")"
