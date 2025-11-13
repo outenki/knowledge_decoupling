@@ -9,14 +9,14 @@ from dataclasses import asdict, is_dataclass
 import torch
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import LambdaLR
-from transformers import GPT2Config, GPT2LMHeadModel, get_scheduler
+from transformers import GPT2Config, GPT2LMHeadModel
 from transformers.trainer import Trainer
 from transformers.trainer_callback import TrainerCallback
 from transformers.training_args import TrainingArguments
 from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
 
-from lib.dataset import load_custom_dataset, slice_dataset
+from lib.dataset import load_custom_dataset
 
 
 DECAY_RATE = 0.9  # for WSD
@@ -51,9 +51,7 @@ class LossLoggerCallback(TrainerCallback):
         if "loss" in logs:
             self.train_log.write(f"{state.global_step}\t{logs['loss']}\n")
             self.train_log.flush()
-            # self.eval_log.write(f"{state.global_step}\t{metrics['eval_loss']}\n")
-            # self.eval_log.flush()
-        
+
     def on_evaluate(self, args, state, control, metrics=None, **kwargs):
         if metrics and "eval_loss" in metrics:
             # 评估日志使用 state.global_step，确保与训练步骤对齐
@@ -138,7 +136,7 @@ def random_sample(dataset, number: int) -> Dataset:
         return dataset
     indices = random.sample(range(len(dataset)), number)
     return dataset.select(indices)
-        
+
 
 def main():
     print("CUDA available:", torch.cuda.is_available())
@@ -159,16 +157,15 @@ def main():
     if args.speedup:
         print("Applying speedup options...")
         # speed up with xformers
-        torch.backends.cuda.enable_flash_sdp(True)
-        torch.backends.cuda.enable_mem_efficient_sdp(True)
-        torch.backends.cuda.enable_math_sdp(True)
+        # torch.backends.cuda.enable_flash_sdp(True)
+        # torch.backends.cuda.enable_mem_efficient_sdp(True)
+        # torch.backends.cuda.enable_math_sdp(True)
 
         # speed up with flash attention 2
         model.config.attn_implementation = "flash_attention_3"
 
         # speed up with torch 2.0 compile
-        model = torch.compile(model)
-
+        # model = torch.compile(model)
 
     assert model is not None
     model.save_pretrained(Path(args.out_path) / "init_model")
@@ -181,7 +178,7 @@ def main():
             data_limit = ceil(args.data_limit * 1.1)
             # dataset = slice_dataset(dataset, 0, data_limit)
             dataset = random_sample(dataset, data_limit)
-        data_dict = dataset.train_test_split(train_size=args.data_limit, shuffle=True, seed=42)
+        data_dict = dataset.train_test_split(train_size=1/1.1, shuffle=True, seed=42)
     elif isinstance(dataset, DatasetDict):
         data_dict = dataset
         for k, dt in data_dict.items():
@@ -256,7 +253,7 @@ def main():
         # speed up with fused AdamW optimizer
         optim="adamw_torch_fused",
     )
-    
+
     with open(Path(args.out_path) / "training_args.json", "w") as f:
         json.dump(training_args.to_dict(), f, indent=4)
 
@@ -273,27 +270,25 @@ def main():
     total_steps = len(trainer.get_train_dataloader()) * training_args.num_train_epochs
     warmup_steps = training_args.warmup_steps or (total_steps // 20)
     optimizer = AdamW(model.parameters(), lr=5e-4)
-    # trainer.optimizer = optimizer
-
 
     def ws_decay(step):
         # WSD
         if step < warmup_steps:
             # linear Warmup
             return step / warmup_steps
-        
+
         # Cosine as the baseline
         cosine_ratio = max(0.0, 0.5 * (1.0 + torch.cos(torch.tensor(3.1415926535 * (step - warmup_steps) / (total_steps - warmup_steps)))))
 
         epoch_step = len(trainer.get_train_dataloader())
         wsd_factor = DECAY_RATE ** ((step - warmup_steps) / epoch_step)
-        
+
         return cosine_ratio * wsd_factor
 
-    scheduler_ws = LambdaLR(trainer.optimizer, lr_lambda=ws_decay)
-    trainer.optimizers = (optimizer, scheduler_ws)
-    # trainer.lr_scheduler = scheduler_ws
-    
+    scheduler_ws = LambdaLR(optimizer, lr_lambda=ws_decay)
+    trainer.optimizer = optimizer
+    trainer.lr_scheduler = scheduler_ws
+
     with open(Path(args.out_path) / "trainer.json", "w") as f:
         json.dump(training_args_to_dict(trainer.args), f, indent=4)
 
