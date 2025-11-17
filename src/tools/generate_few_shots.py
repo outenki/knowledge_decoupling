@@ -29,6 +29,18 @@ def sample_balanced_examples(data: list[dict], n: int) -> list[dict]:
     return res
 
 
+def sample_examples(data: list[dict], reserve_ans: list[str], n: int) -> list[dict]:
+    reserves = {}
+    for _ans in reserve_ans:
+        reserves[_ans.lower()] = [d for d in data if d["answer"].lower() == _ans.lower()]
+    reserves["others"] = [d for d in data if d["answer"] not in reserve_ans]
+
+    res = []
+    for _data in reserves.values():
+        res += random.sample(_data, n)
+    return res
+        
+
 def remove_samples(data: list[dict], samples: list[dict]) -> list[dict]:
     sample_ids = set([d["id"] for d in samples])
     return [d for d in data if d["id"] not in sample_ids]
@@ -64,7 +76,8 @@ input_data = add_id_to_data(input_data)
 if args.is_balanced:
     examples = sample_balanced_examples(input_data, args.sample_num)
 else:
-    examples = random.sample(input_data, args.sample_num)
+    examples = sample_examples(input_data, ["i don't know."], args.sample_num)
+    # examples = random.sample(input_data, args.sample_num)
 print(f"{len(examples)} examples sampled.")
 
 data = remove_samples(input_data, examples)

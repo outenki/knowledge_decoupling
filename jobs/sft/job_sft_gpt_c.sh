@@ -9,7 +9,7 @@
 
 module load singularity-ce
 
-cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts/train_large/sft || exit 1
+cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts/sft || exit 1
 
 # CONFIG_NAME=$1
 # INIT_MODEL=$2

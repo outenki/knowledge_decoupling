@@ -1,11 +1,11 @@
 #!/bin/bash
-#PJM -L "rscgrp=c-batch"
+#PJM -L "rscgrp=b-batch"
 #PJM -L "elapse=24:00:00"
 #PJM -L "gpu=4"
 #PJM -L "jobenv=singularity"
-#PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_sft_ox3000_c.err
-#PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_sft_ox3000_c.out
-#PJM -N "sft_ox_e3_c"
+#PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_sft_sml.err
+#PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_sft_sml.out
+#PJM -N "sft_sml_e3_c"
 
 module load singularity-ce
 
@@ -19,8 +19,8 @@ cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts/sft || exit
 # SUFFIX=${6:-""}
 singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif /bin/bash sft_gpt.sh \
     gpt-large \
-    /home/pj25000107/ku50001566/projects/knowledge_decoupling/output/gpt-large/smolLM2/smolLM2-ox3000-bs1024-dl0-ep3 \
+    /home/pj25000107/ku50001566/projects/knowledge_decoupling/output/gpt-large/smolLM2/smolLM2-bs1024-dl0-ep1 \
     squad_v2_ctxt \
     3 \
     0 \
-    smolLM2-ox3000-bs1024-dl0-ep3
+    smolLM2-bs1024-dl0-ep1

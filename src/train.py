@@ -237,8 +237,8 @@ def main():
     effective_batch_size = per_device_train_batch_size * gradient_accumulation_steps * world_size
     steps_per_epoch = train_dataset_size // effective_batch_size
 
-    save_steps = max(1, steps_per_epoch // 20)
-    logging_steps = max(1, steps_per_epoch // 20)
+    save_steps = max(50, steps_per_epoch // 20)
+    logging_steps = max(50, steps_per_epoch // 20)
     print("save steps:", save_steps)
     print("logging steps:", logging_steps)
     print("eval steps:", logging_steps)
