@@ -226,7 +226,7 @@ def main():
         eval_samples = json.load(f)
         assert isinstance(eval_samples, list)
 
-    if args.sample_num:
+    if args.sample_num and len(eval_samples) > args.sample_num:
         eval_samples = random.sample(eval_samples, args.sample_num)
     total_count = len(eval_samples)
     print(f"Total evaluation samples: {total_count}")

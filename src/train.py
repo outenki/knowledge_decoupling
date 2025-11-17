@@ -16,6 +16,7 @@ from transformers.training_args import TrainingArguments
 from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
 
+
 from lib.dataset import load_custom_dataset
 
 
@@ -71,7 +72,11 @@ def read_args():
     )
     parser.add_argument(
         '--config-name', '-cn', dest='config_name', type=str, required=False, default=None,
-        help='Config name of models.'
+        help="Config name of models."
+    )
+    parser.add_argument(
+        '--init-model', '-im', dest='init_model', type=str, required=False, default=None,
+        help='Path to pre-trained model'
     )
     parser.add_argument(
         '--checkpoint', '-cp', dest='checkpoint', type=str, required=False, default=None,
@@ -79,7 +84,6 @@ def read_args():
     )
     parser.add_argument(
         '--epochs', '-e', dest='epochs', type=int, required=False, default=3,
-        help='Path to pre-trained model'
     )
     parser.add_argument(
         '--data-limit', '-dl', dest='data_limit', type=int, required=False, default=0,
@@ -153,15 +157,24 @@ def main():
     model: GPT2LMHeadModel | None = None
     print("Loading model from config:", args.config_name)
     model = load_model_from_config(args.config_name)
+    if args.init_model:
+        print("Loading model from local path:", args.init_model)
+        model = GPT2LMHeadModel.from_pretrained(
+            args.init_model,
+            quantization_config=None,
+            device_map="auto",
+        )
+            
+
 
     if args.speedup:
         print("Applying speedup options...")
-        # speed up with xformers
+        # print("- speed up with xformers")
         # torch.backends.cuda.enable_flash_sdp(True)
         # torch.backends.cuda.enable_mem_efficient_sdp(True)
         # torch.backends.cuda.enable_math_sdp(True)
 
-        # speed up with flash attention 2
+        # print("- speed up with flash attention 3")
         model.config.attn_implementation = "flash_attention_3"
 
         # speed up with torch 2.0 compile
