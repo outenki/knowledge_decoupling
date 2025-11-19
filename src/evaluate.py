@@ -141,7 +141,7 @@ def score_on_options(model, tokenizer, prompt, options, answer) -> dict:
     res["pred"] = options[scores.index(max(scores))]
     res["answer_score"] = scores[options.index(answer)]
     res["is_correct"] = res["pred"] == answer
-    return sample
+    return res
 
 
 def score_on_generation(model, tokenizer, prompt, answers) -> dict:
