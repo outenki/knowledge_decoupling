@@ -100,7 +100,7 @@ def batch_generate(model, tokenizer, prompts):
             pad_token_id=tokenizer.eos_token_id
         )
     predictions = []
-    for i, prompt in enumerate(prompts):
+    for i, prompt in tqdm.tqdm(enumerate(prompts), total=len(prompts), desc="Decoding generations"):
         prompt_len = enc["input_ids"][i].size(0)
         text = tokenizer.decode(gen_ids[i][prompt_len:], skip_special_tokens=True)
         predictions.append(text)
@@ -139,46 +139,49 @@ def score_on_options(model, tokenizer, prompt, options, answer) -> dict:
     return res
 
 
-def score_on_generation(model, tokenizer, prompts: list[str], answers: list[list[str]]) -> dict:
+def generate_answer(model, tokenizer, prompt, max_new_tokens=50) -> str:
+    """
+    Evaluate a causal LM on a one sample.
+    """
+    input_ids = tokenizer(prompt, return_tensors="pt").to(model.device)
+    with torch.no_grad():
+        gen_ids = model.generate(
+            **input_ids,
+            max_new_tokens=max_new_tokens,
+            do_sample=False,  # ensure same output for the same input
+            pad_token_id=tokenizer.eos_token_id
+        )
+    token_num = input_ids["input_ids"].shape[1]
+    gen_text = tokenizer.decode(gen_ids[0][token_num:], skip_special_tokens=True)
+    return gen_text
+
+
+def score_on_generation(model, tokenizer, prompt, answers) -> dict:
     res = {}
-    predictions = batch_generate(model, tokenizer, prompts)
-    for _prompt, _pred, _answers in zip(prompts, predictions, answers):
-        res["pred"] = _pred
-        res["answers"] = _answers
-        res["pred_score"] = score_continuation_batch(model, tokenizer, _prompt, [_pred])[0]
-        res["answer_score"] = max(score_continuations_batch(model, tokenizer, _prompt, _answers)) if _answers else [-100]
-        res["is_correct"] = any([normalize_text(pred).startswith(normalize_text(answer)) for answer in answers])
-        res["f1"] = max([f1_score(pred, answer) for answer in answers])
+    pred = generate_answer(model, tokenizer, prompt).lower()
+    res["pred"] = pred
+    res["answers"] = answers
+    res["pred_score"] = score_continuations_batch(model, tokenizer, prompt, [pred])
+    res["answer_score"] = max(score_continuations_batch(model, tokenizer, prompt, answers)) if answers else -100
+    res["is_correct"] = any([normalize_text(pred).startswith(normalize_text(answer)) for answer in answers])
+    res["f1"] = max([f1_score(pred, answer) for answer in answers])
     return res
 
 
 def score_samples(model, tokenizer, samples, score_on, few_shots="") -> list[dict]:
     # Score a list of samples with prompts and two options.
     filtered_samples = []
-    if score_on == "options":
-        for _sample in tqdm.tqdm(samples, total=len(samples), desc="scoring samples"):
-            prompt = few_shots + "\n" + _sample["prompt"]
-            options = _sample["options"]
-            answer = _sample["answer"]
+    for sample in tqdm.tqdm(samples, total=len(samples), desc="scoring samples"):
+        prompt = few_shots + "\n" + sample["prompt"]
+        options = sample["options"]
+        answer = sample["answer"]
+        if score_on == "options":
             res = score_on_options(model, tokenizer, prompt, options, answer)
-
-            _sample.update(res)
-            filtered_samples.append(_sample)
-
-    elif score_on == "generation":
-        prompts = []
-        options = []
-        answers = []
-        for sample in tqdm.tqdm(samples, total=len(samples), desc="scoring samples"):
-            prompts.append(few_shots + "\n" + sample["prompt"]) 
-            answers.append(sample["answer"])
-        
-        res = score_on_generation(model, tokenizer, prompts, answers)
-        for _sample, _res in zip(samples, res):
-            _sample.update(_res)
-            filtered_samples.append(_sample)
+        elif score_on == "generation":
+            res = score_on_generation(model, tokenizer, prompt, answer)
+        sample.update(res)
+        filtered_samples.append(sample)
     return filtered_samples
-
 
 def analyze_results(samples) -> dict:
     """
@@ -215,6 +218,7 @@ def main():
     # ======== Load model and tokenizer ========
     tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
     tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.padding_side = "left"
     print(f"Loading model from {model_path}...")
 
     model = GPT2LMHeadModel.from_pretrained(

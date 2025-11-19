@@ -1,0 +1,4 @@
+pjsub job_evaluate_on_generation_0shot_c.sh
+pjsub job_evaluate_on_generation_3shot_c.sh
+pjsub job_evaluate_on_options_0shot_c.sh
+pjsub job_evaluate_on_options_3shot_c.sh
