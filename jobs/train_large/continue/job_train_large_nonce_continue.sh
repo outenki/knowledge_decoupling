@@ -18,7 +18,7 @@ cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts/train_large
 # DATA_LIMITE=${5:-0} (optional)
 singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif \
     /bin/bash train_gpt_continue.sh \
-        gpt-large \
+        gpt2 \
         wikimedia-nonce-bs1024 \
-        /home/pj25000107/ku50001566/projects/knowledge_decoupling/output/gpt-large/nonce/wikimedia-nonce-bs1024-ep5 \
+        /home/pj25000107/ku50001566/projects/knowledge_decoupling/output/gpt2/nonce/wikimedia-nonce-bs1024-ep5 \
         6

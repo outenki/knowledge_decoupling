@@ -16,7 +16,7 @@ cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts/train_large
 # EPOCHS=$3
 # DATA_LIMITE=${4:-0}
 singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif /bin/bash train_gpt_from_init.sh \
-    gpt-large \
+    gpt2 \
     smolLM2-nonce-bs1024 \
     3 \
     1_020_000

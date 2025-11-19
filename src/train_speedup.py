@@ -102,7 +102,7 @@ def read_args():
 
 
 def model_config(model_name: str) -> GPT2Config | None:
-    if model_name == "gpt-large":
+    if model_name == "gpt2":
         return GPT2Config(
             vocab_size=50257,
             n_positions=1024,

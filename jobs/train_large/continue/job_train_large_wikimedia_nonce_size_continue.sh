@@ -18,8 +18,8 @@ cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts/train_large
 # DATA_LIMITE=$5
 singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif \
     /bin/bash train_gpt_continue.sh \
-        gpt-large \
+        gpt2 \
         wikimedia-bs1024 \
-        /home/pj25000107/ku50001566/projects/knowledge_decoupling/output/gpt-large/wikimedia-bs1024-dl1_020_000-ep2/checkpoint-7486 \
+        /home/pj25000107/ku50001566/projects/knowledge_decoupling/output/gpt2/wikimedia-bs1024-dl1_020_000-ep2/checkpoint-7486 \
         3 \
         1_020_000

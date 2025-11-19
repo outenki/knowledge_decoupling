@@ -18,7 +18,7 @@ cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts/sft || exit
 # DATA_LIMITE=$5
 # SUFFIX=${6:-""}
 singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif /bin/bash sft_gpt.sh \
-    gpt-large \
+    gpt2 \
     gpt2 \
     squad_v2_ctxt \
     3 \
