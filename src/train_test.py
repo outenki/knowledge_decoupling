@@ -9,18 +9,15 @@ from dataclasses import asdict, is_dataclass
 import torch
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import LambdaLR
-from transformers import GPT2Config, GPT2LMHeadModel, get_scheduler
+from transformers import AutoModelForCausalLM, AutoConfig
 from transformers.trainer import Trainer
 from transformers.trainer_callback import TrainerCallback
 from transformers.training_args import TrainingArguments
 from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
 
-from lib.dataset import load_custom_dataset, slice_dataset
 
-
-import warnings
-warnings.filterwarnings("ignore", message="Was asked to gather along dimension 0")
+from lib.dataset import load_custom_dataset
 
 
 DECAY_RATE = 0.9  # for WSD
@@ -55,7 +52,7 @@ class LossLoggerCallback(TrainerCallback):
         if "loss" in logs:
             self.train_log.write(f"{state.global_step}\t{logs['loss']}\n")
             self.train_log.flush()
-        
+
     def on_evaluate(self, args, state, control, metrics=None, **kwargs):
         if metrics and "eval_loss" in metrics:
             # 评估日志使用 state.global_step，确保与训练步骤对齐
@@ -75,7 +72,11 @@ def read_args():
     )
     parser.add_argument(
         '--config-name', '-cn', dest='config_name', type=str, required=False, default=None,
-        help='Config name of models.'
+        help="Config name of models."
+    )
+    parser.add_argument(
+        '--init-model', '-im', dest='init_model', type=str, required=False, default=None,
+        help='Path to pre-trained model'
     )
     parser.add_argument(
         '--checkpoint', '-cp', dest='checkpoint', type=str, required=False, default=None,
@@ -83,55 +84,54 @@ def read_args():
     )
     parser.add_argument(
         '--epochs', '-e', dest='epochs', type=int, required=False, default=3,
-        help='Path to pre-trained model'
     )
     parser.add_argument(
         '--data-limit', '-dl', dest='data_limit', type=int, required=False, default=0,
         help='Max number of samples for training. 0 for no limit.'
     )
     parser.add_argument(
+        '--speedup', '-su', dest='speedup', action='store_true',
+        help='Enable speedup options.'
+    )
+    parser.add_argument(
         '--out-path', '-o', dest='out_path', type=str,
         help='Path to save the dataset with nonce sentences.'
     )
-    parser.add_argument('--xformers', dest='xformers', action='store_true')
-    parser.add_argument('--flash-attention-2', dest='flash_attention_2', action='store_true')
-    parser.add_argument('--flash-attention-3', dest='flash_attention_3', action='store_true')
-    parser.add_argument('--torch-compile', dest='torch_compile', action='store_true')
-    parser.add_argument('--bnb', dest='bnb', action='store_true')
     return parser.parse_args()
 
 
-def model_config(model_name: str) -> GPT2Config | None:
-    if model_name == "gpt2":
-        return GPT2Config(
-            vocab_size=50257,
-            n_positions=1024,
-            n_embd=768,
-            n_layer=12,
-            n_head=12,
-        )
+def model_config(model_name: str) -> AutoConfig | None:
+    # if model_name == "gpt2":
+    #     return GPT2Config(
+    #         vocab_size=50257,
+    #         n_positions=1024,
+    #         n_embd=768,
+    #         n_layer=12,
+    #         n_head=12,
+    #     )
 
-    if model_name == "gpt-medium":
-        return GPT2Config(
-            vocab_size=50257,
-            n_positions=512,
-            n_embd=384,
-            n_layer=6,
-            n_head=6,
-        )
+    # if model_name == "gpt-medium":
+    #     return GPT2Config(
+    #         vocab_size=50257,
+    #         n_positions=512,
+    #         n_embd=384,
+    #         n_layer=6,
+    #         n_head=6,
+    #     )
 
-    if model_name == "gpt-mini":
-        return GPT2Config(
-            vocab_size=50257,
-            n_positions=128,
-            n_embd=256,
-            n_layer=4,
-            n_head=4,
-        )
+    # if model_name == "gpt-mini":
+    #     return GPT2Config(
+    #         vocab_size=50257,
+    #         n_positions=128,
+    #         n_embd=256,
+    #         n_layer=4,
+    #         n_head=4,
+    #    )
+    return AutoConfig(model_name)
 
 
-def load_model_from_config(config_name: str) -> GPT2LMHeadModel:
-    return GPT2LMHeadModel(model_config(config_name))
+def load_model_from_config(config_name: str) -> AutoModelForCausalLM:
+    return AutoModelForCausalLM.from_config(model_config(config_name))
 
 
 def random_sample(dataset, number: int) -> Dataset:
@@ -141,7 +141,7 @@ def random_sample(dataset, number: int) -> Dataset:
         return dataset
     indices = random.sample(range(len(dataset)), number)
     return dataset.select(indices)
-        
+
 
 def main():
     print("CUDA available:", torch.cuda.is_available())
@@ -152,46 +152,37 @@ def main():
 
     args = read_args()
     print(vars(args))
-    out_path= args.out_path
+    Path(args.out_path).mkdir(parents=True, exist_ok=True)
 
     # === Load model
-    model: GPT2LMHeadModel | None = None
+    model: AutoModelForCausalLM | None = None
     print("Loading model from config:", args.config_name)
     model = load_model_from_config(args.config_name)
+    if args.init_model:
+        print("Loading model from local path:", args.init_model)
+        model = AutoModelForCausalLM.from_pretrained(
+            args.init_model,
+            quantization_config=None,
+            device_map="auto",
+        )
+            
 
-    if args.xformers:
+
+    if args.speedup:
         print("Applying speedup options...")
-        # speed up with xformers
-        torch.backends.cuda.enable_flash_sdp(True)
-        torch.backends.cuda.enable_mem_efficient_sdp(True)
-        torch.backends.cuda.enable_math_sdp(True)
-        out_path += "-xformers"
-    if args.flash_attention_2:
-        # speed up with flash attention
-        model.config.attn_implementation = "flash_attention_2"
-        out_path += "-fa2"
+        # print("- speed up with xformers")
+        # torch.backends.cuda.enable_flash_sdp(True)
+        # torch.backends.cuda.enable_mem_efficient_sdp(True)
+        # torch.backends.cuda.enable_math_sdp(True)
 
-    if args.flash_attention_3:
-        # speed up with flash attention
+        # print("- speed up with flash attention 3")
         model.config.attn_implementation = "flash_attention_3"
-        out_path += "-fa3"
 
-
-    if args.torch_compile:
         # speed up with torch 2.0 compile
-        model = torch.compile(model)
-        out_path += "-compile"
-
-    if args.bnb:
-        # speed up with 8-bit quantization
-        from transformers import BitsAndBytesConfig
-        bnb_config = BitsAndBytesConfig(load_in_8bit=True)
-        model.config.quantization_config = bnb_config
-        out_path += "-bnb"
-    Path(out_path).mkdir(parents=True, exist_ok=True)
+        # model = torch.compile(model)
 
     assert model is not None
-    model.save_pretrained(Path(out_path) / "init_model")
+    model.save_pretrained(Path(args.out_path) / "init_model")
 
     # === load data
     dataset = load_custom_dataset(args.data_path, None, "local")
@@ -201,7 +192,7 @@ def main():
             data_limit = ceil(args.data_limit * 1.1)
             # dataset = slice_dataset(dataset, 0, data_limit)
             dataset = random_sample(dataset, data_limit)
-        data_dict = dataset.train_test_split(train_size=args.data_limit, shuffle=True, seed=42)
+        data_dict = dataset.train_test_split(train_size=1/1.1, shuffle=True, seed=42)
     elif isinstance(dataset, DatasetDict):
         data_dict = dataset
         for k, dt in data_dict.items():
@@ -236,7 +227,7 @@ def main():
     print(f"Training data size: {len(train_dataset)}")
     print(f"Eval data size: {len(eval_dataset)}")
 
-    log_path = f"{out_path}/logs"
+    log_path = f"{args.out_path}/logs"
     Path(log_path).mkdir(parents=True, exist_ok=True)
 
     train_dataset_size = len(train_dataset)
@@ -247,11 +238,14 @@ def main():
     effective_batch_size = per_device_train_batch_size * gradient_accumulation_steps * world_size
     steps_per_epoch = train_dataset_size // effective_batch_size
 
-    save_steps = max(1, steps_per_epoch // 20)
-    logging_steps = max(1, steps_per_epoch // 20)
+    save_steps = max(50, steps_per_epoch // 20)
+    logging_steps = max(50, steps_per_epoch // 20)
+    print("save steps:", save_steps)
+    print("logging steps:", logging_steps)
+    print("eval steps:", logging_steps)
 
     training_args = TrainingArguments(
-        output_dir=out_path,
+        output_dir=args.out_path,
         save_safetensors=True,
         dataloader_pin_memory=True,
         dataloader_num_workers=4,
@@ -269,11 +263,12 @@ def main():
         report_to="none",
         fp16=torch.cuda.is_available(),
         remove_unused_columns=False,
+
         # speed up with fused AdamW optimizer
         optim="adamw_torch_fused",
     )
-    
-    with open(Path(out_path) / "training_args.json", "w") as f:
+
+    with open(Path(args.out_path) / "training_args.json", "w") as f:
         json.dump(training_args.to_dict(), f, indent=4)
 
     print("eval_dataset:", eval_dataset)
@@ -282,36 +277,33 @@ def main():
         args=training_args,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
-        callbacks=[LossLoggerCallback(f"{out_path}/logs")],
+        callbacks=[LossLoggerCallback(f"{args.out_path}/logs")],
     )
 
     # WSD settings
     total_steps = len(trainer.get_train_dataloader()) * training_args.num_train_epochs
     warmup_steps = training_args.warmup_steps or (total_steps // 20)
     optimizer = AdamW(model.parameters(), lr=5e-4)
-    trainer.optimizer = optimizer
-
-    # cosine warmup
-    scheduler_cosine = get_scheduler(
-        "cosine",
-        optimizer=trainer.optimizer,
-        num_warmup_steps=warmup_steps,
-        num_training_steps=total_steps
-    )
 
     def ws_decay(step):
         # WSD
         if step < warmup_steps:
-            return 1.0  # warmup阶段由cosine控制
-        else:
-            # WSD示例：每 epoch 衰减 0.9
-            epoch_step = len(trainer.get_train_dataloader())
-            return DECAY_RATE ** ((step - warmup_steps) / epoch_step)
+            # linear Warmup
+            return step / warmup_steps
 
-    scheduler_ws = LambdaLR(trainer.optimizer, lr_lambda=ws_decay)
+        # Cosine as the baseline
+        cosine_ratio = max(0.0, 0.5 * (1.0 + torch.cos(torch.tensor(3.1415926535 * (step - warmup_steps) / (total_steps - warmup_steps)))))
+
+        epoch_step = len(trainer.get_train_dataloader())
+        wsd_factor = DECAY_RATE ** ((step - warmup_steps) / epoch_step)
+
+        return cosine_ratio * wsd_factor
+
+    scheduler_ws = LambdaLR(optimizer, lr_lambda=ws_decay)
+    trainer.optimizer = optimizer
     trainer.lr_scheduler = scheduler_ws
-    
-    with open(Path(out_path) / "trainer.json", "w") as f:
+
+    with open(Path(args.out_path) / "trainer.json", "w") as f:
         json.dump(training_args_to_dict(trainer.args), f, indent=4)
 
     # Load checkpoint if provided
@@ -321,12 +313,9 @@ def main():
         print(f"Starting from random model")
     else:
         print(f"Resuming from checkpoint: {checkpoint}")
-
-    orig_forward = model.forward
-
     trainer.train(resume_from_checkpoint=checkpoint)
-    print(f"Save model to: {out_path}")
-    model.save_pretrained(Path(out_path))
+    print(f"Save model to: {args.out_path}")
+    model.save_pretrained(Path(args.out_path))
 
 
 if __name__ == "__main__":

@@ -1,0 +1,24 @@
+#!/bin/bash
+#PJM -L "rscgrp=b-batch"
+#PJM -L "elapse=100:00:00"
+#PJM -L "gpu=4"
+#PJM -L "jobenv=singularity"
+#PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_continue_ox3000_ep3-6.err
+#PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_continue_ox3000_ep3-6.out
+#PJM -N "tl_ox_ep6"
+
+module load singularity-ce
+
+cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts/train/continue || exit 1
+
+# CONFIG_NAME=$1
+# DATA_NAME=$2
+# CHECKPOINT=$3
+# EPOCHS=$4
+# DATA_LIMITE=${5:-0} (optional)
+singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif \
+    /bin/bash train_gpt_continue.sh \
+        gpt2 \
+        simplyfied-wikimedia-ox3000-bs1024 \
+        /home/pj25000107/ku50001566/projects/knowledge_decoupling/output/gpt2/ox3000/simplyfied-wikimedia-ox3000-bs1024-ep3 \
+        6

@@ -9,7 +9,7 @@ from dataclasses import asdict, is_dataclass
 import torch
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import LambdaLR
-from transformers import GPT2Config, GPT2LMHeadModel
+from transformers import AutoModelForCausalLM, AutoConfig
 from transformers.trainer import Trainer
 from transformers.trainer_callback import TrainerCallback
 from transformers.training_args import TrainingArguments
@@ -100,37 +100,12 @@ def read_args():
     return parser.parse_args()
 
 
-def model_config(model_name: str) -> GPT2Config | None:
-    if model_name == "gpt-large":
-        return GPT2Config(
-            vocab_size=50257,
-            n_positions=1024,
-            n_embd=768,
-            n_layer=12,
-            n_head=12,
-        )
-
-    if model_name == "gpt-medium":
-        return GPT2Config(
-            vocab_size=50257,
-            n_positions=512,
-            n_embd=384,
-            n_layer=6,
-            n_head=6,
-        )
-
-    if model_name == "gpt-mini":
-        return GPT2Config(
-            vocab_size=50257,
-            n_positions=128,
-            n_embd=256,
-            n_layer=4,
-            n_head=4,
-        )
+def model_config(model_name: str) -> AutoConfig | None:
+    return AutoConfig.from_pretrained(model_name)
 
 
-def load_model_from_config(config_name: str) -> GPT2LMHeadModel:
-    return GPT2LMHeadModel(model_config(config_name))
+def load_model_from_config(config_name: str) -> AutoModelForCausalLM:
+    return AutoModelForCausalLM.from_config(model_config(config_name))
 
 
 def random_sample(dataset, number: int) -> Dataset:
@@ -154,12 +129,12 @@ def main():
     Path(args.out_path).mkdir(parents=True, exist_ok=True)
 
     # === Load model
-    model: GPT2LMHeadModel | None = None
+    model: AutoModelForCausalLM | None = None
     print("Loading model from config:", args.config_name)
     model = load_model_from_config(args.config_name)
     if args.init_model:
         print("Loading model from local path:", args.init_model)
-        model = GPT2LMHeadModel.from_pretrained(
+        model = AutoModelForCausalLM.from_pretrained(
             args.init_model,
             quantization_config=None,
             device_map="auto",

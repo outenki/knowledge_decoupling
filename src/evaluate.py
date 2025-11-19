@@ -13,6 +13,7 @@ import random
 
 import torch
 from transformers import GPT2Tokenizer, GPT2LMHeadModel
+from transformers import AutoModel, AutoTokenizer
 from torch.nn import CrossEntropyLoss
 
 import pandas as pd
@@ -51,39 +52,34 @@ def read_args():
     return parser.parse_args()
 
 
-def score_continuation(model, tokenizer, prompt: str, continuation: str) -> float | None:
-    input_text = prompt + " " + continuation
-    input_ids = tokenizer(input_text, return_tensors="pt", add_special_tokens=False)["input_ids"]
-    prompt_ids = tokenizer(prompt, return_tensors="pt", add_special_tokens=False)["input_ids"]
-
-    block_size = getattr(model.config, "n_positions", None)
-    if block_size is not None and input_ids.size(1) > block_size:
-        return None  # skip too long samples
-
-    input_ids = input_ids.to(model.device)
-    prompt_len = prompt_ids.size(1)
+def score_continuations_batch(model, tokenizer, prompt, continuations):
+    texts = [prompt + " " + c for c in continuations]
+    enc = tokenizer(texts, return_tensors="pt", padding=True, truncation=True, add_special_tokens=False)
+    input_ids = enc["input_ids"].to(model.device)
 
     with torch.no_grad():
-        outputs = model(input_ids=input_ids)
-        logits = outputs.logits  # [batch, seq_len, vocab_size]
+        logits = model(input_ids).logits
 
-        # p(w_{i+1}|w_{i})を予測するので、logitを[:-1]にして、labelを[:1]にする
-        shift_logits = logits[:, :-1, :].contiguous()
-        shift_labels = input_ids[:, 1:].contiguous()
+    # 需要对每个样本分别计算 continuation loss
+    log_prob = []
+    for i, c in enumerate(continuations):
+        prompt_ids = tokenizer(prompt, add_special_tokens=False).input_ids
+        cont_len = len(tokenizer(c, add_special_tokens=False).input_ids)
 
-        # mask: only calculate loss of continuation
-        cont_mask = torch.zeros_like(shift_labels, dtype=torch.bool)
-        cont_mask[:, prompt_len-1:] = True
+        # shift
+        shift_logits = logits[i, :-1, :]
+        shift_labels = input_ids[i, 1:]
 
-        loss_fct = CrossEntropyLoss(reduction="none")
-        token_losses = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
-        token_losses = token_losses.view(shift_labels.size())
+        # mask continuation部分
+        mask = torch.zeros_like(shift_labels, dtype=torch.bool)
+        mask[len(prompt_ids)-1 : len(prompt_ids)-1 + cont_len] = True
 
-        # only take the loss of continuation
-        cont_losses = token_losses[cont_mask]
-        avg_log_prob = -cont_losses.mean().item()  # average log-prob
+        loss_fct = torch.nn.CrossEntropyLoss(reduction="none")
+        token_losses = loss_fct(shift_logits, shift_labels)
+        cont_loss = token_losses[mask].mean()
+        log_prob.append(-cont_loss.item())  # average log-prob
 
-    return avg_log_prob
+    return log_prob
 
 
 def generate_few_shots_texts(examples: list[dict]) -> str:
@@ -95,21 +91,21 @@ def generate_few_shots_texts(examples: list[dict]) -> str:
     return text.strip()
 
 
-def generate_answer(model, tokenizer, prompt, max_new_tokens=50) -> str:
-    """
-    Evaluate a causal LM on a one sample.
-    """
-    input_ids = tokenizer(prompt, return_tensors="pt").to(model.device)
+def batch_generate(model, tokenizer, prompts):
+    enc = tokenizer(prompts, return_tensors="pt", padding=True).to(model.device)
     with torch.no_grad():
         gen_ids = model.generate(
-            **input_ids,
-            max_new_tokens=max_new_tokens,
-            do_sample=False,  # ensure same output for the same input
+            **enc,
+            max_new_tokens=50,
+            do_sample=False,
             pad_token_id=tokenizer.eos_token_id
         )
-    token_num = input_ids["input_ids"].shape[1]
-    gen_text = tokenizer.decode(gen_ids[0][token_num:], skip_special_tokens=True)
-    return gen_text
+    predictions = []
+    for i, prompt in tqdm.tqdm(enumerate(prompts), total=len(prompts), desc="Decoding generations"):
+        prompt_len = enc["input_ids"][i].size(0)
+        text = tokenizer.decode(gen_ids[i][prompt_len:], skip_special_tokens=True)
+        predictions.append(text)
+    return predictions
 
 
 def normalize_text(s: str) -> str:
@@ -133,7 +129,7 @@ def f1_score(pred: str, answer: str) -> float:
 
 def score_on_options(model, tokenizer, prompt, options, answer) -> dict:
     res = {}
-    scores = [score_continuation(model, tokenizer, prompt, option) for option in options]
+    scores = score_continuations_batch(model, tokenizer, prompt, options)
     if any(score is None for score in scores):
         return {}
     res["scores"] = scores
@@ -141,7 +137,24 @@ def score_on_options(model, tokenizer, prompt, options, answer) -> dict:
     res["pred"] = options[scores.index(max(scores))]
     res["answer_score"] = scores[options.index(answer)]
     res["is_correct"] = res["pred"] == answer
-    return sample
+    return res
+
+
+def generate_answer(model, tokenizer, prompt, max_new_tokens=50) -> str:
+    """
+    Evaluate a causal LM on a one sample.
+    """
+    input_ids = tokenizer(prompt, return_tensors="pt").to(model.device)
+    with torch.no_grad():
+        gen_ids = model.generate(
+            **input_ids,
+            max_new_tokens=max_new_tokens,
+            do_sample=False,  # ensure same output for the same input
+            pad_token_id=tokenizer.eos_token_id
+        )
+    token_num = input_ids["input_ids"].shape[1]
+    gen_text = tokenizer.decode(gen_ids[0][token_num:], skip_special_tokens=True)
+    return gen_text
 
 
 def score_on_generation(model, tokenizer, prompt, answers) -> dict:
@@ -149,8 +162,8 @@ def score_on_generation(model, tokenizer, prompt, answers) -> dict:
     pred = generate_answer(model, tokenizer, prompt).lower()
     res["pred"] = pred
     res["answers"] = answers
-    res["pred_score"] = score_continuation(model, tokenizer, prompt, pred)
-    res["answer_score"] = max([score_continuation(model, tokenizer, prompt, answer) for answer in answers])
+    res["pred_score"] = score_continuations_batch(model, tokenizer, prompt, [pred])
+    res["answer_score"] = max(score_continuations_batch(model, tokenizer, prompt, answers)) if answers else -100
     res["is_correct"] = any([normalize_text(pred).startswith(normalize_text(answer)) for answer in answers])
     res["f1"] = max([f1_score(pred, answer) for answer in answers])
     return res
@@ -170,7 +183,6 @@ def score_samples(model, tokenizer, samples, score_on, few_shots="") -> list[dic
         sample.update(res)
         filtered_samples.append(sample)
     return filtered_samples
-
 
 def analyze_results(samples) -> dict:
     """
@@ -207,6 +219,7 @@ def main():
     # ======== Load model and tokenizer ========
     tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
     tokenizer.pad_token = tokenizer.eos_token
+    tokenizer.padding_side = "left"
     print(f"Loading model from {model_path}...")
 
     model = GPT2LMHeadModel.from_pretrained(
