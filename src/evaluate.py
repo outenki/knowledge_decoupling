@@ -160,13 +160,11 @@ def generate_answer(model, tokenizer, prompt, max_new_tokens=50) -> str:
 
 def score_on_generation(model, tokenizer, prompt, answers) -> dict:
     res = {}
-    if not answers:
-        answers = ["i don't know."]
     pred = generate_answer(model, tokenizer, prompt).lower()
     res["pred"] = pred
     res["answers"] = answers
-    res["pred_score"] = score_continuations_batch(model, tokenizer, prompt, [pred])
-    res["answer_score"] = max(score_continuations_batch(model, tokenizer, prompt, answers)) if answers else -100
+    res["pred_score"] = max(score_continuations_batch(model, tokenizer, prompt, [pred]))
+    res["answer_score"] = max(score_continuations_batch(model, tokenizer, prompt, answers))
     res["is_correct"] = any([normalize_text(pred).startswith(normalize_text(answer)) for answer in answers])
     res["f1"] = max([f1_score(pred, answer) for answer in answers])
     return res
@@ -179,7 +177,9 @@ def score_samples(model, tokenizer, samples, score_on, few_shots="") -> list[dic
         prompt = few_shots + "\n" + sample["prompt"]
         options = sample["options"]
         answer = sample["answer"]
-        answers = sample["answers"]
+        answers = sample.get("answers", [answer])
+        if not answers:
+            answers = ["i don't know."]
         if score_on == "options":
             res = score_on_options(model, tokenizer, prompt, options, answer)
         elif score_on == "generation":
