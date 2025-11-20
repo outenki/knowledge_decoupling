@@ -271,7 +271,7 @@ def main():
         print(f"Generated few_shots: \n{few_shots}")
 
     # ========= Score samples ========
-    used_samples = score_samples(model, tokenizer, eval_samples, args.score_on)
+    used_samples = score_samples(model, tokenizer, eval_samples, args.score_on, few_shots)
     used_count = len(used_samples)
     print(f"Evaluated on {used_count} samples")
     results = analyze_results(used_samples)
