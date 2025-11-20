@@ -53,22 +53,27 @@ def read_args():
 
 
 def get_input_ids(model, tokenizer, texts):
-    input_ids = tokenizer(
+    enc = tokenizer(
         texts, return_tensors="pt", padding=True, truncation=True, add_special_tokens=False
-    )["input_ids"]
+    )
+    input_ids = enc["input_ids"]
+    attention_mask = enc["attention_mask"]
+    
     # control the max length
     block_size = getattr(model.config, "n_positions", None)
     if block_size is not None and input_ids.size(1) > block_size:
-        input_ids = input_ids[:, -block_size:]  # 截断为最后 block_size 个 token
-    return input_ids
+        input_ids = input_ids[:, -block_size:]
+        attention_mask = attention_mask[:, -block_size:]
+    
+    return input_ids.to(model.device), attention_mask.to(model.device)
 
 
 def score_continuations_batch(model, tokenizer, prompt, continuations):
     texts = [prompt + " " + c for c in continuations]
-    input_ids = get_input_ids(model, tokenizer, texts).to(model.device)
+    input_ids, attention_mask = get_input_ids(model, tokenizer, texts)
 
     with torch.no_grad():
-        logits = model(input_ids).logits
+        logits = model(input_ids, attention_mask=attention_mask).logits
 
     # 需要对每个样本分别计算 continuation loss
     log_prob = []
@@ -138,18 +143,22 @@ def generate_answer(model, tokenizer, prompt, max_new_tokens=50) -> str:
     Evaluate a causal LM on a one sample.
     Automatically truncates prompt if longer than model context.
     """
-    input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(model.device)
+    enc = tokenizer(prompt, return_tensors="pt", padding=True, truncation=True)
+    input_ids = enc["input_ids"].to(model.device)
+    attention_mask = enc["attention_mask"].to(model.device)
 
     # truncate if too long
     block_size = getattr(model.config, "n_positions", None)
     if block_size is not None and input_ids.size(1) > block_size:
         input_ids = input_ids[:, -block_size:]
+        attention_mask = attention_mask[:, -block_size:]
 
     with torch.no_grad():
-        gen_ids = model.generate(
+       gen_ids = model.generate(
             input_ids=input_ids,
+            attention_mask=attention_mask,
             max_new_tokens=max_new_tokens,
-            do_sample=False,  # deterministic
+            do_sample=False,
             pad_token_id=tokenizer.eos_token_id
         )
 
