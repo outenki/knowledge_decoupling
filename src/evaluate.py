@@ -52,10 +52,20 @@ def read_args():
     return parser.parse_args()
 
 
+def get_input_ids(tokenizer, texts):
+    input_ids = tokenizer(
+        texts, return_tensors="pt", padding=True, truncation=True, add_special_tokens=False
+    )["input_ids"]
+    # control the max length
+    block_size = getattr(model.config, "n_positions", None)
+    if block_size is not None and input_ids.size(1) > block_size:
+        input_ids = input_ids[:, -block_size:]  # 截断为最后 block_size 个 token
+    return input_ids
+
+
 def score_continuations_batch(model, tokenizer, prompt, continuations):
     texts = [prompt + " " + c for c in continuations]
-    enc = tokenizer(texts, return_tensors="pt", padding=True, truncation=True, add_special_tokens=False)
-    input_ids = enc["input_ids"].to(model.device)
+    input_ids = get_input_ids(tokenizer, texts).to(model.device)
 
     with torch.no_grad():
         logits = model(input_ids).logits
@@ -92,7 +102,18 @@ def generate_few_shots_texts(examples: list[dict]) -> str:
 
 
 def batch_generate(model, tokenizer, prompts):
-    enc = tokenizer(prompts, return_tensors="pt", padding=True).to(model.device)
+    block_size = getattr(model.config, "n_positions", None)
+
+    truncated_prompts = []
+    for prompt in prompts:
+        enc_prompt = tokenizer(prompt, add_special_tokens=False)
+        input_ids = enc_prompt["input_ids"]
+        if block_size is not None and len(input_ids) > block_size:
+            # 后截断，保留最近 block_size 个 token
+            input_ids = input_ids[-block_size:]
+        truncated_prompts.append(tokenizer.decode(input_ids, skip_special_tokens=True))
+
+    enc = tokenizer(truncated_prompts, return_tensors="pt", padding=True).to(model.device)
     with torch.no_grad():
         gen_ids = model.generate(
             **enc,

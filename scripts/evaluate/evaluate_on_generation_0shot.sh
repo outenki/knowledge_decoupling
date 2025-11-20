@@ -6,8 +6,8 @@ SCORE_ON=generation
 MODEL_HF=gpt2
 FEWSHOTS=0
 
-# for eval_name in qa_arc_easy qa_arc_challenge qa_qasc qa_boolq qa_boolq_psg quad_v2 squad_v2_ctxt; do
-for eval_name in quad_v2 squad_v2_ctxt; do
+# for eval_name in qa_arc_easy qa_arc_challenge qa_qasc qa_boolq qa_boolq_psg squad_v2 squad_v2_ctxt; do
+for eval_name in squad_v2 squad_v2_ctxt; do
     echo
     echo "============ $eval_name ============"
 
