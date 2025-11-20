@@ -52,7 +52,7 @@ def read_args():
     return parser.parse_args()
 
 
-def get_input_ids(tokenizer, texts):
+def get_input_ids(model, tokenizer, texts):
     input_ids = tokenizer(
         texts, return_tensors="pt", padding=True, truncation=True, add_special_tokens=False
     )["input_ids"]
@@ -65,7 +65,7 @@ def get_input_ids(tokenizer, texts):
 
 def score_continuations_batch(model, tokenizer, prompt, continuations):
     texts = [prompt + " " + c for c in continuations]
-    input_ids = get_input_ids(tokenizer, texts).to(model.device)
+    input_ids = get_input_ids(model, tokenizer, texts).to(model.device)
 
     with torch.no_grad():
         logits = model(input_ids).logits
@@ -99,34 +99,6 @@ def generate_few_shots_texts(examples: list[dict]) -> str:
         _t = _e["prompt"] + ' ' + _e["answer"] + "\n"
         text += _t
     return text.strip()
-
-
-def batch_generate(model, tokenizer, prompts):
-    block_size = getattr(model.config, "n_positions", None)
-
-    truncated_prompts = []
-    for prompt in prompts:
-        enc_prompt = tokenizer(prompt, add_special_tokens=False)
-        input_ids = enc_prompt["input_ids"]
-        if block_size is not None and len(input_ids) > block_size:
-            # 后截断，保留最近 block_size 个 token
-            input_ids = input_ids[-block_size:]
-        truncated_prompts.append(tokenizer.decode(input_ids, skip_special_tokens=True))
-
-    enc = tokenizer(truncated_prompts, return_tensors="pt", padding=True).to(model.device)
-    with torch.no_grad():
-        gen_ids = model.generate(
-            **enc,
-            max_new_tokens=50,
-            do_sample=False,
-            pad_token_id=tokenizer.eos_token_id
-        )
-    predictions = []
-    for i, prompt in tqdm.tqdm(enumerate(prompts), total=len(prompts), desc="Decoding generations"):
-        prompt_len = enc["input_ids"][i].size(0)
-        text = tokenizer.decode(gen_ids[i][prompt_len:], skip_special_tokens=True)
-        predictions.append(text)
-    return predictions
 
 
 def normalize_text(s: str) -> str:
@@ -164,22 +136,32 @@ def score_on_options(model, tokenizer, prompt, options, answer) -> dict:
 def generate_answer(model, tokenizer, prompt, max_new_tokens=50) -> str:
     """
     Evaluate a causal LM on a one sample.
+    Automatically truncates prompt if longer than model context.
     """
-    input_ids = tokenizer(prompt, return_tensors="pt").to(model.device)
+    input_ids = tokenizer(prompt, return_tensors="pt").input_ids.to(model.device)
+
+    # truncate if too long
+    block_size = getattr(model.config, "n_positions", None)
+    if block_size is not None and input_ids.size(1) > block_size:
+        input_ids = input_ids[:, -block_size:]
+
     with torch.no_grad():
         gen_ids = model.generate(
-            **input_ids,
+            input_ids=input_ids,
             max_new_tokens=max_new_tokens,
-            do_sample=False,  # ensure same output for the same input
+            do_sample=False,  # deterministic
             pad_token_id=tokenizer.eos_token_id
         )
-    token_num = input_ids["input_ids"].shape[1]
+
+    token_num = input_ids.shape[1]
     gen_text = tokenizer.decode(gen_ids[0][token_num:], skip_special_tokens=True)
     return gen_text
 
 
 def score_on_generation(model, tokenizer, prompt, answers) -> dict:
     res = {}
+    if not answers:
+        answers = ["i don't know."]
     pred = generate_answer(model, tokenizer, prompt).lower()
     res["pred"] = pred
     res["answers"] = answers
@@ -197,13 +179,15 @@ def score_samples(model, tokenizer, samples, score_on, few_shots="") -> list[dic
         prompt = few_shots + "\n" + sample["prompt"]
         options = sample["options"]
         answer = sample["answer"]
+        answers = sample["answers"]
         if score_on == "options":
             res = score_on_options(model, tokenizer, prompt, options, answer)
         elif score_on == "generation":
-            res = score_on_generation(model, tokenizer, prompt, answer)
+            res = score_on_generation(model, tokenizer, prompt, answers)
         sample.update(res)
         filtered_samples.append(sample)
     return filtered_samples
+
 
 def analyze_results(samples) -> dict:
     """
