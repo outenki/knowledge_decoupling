@@ -14,6 +14,7 @@ for eval_name in qa_arc_easy qa_arc_challenge qa_qasc qa_boolq qa_boolq_psg squa
     /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/evaluate.py \
         --model-path $BASE_PATH/output/$MODEL_NAME/${MODEL_NAME}-random \
         --test-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
+        --example-data $BASE_PATH/input/evaluate_data/$eval_name/examples.json \
         --score-on $SCORE_ON \
         --sample-num 1000 \
         -o $BASE_PATH/output/$MODEL_NAME/${MODEL_NAME}-random/evaluation/$score_on_${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
@@ -22,6 +23,7 @@ for eval_name in qa_arc_easy qa_arc_challenge qa_qasc qa_boolq qa_boolq_psg squa
     /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/evaluate.py \
         --model-path $MODEL_HF \
         --test-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
+        --example-data $BASE_PATH/input/evaluate_data/$eval_name/examples.json \
         --score-on $SCORE_ON \
         --sample-num 1000 \
         -o $BASE_PATH/output/$MODEL_NAME/${MODEL_HF}_hf/evaluation/$score_on_${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
@@ -30,6 +32,7 @@ for eval_name in qa_arc_easy qa_arc_challenge qa_qasc qa_boolq qa_boolq_psg squa
     /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/evaluate.py \
         --model-path $BASE_PATH/output/$MODEL_NAME/gpt2-sft_squad_v2_ctxt-e3 \
         --test-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
+        --example-data $BASE_PATH/input/evaluate_data/$eval_name/examples.json \
         --score-on $SCORE_ON \
         --sample-num 1000 \
         -o $BASE_PATH/output/$MODEL_NAME/gpt2_hf/evaluation/$score_on_${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
@@ -41,13 +44,14 @@ for eval_name in qa_arc_easy qa_arc_challenge qa_qasc qa_boolq qa_boolq_psg squa
         smolLM2-ox3000-bs1024-dl0-ep3 \
         smolLM2-ox3000-bs1024-dl0-ep3-sft_squad_v2_ctxt-ep3 \
         smolLM2-bs1024-dl0-ep1 \
-        smolLM2-bs1024-dl0-ep1-sft_squad_v2_ctxt-dl0-ep3
+        smolLM2-bs1024-dl0-ep1-sft_squad_v2_ctxt-ep3
     do
         echo
         echo "====== Evaluating $data_name ======"
         /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/evaluate.py \
             --model-path $BASE_PATH/output/$MODEL_NAME/smolLM2/$data_name \
             --test-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
+            --example-data $BASE_PATH/input/evaluate_data/$eval_name/examples.json \
             --score-on $SCORE_ON \
             --sample-num 1000 \
             -o $BASE_PATH/output/$MODEL_NAME/smolLM2/$data_name/evaluation/$score_on_${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
