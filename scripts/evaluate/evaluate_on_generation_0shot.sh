@@ -28,7 +28,7 @@ for eval_name in qa_arc_easy qa_arc_challenge qa_qasc qa_boolq qa_boolq_psg squa
 
     echo "====== Evaluating hugging face $MODEL_HF ======"
     /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/evaluate.py \
-        --model-path $BASE_PATH/output/$MODEL_NAME/gpt2-sft_squad_v2_ctxt-e3 \
+        --model-path $BASE_PATH/output/$MODEL_NAME/gpt2-sft_squad_v2_ctxt-ep3 \
         --test-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
         --score-on $SCORE_ON \
         --sample-num 1000 \
