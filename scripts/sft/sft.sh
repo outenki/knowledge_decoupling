@@ -3,12 +3,12 @@ BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
 SCRIPT_PATH=$BASE_PATH/src
 OUT_PATH=$BASE_PATH/output
 DATA_PATH=$BASE_PATH/input/tokenized/sft
+
 CONFIG_NAME=$1
 INIT_MODEL=$2
 DATA_NAME=$3
-EPOCHS=$4
-DATA_LIMITE=$5
-SUFFIX=${6:-""}
+OUTPUT_NAME=$4
+EPOCHS=$5
 
 
 echo "====== training on ${DATA_NAME} ======"
@@ -18,12 +18,12 @@ echo "start time: $(date -d @$start_time +"%D %T")"
 
 /home/pj25000107/ku50001566/.local/bin/uv run python $SCRIPT_PATH/train.py \
     --speedup \
-    -dp $DATA_PATH/${DATA_NAME} \
     -cn $CONFIG_NAME \
     -im $INIT_MODEL \
+    -dp $DATA_PATH/${DATA_NAME} \
     -e $EPOCHS \
-    -dl $DATA_LIMITE \
-    -o $OUT_PATH/$CONFIG_NAME/${DATA_NAME}-dl${DATA_LIMITE}-ep${EPOCHS}-sft_${SUFFIX}
+    -dl 0 \
+    -o $OUT_PATH/$CONFIG_NAME/${OUTPUT_NAME}-sft_${DATA_NAME}-e${EPOCHS}
 
 end_time=$(date +"%s")
 echo "end time: $(date -d @$end_time +"%D %T")"

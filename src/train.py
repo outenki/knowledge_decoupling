@@ -186,10 +186,6 @@ def main():
         eval_dataset = data_dict["val"]
     elif "validation" in data_dict:
         eval_dataset = data_dict["validation"]
-    elif "eval" in data_dict:
-        eval_dataset = data_dict["eval"]
-    elif "test" in data_dict:
-        eval_dataset = data_dict["test"]
     else:
         data_dict = train_dataset .train_test_split(test_size=0.01, shuffle=True, seed=42)
         train_dataset = data_dict["train"]

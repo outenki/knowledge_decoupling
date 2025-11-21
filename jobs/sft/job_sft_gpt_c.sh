@@ -14,13 +14,11 @@ cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts/sft || exit
 # CONFIG_NAME=$1
 # INIT_MODEL=$2
 # DATA_NAME=$3
-# EPOCHS=$4
-# DATA_LIMITE=$5
-# SUFFIX=${6:-""}
+# OUTPUT_NAME=$4
+# EPOCHS=$5
 singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif /bin/bash sft_gpt.sh \
     gpt2 \
     gpt2 \
-    squad_v2_ctxt \
-    3 \
-    0 \
-    gpt2
+    mix \
+    gpt2 \
+    3

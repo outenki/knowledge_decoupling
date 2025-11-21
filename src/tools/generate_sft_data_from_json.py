@@ -1,7 +1,7 @@
 import sys
 import json
 from pathlib import Path
-from datasets import load_dataset, DatasetDict
+from datasets import load_dataset, DatasetDict, Dataset
 from transformers import GPT2Tokenizer
 
 
@@ -41,13 +41,16 @@ def preprocess(example):
 
 input_path = Path(sys.argv[1])
 output_path = sys.argv[2]
+Path(output_path).mkdir(exist_ok=True, parents=True)
 
-train_path = input_path / "train.json"
-test_path = input_path / "test.json"
+train_js = []
+print(f"Loading train.json from {input_path}")
+for json_file in input_path.rglob("*.json"):
+    with open(json_file, "r") as f:
+        train_js += json.load(f)
 
-# --- load train ---
-print(f"Loading train.json from {train_path}")
-train_ds = load_dataset("json", data_files=str(train_path))["train"]
+# --- load data ---
+train_ds = Dataset.from_list(train_js)
 
 print("Processing train data...")
 tokenized_train = train_ds.map(
@@ -57,20 +60,6 @@ tokenized_train = train_ds.map(
 )
 
 dataset_dict = {"train": tokenized_train}
-
-# --- load test (optional) ---
-if test_path.exists():
-    print(f"Loading test.json from {test_path}")
-    test_ds = load_dataset("json", data_files=str(test_path))["train"]
-
-    print("Processing test data...")
-    tokenized_test = test_ds.map(
-        preprocess,
-        remove_columns=test_ds.column_names,
-        desc="Tokenizing test",
-    )
-
-    dataset_dict["test"] = tokenized_test
 
 # --- save ---
 print(f"Saving tokenized dataset to {output_path}")
