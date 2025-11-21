@@ -41,7 +41,7 @@ for eval_name in qa_arc_easy qa_arc_challenge qa_qasc qa_boolq qa_boolq_psg squa
         smolLM2-ox3000-bs1024-dl0-ep3 \
         smolLM2-ox3000-bs1024-dl0-ep3-sft_squad_v2_ctxt-ep3 \
         smolLM2-bs1024-dl0-ep1 \
-        smolLM2-bs1024-dl0-ep1-sft_squad_v2_ctxt-dl0-ep3 \
+        smolLM2-bs1024-dl0-ep1-sft_squad_v2_ctxt-dl0-ep3
     do
         echo
         echo "====== Evaluating $data_name ======"
