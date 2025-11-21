@@ -29,6 +29,7 @@ for eval_name in verb_agreement fce_5gram qa_arc_easy qa_arc_challenge qa_qasc q
 
     for data_name in \
         smolLM2-nonce-bs1024-dl0-ep1 \
+        smolLM2-nonce-mn3-bs1024-dl0-ep1 \
         smolLM2-ox3000-bs1024-dl0-ep3 \
         squad_v2_ctxt-dl0-ep3-sft_smolLM2-ox3000-bs1024-dl0-ep3 \
         smolLM2-bs1024-dl0-ep1 \
