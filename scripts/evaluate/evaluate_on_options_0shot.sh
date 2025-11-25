@@ -24,7 +24,7 @@ for eval_name in verb_agreement fce_5gram qa_arc_easy qa_arc_challenge qa_qasc q
         --test-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
         --score-on $SCORE_ON \
         --sample-num 1000 \
-        -o $BASE_PATH/output/$MODEL_NAME/${MODEL_HF}_hf/evaluation/$score_on_${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
+        -o $BASE_PATH/output/$MODEL_NAME/${MODEL_HF}-hf/evaluation/$score_on_${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
 
     echo "====== Evaluating hugging face $MODEL_HF ======"
     /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/evaluate.py \

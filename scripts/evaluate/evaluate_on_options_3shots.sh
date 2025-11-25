@@ -26,7 +26,7 @@ for eval_name in qa_arc_easy qa_arc_challenge qa_qasc qa_boolq qa_boolq_psg; do
         --example-data $BASE_PATH/input/evaluate_data/$eval_name/examples.json \
         --score-on $SCORE_ON \
         --sample-num 1000 \
-        -o $BASE_PATH/output/$MODEL_NAME/${MODEL_HF}_hf/evaluation/$score_on_${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
+        -o $BASE_PATH/output/$MODEL_NAME/${MODEL_HF}-hf/evaluation/$score_on_${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
 
     echo "====== Evaluating hugging face $MODEL_HF ======"
     /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/evaluate.py \
