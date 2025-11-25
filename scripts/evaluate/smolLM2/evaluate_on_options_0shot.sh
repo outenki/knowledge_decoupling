@@ -6,7 +6,7 @@ SCORE_ON=options
 MODEL_HF=gpt2
 FEWSHOTS=0
 
-for eval_name in verb_agreement fce_5gram qa_arc_easy qa_arc_challenge qa_qasc qa_boolq qa_boolq_psg; do
+for eval_name in verb_agreement fce_5gram qa_arc_easy qa_arc_challenge qa_qasc qa_boolq qa_boolq_ctxt; do
     echo
     echo "============ $eval_name ============"
 
@@ -26,7 +26,7 @@ for eval_name in verb_agreement fce_5gram qa_arc_easy qa_arc_challenge qa_qasc q
         --sample-num 1000 \
         -o $BASE_PATH/output/$MODEL_NAME/${MODEL_HF}-hf/evaluation/$score_on_${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
 
-    echo "====== Evaluating hugging face $MODEL_HF ======"
+    echo "====== Evaluating hugging face $MODEL_HF after SFT======"
     /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/evaluate.py \
         --model-path $BASE_PATH/output/$MODEL_NAME/gpt2-sft_squad_v2_ctxt-ep3 \
         --test-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \

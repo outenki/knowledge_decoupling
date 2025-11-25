@@ -1,0 +1,2 @@
+sh evaluate_on_options_0shot.sh
+sh evaluate_on_options_3shots.sh

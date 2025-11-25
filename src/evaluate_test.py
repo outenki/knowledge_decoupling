@@ -12,7 +12,7 @@ import tqdm
 import random
 
 import torch
-from transformers import GPT2Tokenizer
+from transformers import AutoTokenizer
 from transformers import AutoModelForCausalLM
 from torch.nn import CrossEntropyLoss
 
@@ -26,7 +26,11 @@ random.seed(42)
 def read_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--model-path', '-mp', dest='model_path', type=str, required=True,
+        '--model', '-mp', dest='model', type=str, required=True,
+        help='Model path to load from. (pt or safetensors)'
+    )
+    parser.add_argument(
+        '--tokenizer', '-t', dest='tokenizer', type=str, required=False,
         help='Model path to load from. (pt or safetensors)'
     )
     parser.add_argument(
@@ -242,7 +246,7 @@ def main():
     print(vars(args))
 
     # ======== Check arguments ========
-    model_path = args.model_path
+    model_path = args.model
     eval_data_path = args.data_path
     out_path = args.out_path
     Path(out_path).mkdir(parents=True, exist_ok=True)
@@ -252,7 +256,10 @@ def main():
     print(f"Using device: {device}")
 
     # ======== Load model and tokenizer ========
-    tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+    tokenizer = AutoTokenizer.from_pretrained("gpt2")
+    if args.tokenizer:
+        tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
+        
     tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "left"
     print(f"Loading model from {model_path}...")
