@@ -3,45 +3,46 @@ BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
 
 MODEL_NAME=gpt2
 SCORE_ON=options
-MODEL_HF=gpt2
 FEWSHOTS=0
 
 for eval_name in verb_agreement fce_5gram qa_arc_easy qa_arc_challenge qa_qasc qa_boolq qa_boolq_ctxt; do
     echo
     echo "============ $eval_name ============"
 
-    echo "====== Evaluating random $MODEL_HF ======"
+    # echo "====== Evaluating random $MODEL_NAME ======"
+    # /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/evaluate.py \
+    #     --model-path $BASE_PATH/output/$MODEL_NAME/${MODEL_NAME}-random \
+    #     --test-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
+    #     --score-on $SCORE_ON \
+    #     --sample-num 1000 \
+    #     -o $BASE_PATH/output/$MODEL_NAME/${MODEL_NAME}-random/evaluation/$score_on_${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
+
+    # echo "====== Evaluating hugging face $MODEL_NAME ======"
+    # /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/evaluate.py \
+    #     --model-path $MODEL_NAME \
+    #     --test-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
+    #     --score-on $SCORE_ON \
+    #     --sample-num 1000 \
+    #     -o $BASE_PATH/output/$MODEL_NAME/${MODEL_NAME}-hf/evaluation/$score_on_${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
+
+    echo "====== Evaluating hugging face $MODEL_NAME after SFT======"
     /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/evaluate.py \
-        --model-path $BASE_PATH/output/$MODEL_NAME/${MODEL_NAME}-random \
+        --model-path $BASE_PATH/output/$MODEL_NAME/gpt2-sft_mix-e3 \
         --test-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
         --score-on $SCORE_ON \
         --sample-num 1000 \
-        -o $BASE_PATH/output/$MODEL_NAME/${MODEL_NAME}-random/evaluation/$score_on_${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
-
-    echo "====== Evaluating hugging face $MODEL_HF ======"
-    /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/evaluate.py \
-        --model-path $MODEL_HF \
-        --test-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
-        --score-on $SCORE_ON \
-        --sample-num 1000 \
-        -o $BASE_PATH/output/$MODEL_NAME/${MODEL_HF}-hf/evaluation/$score_on_${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
-
-    echo "====== Evaluating hugging face $MODEL_HF after SFT======"
-    /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/evaluate.py \
-        --model-path $BASE_PATH/output/$MODEL_NAME/gpt2-sft_squad_v2_ctxt-ep3 \
-        --test-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
-        --score-on $SCORE_ON \
-        --sample-num 1000 \
-        -o $BASE_PATH/output/$MODEL_NAME/gpt2_hf/evaluation/$score_on_${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
+        -o $BASE_PATH/output/$MODEL_NAME/gpt2-sft_mix-e3/evaluation/$score_on_${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
 
 
+        # smolLM2-nonce-bs1024-dl0-ep1 \
+        # smolLM2-nonce-mn3-bs1024-dl0-ep1 \
+        # smolLM2-ox3000-bs1024-dl0-ep3 \
+        # smolLM2-ox3000-bs1024-dl0-ep3-sft_squad_v2_ctxt-ep3 \
+        # smolLM2-bs1024-dl0-ep1 \
+        # smolLM2-bs1024-dl0-ep1-sft_squad_v2_ctxt-ep3
     for data_name in \
-        smolLM2-nonce-bs1024-dl0-ep1 \
-        smolLM2-nonce-mn3-bs1024-dl0-ep1 \
-        smolLM2-ox3000-bs1024-dl0-ep3 \
-        smolLM2-ox3000-bs1024-dl0-ep3-sft_squad_v2_ctxt-ep3 \
-        smolLM2-bs1024-dl0-ep1 \
-        smolLM2-bs1024-dl0-ep1-sft_squad_v2_ctxt-ep3
+        smolLM2-ox3000-bs1024-dl0-ep3-sft_mix-e3 \
+        smolLM2-bs1024-dl0-ep1-sft_mix-e3
     do
         echo
         echo "====== Evaluating $data_name ======"

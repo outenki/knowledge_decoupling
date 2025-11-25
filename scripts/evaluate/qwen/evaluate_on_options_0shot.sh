@@ -32,7 +32,7 @@ for eval_name in verb_agreement fce_5gram; do
     #     --test-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
     #     --score-on $SCORE_ON \
     #     --sample-num 1000 \
-    #     -o $BASE_PATH/output/$MODEL_NAME/gpt2_hf/evaluation/$score_on_${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
+    #     -o $BASE_PATH/output/$MODEL_NAME/gpt2-hf/evaluation/$score_on_${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
 
 
     for data_name in \
