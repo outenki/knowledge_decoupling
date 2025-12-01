@@ -2,13 +2,13 @@
 BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
 
 MODEL_NAME=gpt2
-SCORE_ON=generation
-FEWSHOTS=3
+SCORE_ON=options
+FEWSHOTS=0
 SAMPLE_NUM=1000
 MODE="simple"
 SUFFIX="_20251127_${MODE}"
 
-for eval_name in qa_arc_easy qa_arc_challenge qa_qasc qa_boolq qa_boolq_ctxt squad_v2 squad_v2_ctxt; do
+for eval_name in verb_agreement fce_5gram qa_arc_easy qa_arc_challenge qa_qasc qa_boolq qa_boolq_ctxt; do
     echo
     echo "============ $eval_name ============"
     # echo "====== Evaluating hugging face $MODEL_NAME ======"
@@ -16,7 +16,6 @@ for eval_name in qa_arc_easy qa_arc_challenge qa_qasc qa_boolq qa_boolq_ctxt squ
     #     --model $MODEL_NAME \
     #     --mode $MODE \
     #     --test-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
-    #     --example-data $BASE_PATH/input/evaluate_data/$eval_name/examples.json \
     #     --score-on $SCORE_ON \
     #     --sample-num $SAMPLE_NUM \
     #     -o $BASE_PATH/output/$MODEL_NAME/${MODEL_NAME}-hf/evaluation${SUFFIX}/${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
@@ -31,7 +30,6 @@ for eval_name in qa_arc_easy qa_arc_challenge qa_qasc qa_boolq qa_boolq_ctxt squ
     #         --model $BASE_PATH/output/$MODEL_NAME/$model \
     #         --mode $MODE \
     #         --test-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
-    #         --example-data $BASE_PATH/input/evaluate_data/$eval_name/examples.json \
     #         --score-on $SCORE_ON \
     #         --sample-num $SAMPLE_NUM \
     #         -o $BASE_PATH/output/$MODEL_NAME/$model/evaluation${SUFFIX}/${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
@@ -54,7 +52,6 @@ for eval_name in qa_arc_easy qa_arc_challenge qa_qasc qa_boolq qa_boolq_ctxt squ
             --model $BASE_PATH/output/$MODEL_NAME/smolLM2/$model \
             --mode $MODE \
             --test-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
-            --example-data $BASE_PATH/input/evaluate_data/$eval_name/examples.json \
             --score-on $SCORE_ON \
             --sample-num $SAMPLE_NUM \
             -o $BASE_PATH/output/$MODEL_NAME/smolLM2/$model/evaluation${SUFFIX}/${SCORE_ON}/${FEWSHOTS}_shots/$eval_name

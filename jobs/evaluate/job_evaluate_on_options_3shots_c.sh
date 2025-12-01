@@ -9,6 +9,6 @@
 
 module load singularity-ce
 
-cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts/evaluate || exit 1
+cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts/evaluate/smolLM2 || exit 1
 
 singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif /bin/bash evaluate_on_options_3shots.sh
