@@ -1,15 +1,14 @@
 import argparse
 from functools import partial
 from pathlib import Path
-from datasets import Dataset
-from transformers import GPT2Tokenizer
-from tqdm import tqdm
+from transformers import AutoTokenizer
 
 from lib.dataset import load_custom_dataset
 
 
 def read_args():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--tokenizer", type=str, required=False, default="gpt2")
     parser.add_argument("--data-name", "-dn", type=str, required=True)
     parser.add_argument("--load-from", "-lf", type=str, choices=["local", "hf"], required=True)
     parser.add_argument("--data-type", "-dt", type=str, default=None)
@@ -53,8 +52,9 @@ def main():
     tokenized_datasets = datasets
     if args.tokenize:
         print(">>> Tokenizing ...")
-        tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+        tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
         tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.padding_side = "left"
 
         map_func = partial(tokenize_examples, tokenizer=tokenizer, column_name=args.data_column)
         tokenized_datasets = datasets.map(
