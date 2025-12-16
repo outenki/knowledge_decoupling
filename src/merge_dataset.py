@@ -5,8 +5,6 @@ from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
 from datasets import concatenate_datasets, load_from_disk
 
-from lib.dataset import slice_dataset
-
 
 def read_args():
     parser = argparse.ArgumentParser()

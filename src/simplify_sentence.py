@@ -168,6 +168,7 @@ def simplify_sentence(doc):
 
         candidate = get_simple_candidate(token)
         if candidate is None:
+            print(f"failed to simplify token: {token}")
             return ""
             # out_tokens.append(token.text_with_ws)
             # continue
@@ -295,6 +296,16 @@ def main():
     else:
         raise TypeError
 
+def test():
+    # text = "Free was george justified in killing lennie essay killing papers, essays, and research papers."
+    # text = "What is the percent of increase to the nearest percent?"
+    text = "Pay day loan around $1000."
+    print(f"ori: {text}")
+    print("simplified:")
+    print(simplify_long_text(text))
+
+
 
 if __name__ == "__main__":
-    main()
+    # main()
+    test()

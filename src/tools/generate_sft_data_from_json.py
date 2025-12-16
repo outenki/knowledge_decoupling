@@ -1,15 +1,17 @@
 import sys
 import json
 from pathlib import Path
-from datasets import load_dataset, DatasetDict, Dataset
+from datasets import DatasetDict, Dataset
 from transformers import GPT2Tokenizer
 
 
-TOKENIZER = GPT2Tokenizer.from_pretrained("gpt2")
+# gpt2
+# Qwen/Qwen3-0.6B-Base
+# HuggingFaceTB/SmolLM2-135M
+print(f"Using tokenizer: {sys.argv[3]}")
+TOKENIZER = GPT2Tokenizer.from_pretrained(sys.argv[3])
 TOKENIZER.pad_token = TOKENIZER.eos_token
 TOKENIZER.padding_side = "left"
-
-
 def preprocess(example):
     prompt = example["prompt"]
     response = example["answer"]
@@ -41,12 +43,18 @@ def preprocess(example):
 
 input_path = Path(sys.argv[1])
 output_path = sys.argv[2]
+
 Path(output_path).mkdir(exist_ok=True, parents=True)
 
 train_js = []
-print(f"Loading train.json from {input_path}")
-for json_file in input_path.rglob("*.json"):
-    with open(json_file, "r") as f:
+if input_path.is_dir():
+    for json_file in input_path.rglob("*.json"):
+        print(f"Loading train.json from {json_file}")
+        with open(json_file, "r") as f:
+            train_js += json.load(f)
+else:
+    print(f"Loading train.json from {input_path}")
+    with open(input_path, "r") as f:
         train_js += json.load(f)
 
 # --- load data ---

@@ -100,7 +100,7 @@ def read_args():
     return parser.parse_args()
 
 
-def model_config(model_name: str) -> AutoConfig | None:
+def model_config(model_name: str):
     return AutoConfig.from_pretrained(model_name)
 
 
@@ -129,11 +129,11 @@ def main():
     Path(args.out_path).mkdir(parents=True, exist_ok=True)
 
     # === Load model
-    model: AutoModelForCausalLM | None = None
+    model = None
     print("Loading model from config:", args.config_name)
     model = load_model_from_config(args.config_name)
     if args.init_model:
-        print("Loading model from local path:", args.init_model)
+        print("Loading init model from:", args.init_model)
         model = AutoModelForCausalLM.from_pretrained(
             args.init_model,
             quantization_config=None,

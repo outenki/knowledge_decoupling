@@ -4,11 +4,10 @@ SCRIPT_PATH=$BASE_PATH/src
 OUT_PATH=$BASE_PATH/output
 DATA_PATH=$BASE_PATH/input/tokenized
 CONFIG_NAME=$1
-MODEL_NAME=$2
-DATA_NAME=$3
-EPOCHS=$4
-DATA_LIMITE=$5
-SUFFIX=${6:-""}
+DATA_NAME=$2
+EPOCHS=$3
+DATA_LIMITE=$4
+SUFFIX=${5:-""}
 
 
 echo "====== training on ${DATA_NAME} ======"

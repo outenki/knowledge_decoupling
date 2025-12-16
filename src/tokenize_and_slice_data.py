@@ -64,35 +64,33 @@ def main():
             remove_columns=[args.data_column],
             desc="Tokenizing data"
         )
-
-        tokenized_path = output_path / "tokenized"
-        print(f">>> Save tokenized dataset to: {tokenized_path}")
-        tokenized_datasets.save_to_disk(str(tokenized_path))
+        if not args.slice:
+            tokenized_path = output_path
+            print(f">>> Save tokenized dataset to: {tokenized_path}")
+            tokenized_datasets.save_to_disk(str(tokenized_path))
 
     # === BINARIZATION / SLICE ===
-    if not args.slice:
-        print(">>> Skip slicing")
-        return
+    if args.slice:
 
-    print(">>> Slicing ...")
-    block_sizes = [args.block_size] if args.block_size else [128, 512, 1024]
+        print(">>> Slicing ...")
+        block_sizes = [args.block_size] if args.block_size else [128, 512, 1024]
 
-    for bs in block_sizes:
-        print(f"  -> block_size = {bs}")
-        map_func = partial(group_texts_to_blocks, block_size=bs)
+        for bs in block_sizes:
+            print(f"  -> block_size = {bs}")
+            map_func = partial(group_texts_to_blocks, block_size=bs)
 
-        lm_datasets = tokenized_datasets.map(
-            map_func,
-            batched=True,
-            batch_size=3000,
-            num_proc=4,
-            desc=f"Chunking to blocks ({bs})",
-            remove_columns=tokenized_datasets["train"].column_names
-        )
+            lm_datasets = tokenized_datasets.map(
+                map_func,
+                batched=True,
+                batch_size=3000,
+                num_proc=4,
+                desc=f"Chunking to blocks ({bs})",
+                remove_columns=tokenized_datasets["train"].column_names
+            )
 
-        bin_path = output_path / f"tokenized_bs{bs}"
-        print(f"  -> Save to: {bin_path}")
-        lm_datasets.save_to_disk(str(bin_path))
+            bin_path = output_path
+            print(f"  -> Save to: {bin_path}")
+            lm_datasets.save_to_disk(str(bin_path))
 
     print("✅ Done！")
 

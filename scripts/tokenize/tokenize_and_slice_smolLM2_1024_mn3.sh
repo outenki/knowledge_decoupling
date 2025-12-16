@@ -17,7 +17,7 @@ do
     echo
     echo "====== preprocess part$part ======"
     /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/tokenize_and_slice_data.py \
-        --tokenizer $TOKENIZER -dn $DATA_PATH/part$part -lf local -dc text -t -s -bs 1024 -o $OUTPUT_PATH/$TOKENIZER/part$part
+        --tokenizer $TOKENIZER -dn $DATA_PATH/part$part -lf local -dc text -t -s -bs 1024 -o $OUTPUT_PATH/$TOKENIZER/tokenized_bs1024/part$part
 done
 
 end_time=$(date +"%s")

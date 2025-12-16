@@ -1,3 +1,4 @@
-pjsub job_sft_gpt_c.sh
-pjsub job_sft_ox3000_c.sh
-pjsub job_sft_sml_c.sh
+pjsub job_sft_qwen_mix_c.sh
+pjsub job_sft_qwen_squad_c.sh
+pjsub job_sft_sml_mix_c.sh
+pjsub job_sft_sml_squad_c.sh
