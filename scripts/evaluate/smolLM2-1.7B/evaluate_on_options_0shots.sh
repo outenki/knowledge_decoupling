@@ -19,7 +19,7 @@ for eval_name in verb_agreement fce_5gram qa_arc_easy qa_arc_challenge qa_qasc q
         --test-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
         --score-on $SCORE_ON \
         --sample-num $SAMPLE_NUM \
-        -o $BASE_PATH/output/$MODEL_NAME/random/evaluation_$SUFFIX/$score_on_${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
+        -o $BASE_PATH/output/$MODEL_NAME/random/evaluation$SUFFIX/$score_on_${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
 
     echo "====== Evaluating hugging face $MODEL_NAME ======"
     /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/evaluate.py \
@@ -28,7 +28,7 @@ for eval_name in verb_agreement fce_5gram qa_arc_easy qa_arc_challenge qa_qasc q
         --test-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
         --score-on $SCORE_ON \
         --sample-num 1000 \
-        -o $BASE_PATH/output/$MODEL_NAME/hf/evaluation/$score_on_${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
+        -o $BASE_PATH/output/$MODEL_NAME/hf/evaluation$SUFFIX/$score_on_${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
 
     echo "====== Evaluating hugging face $MODEL_NAME after SFT by mix ======"
     /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/evaluate.py \
@@ -37,7 +37,7 @@ for eval_name in verb_agreement fce_5gram qa_arc_easy qa_arc_challenge qa_qasc q
         --test-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
         --score-on $SCORE_ON \
         --sample-num $SAMPLE_NUM \
-        -o $BASE_PATH/output/$MODEL_NAME/hf-sft/mix-e3/evaluation_$SUFFIX/$score_on_${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
+        -o $BASE_PATH/output/$MODEL_NAME/hf-sft/mix-e3/evaluation$SUFFIX/$score_on_${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
 
     echo "====== Evaluating hugging face $MODEL_NAME after SFT by squad_v2_ctx ======"
     /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/evaluate.py \
@@ -46,7 +46,7 @@ for eval_name in verb_agreement fce_5gram qa_arc_easy qa_arc_challenge qa_qasc q
         --test-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
         --score-on $SCORE_ON \
         --sample-num $SAMPLE_NUM \
-        -o $BASE_PATH/output/$MODEL_NAME/hf-sft/squad_v2_ctxt-e3/evaluation_$SUFFIX/$score_on_${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
+        -o $BASE_PATH/output/$MODEL_NAME/hf-sft/squad_v2_ctxt-e3/evaluation$SUFFIX/$score_on_${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
 
 
 
@@ -62,6 +62,6 @@ for eval_name in verb_agreement fce_5gram qa_arc_easy qa_arc_challenge qa_qasc q
     #         --test-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
     #         --score-on $SCORE_ON \
     #         --sample-num $SAMPLE_NUM \
-    #         -o $BASE_PATH/output/$MODEL_NAME/$data_name/evaluation_$SUFFIX/$score_on_${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
+    #         -o $BASE_PATH/output/$MODEL_NAME/$data_name/evaluation$SUFFIX/$score_on_${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
     # done
 done
