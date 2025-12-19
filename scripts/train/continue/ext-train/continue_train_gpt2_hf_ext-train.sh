@@ -6,7 +6,7 @@ DATA_PATH=$BASE_PATH/input/tokenized/ext/sml2
 
 CONFIG_NAME="gpt2"
 INIT_MODEL="gpt2"
-EPOCHS=1
+# EPOCHS=1
 
 
 echo "====== continue training ${INIT_MODEL} ======"
@@ -14,14 +14,16 @@ start_time=$(date +"%s")
 echo "start time: $(date -d @$start_time +"%D %T")"
 
 
-/home/pj25000107/ku50001566/.local/bin/uv run python $SCRIPT_PATH/train.py \
-    --speedup \
-    -cn $CONFIG_NAME \
-    -im $INIT_MODEL \
-    -dp $DATA_PATH/ext-train-sml2 \
-    -e $EPOCHS \
-    -dl 0\
-    -o $OUT_PATH/$CONFIG_NAME/hf-ext_train-ep${EPOCHS}
+for EPOCHS in 1 3; do
+    /home/pj25000107/ku50001566/.local/bin/uv run python $SCRIPT_PATH/train.py \
+        --speedup \
+        -cn $CONFIG_NAME \
+        -im $INIT_MODEL \
+        -dp $DATA_PATH/ext-train-sml2 \
+        -e $EPOCHS \
+        -dl 0\
+        -o $OUT_PATH/$CONFIG_NAME/hf-ext_train-ep${EPOCHS}
+done
 
 end_time=$(date +"%s")
 echo "end time: $(date -d @$end_time +"%D %T")"
