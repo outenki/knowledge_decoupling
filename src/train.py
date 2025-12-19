@@ -15,6 +15,7 @@ from transformers.trainer_callback import TrainerCallback
 from transformers.training_args import TrainingArguments
 from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
+from datasets import concatenate_datasets
 
 
 from lib.dataset import load_custom_dataset
@@ -67,7 +68,7 @@ class LossLoggerCallback(TrainerCallback):
 def read_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--data-path', '-dp', dest='data_path', type=str,
+        '--data-path', '-dp', dest='data_path', type=str, action='append',
         help='Dataset path to load from.'
     )
     parser.add_argument(
@@ -117,6 +118,27 @@ def random_sample(dataset, number: int) -> Dataset:
     return dataset.select(indices)
 
 
+def limit_dataset_dict(data_dict: DatasetDict, data_limit: int) -> DatasetDict:
+    for k, dt in data_dict.items():
+        if k == "train":
+            data_dict[k] = random_sample(dt, data_limit)
+        else:
+            data_limit = data_limit // 10
+            data_dict[k] = random_sample(dt, data_limit)
+    return data_dict
+
+
+def load_dataset_dict(data_path: str) -> DatasetDict:
+    dataset = load_custom_dataset(data_path, None, "local")
+    if isinstance(dataset, Dataset):
+        data_dict = dataset.train_test_split(train_size=1/1.1, shuffle=True, seed=42)
+    elif isinstance(dataset, DatasetDict):
+        data_dict = dataset
+    else:
+        raise TypeError(f"Invalid data type {type(dataset)}")
+    return data_dict
+
+
 def main():
     print("CUDA available:", torch.cuda.is_available())
     print("GPU count:", torch.cuda.device_count())
@@ -159,25 +181,20 @@ def main():
     model.save_pretrained(Path(args.out_path) / "init_model")
 
     # === load data
-    dataset = load_custom_dataset(args.data_path, None, "local")
+    data_list = []
+    for data_path in args.data_path:
+        print(f"Loading dataset from {data_path}")
+        _data_dict = load_dataset_dict(data_path)
+        data_list.append(_data_dict)
+    data_dict = DatasetDict({
+        split: concatenate_datasets([dd[split] for dd in data_list])
+        for split in data_list[0].keys()
+    })
 
-    if isinstance(dataset, Dataset):
-        if args.data_limit > 0:
-            data_limit = ceil(args.data_limit * 1.1)
-            # dataset = slice_dataset(dataset, 0, data_limit)
-            dataset = random_sample(dataset, data_limit)
-        data_dict = dataset.train_test_split(train_size=1/1.1, shuffle=True, seed=42)
-    elif isinstance(dataset, DatasetDict):
-        data_dict = dataset
-        for k, dt in data_dict.items():
-            if args.data_limit > 0:
-                if k == "train":
-                    data_dict[k] = random_sample(dt, args.data_limit)
-                else:
-                    data_limit = args.data_limit // 10
-                    data_dict[k] = random_sample(dt, data_limit)
-    else:
-        raise TypeError(f"Invalid data type {type(dataset)}")
+    if args.data_limit > 0:
+        data_dict = limit_dataset_dict(data_dict, args.data_limit)
+
+    print("Dataset:", data_dict)
 
     train_dataset: Dataset | None = None
     eval_dataset: Dataset | None = None

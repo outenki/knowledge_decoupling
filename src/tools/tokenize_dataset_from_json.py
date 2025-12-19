@@ -1,17 +1,33 @@
 import sys
 import json
+import argparse
+
 from pathlib import Path
 from datasets import DatasetDict, Dataset
 from transformers import GPT2Tokenizer
 
+parser = argparse.ArgumentParser()
+parser.add_argument(
+    '--input-path', '-i', dest='input_path', type=str,
+    help='Path to json file or dir of json files'
+)
+parser.add_argument('--output-path', '-output', dest='output_path', type=str,)
+parser.add_argument(
+    '--tokenizer', '-tk', dest='tokenizer', type=str,
+    choices={"gpt2", "Qwen/Qwen3-0.6B-Base", "HuggingFaceTB/SmolLM2-135M"}
+)
+parser.add_argument(
+    '--mask-prompt', '-mp', dest='mask_prompt', action='store_true',
+    help='Mask prompt for SFT'
+)
+args = parser.parse_args()
 
-# gpt2
-# Qwen/Qwen3-0.6B-Base
-# HuggingFaceTB/SmolLM2-135M
-print(f"Using tokenizer: {sys.argv[3]}")
-TOKENIZER = GPT2Tokenizer.from_pretrained(sys.argv[3])
+
+print(f"Using tokenizer: {args.tokenizer}")
+TOKENIZER = GPT2Tokenizer.from_pretrained(args.tokenizer)
 TOKENIZER.pad_token = TOKENIZER.eos_token
 TOKENIZER.padding_side = "left"
+
 def preprocess(example):
     prompt = example["prompt"]
     response = example["answer"]
@@ -20,9 +36,12 @@ def preprocess(example):
     response_ids = TOKENIZER(response, add_special_tokens=False).input_ids
 
     input_ids = prompt_ids + response_ids
-    labels = [-100] * len(prompt_ids) + response_ids
+    if args.mask_prompt:
+        labels = [-100] * len(prompt_ids) + response_ids
+    else:
+        labels = input_ids
 
-    # pad 到 max_length
+    # pad to max_length
     max_length = 1024
     pad_len = max_length - len(input_ids)
     if pad_len > 0:
@@ -41,9 +60,8 @@ def preprocess(example):
     }
 
 
-input_path = Path(sys.argv[1])
-output_path = sys.argv[2]
-
+input_path = Path(args.input_path)
+output_path = args.output_path
 Path(output_path).mkdir(exist_ok=True, parents=True)
 
 train_js = []
