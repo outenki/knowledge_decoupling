@@ -1,11 +1,11 @@
 #!/bin/bash
 BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
-DATA_NAME=SmolLM2
-ITER_NUM=10
+DATA_NAME=SmolLM2-1.7B-100B
+MULTI_PROC=10
 SIZE=100000
-START=$(($1 * $SIZE * $ITER_NUM))
-END=$(($(($1 + 1)) * $SIZE * $ITER_NUM -1))
-MAX_N=3
+START=$(($1 * $SIZE * $MULTI_PROC))
+END=$(($(($1 + 1)) * $SIZE * $MULTI_PROC -1))
+MAX_N=8
 
 
 start_time=$(date +"%s")
@@ -17,14 +17,12 @@ do
     echo
     echo "====== preprocess $part ======"
     /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/generate_nonce_data.py \
-        -dn "EleutherAI/SmolLM2-135M-10B" \
+        -d "EleutherAI/SmolLM2-135M-10B" \
         -lf hf \
         -sf $i \
         -ss text \
         -sk source \
         -sv stack_edu infimm_webmath \
-        -lb $BASE_PATH/data/wikimedia-nonce/vocab/lemma_blacklist \
-        -wb $BASE_PATH/data/wikimedia-nonce/vocab/nonce_word_bank.json \
         -l $SIZE \
         -mn $MAX_N \
         -o $BASE_PATH/data/$DATA_NAME/sents/mn_$MAX_N/nonce-parts/part$part

@@ -10,3 +10,10 @@ def get_device():
     else:
         device = torch.device("cpu")
     return device
+
+
+def print_args(args: dict):
+    print("↓↓↓↓↓↓↓↓↓↓ Arguments ↓↓↓↓↓↓↓↓↓↓")
+    for k, v in args.items():
+        print(f"{k}: {v}")
+    print("↑↑↑↑↑↑↑↑↑↑ Arguments ↑↑↑↑↑↑↑↑↑↑") 

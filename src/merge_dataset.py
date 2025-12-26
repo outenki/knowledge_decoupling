@@ -5,6 +5,8 @@ from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
 from datasets import concatenate_datasets, load_from_disk
 
+from lib.utils import print_args
+
 
 def read_args():
     parser = argparse.ArgumentParser()
@@ -25,7 +27,7 @@ def read_args():
 
 def main():
     args = read_args()
-    print(vars(args))
+    print_args(vars(args))
     Path(args.out_path).mkdir(parents=True, exist_ok=True)
 
     datasets = []
@@ -37,7 +39,7 @@ def main():
             continue
         try:
             dataset = load_from_disk(str(data_path))
-            print(f"Loaded dataset from {data_path}(size: {len(dataset)})")
+            print(f"Loaded dataset from {data_path}")
             datasets.append(dataset)
         except Exception as e:
             print(f"Failed to load dataset from {data_path}: {e}")
@@ -71,6 +73,7 @@ def main():
     else:
         raise TypeError(f"Dataset or DatasetDict is expected. Got {type(datasets[0])}")
     if merged:
+        print(f"Saving dataset to {args.out_path}")
         merged.save_to_disk(args.out_path)
 
 

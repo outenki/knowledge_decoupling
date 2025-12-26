@@ -5,6 +5,8 @@ from pathlib import Path
 
 from datasets import load_dataset, Dataset
 
+from lib.utils import print_args
+
 
 def read_args():
     parser = argparse.ArgumentParser()
@@ -110,7 +112,7 @@ def generate_qa_data_from_squad(dataset: Dataset, with_context=False) -> list[di
 
 
 args = read_args()
-print(vars(args))
+print_args(vars(args))
 print(f"making dirs: {args.output_path}")
 Path(args.output_path).mkdir(parents=True, exist_ok=True)
 

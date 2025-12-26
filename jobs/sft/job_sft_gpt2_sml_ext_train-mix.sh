@@ -3,9 +3,9 @@
 #PJM -L "elapse=24:00:00"
 #PJM -L "gpu=4"
 #PJM -L "jobenv=singularity"
-#PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_sft_gpt2_c.err
-#PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_sft_gpt2_c.out
-#PJM -N "sft_gpt2_e3_c"
+#PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_sft_ext_full.err
+#PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_sft_ext_full.out
+#PJM -N "sft_gpt2_ef_c"
 
 module load singularity-ce
 
@@ -18,7 +18,7 @@ cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts/sft || exit
 # EPOCHS=$5
 singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif /bin/bash sft.sh \
     gpt2 \
-    gpt2 \
-    mix \
-    gpt2 \
+    /home/pj25000107/ku50001566/projects/knowledge_decoupling/output/gpt2/smolLM2/smolLM2-bs1024-dl0-ep1-ext_train-ep1 \
+    gpt2/mix \
+    smolLM2/smolLM2-bs1024-dl0-ep1-ext_train-ep1-sft_mix_ep3 \
     3

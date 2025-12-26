@@ -17,7 +17,7 @@ from transformers import AutoModelForCausalLM
 from torch.nn import CrossEntropyLoss
 
 import pandas as pd
-from lib.utils import get_device
+from lib.utils import get_device, print_args
 
 
 random.seed(42)
@@ -243,7 +243,7 @@ def analyze_results(samples) -> dict:
 
 def main():
     args = read_args()
-    print(vars(args))
+    print_args(vars(args))
 
     # ======== Check arguments ========
     model_path = args.model

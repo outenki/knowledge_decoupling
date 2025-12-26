@@ -17,6 +17,7 @@ from lib.basic_words.basic_words_850 import BASIC_WORDS_850
 from lib.basic_words.oxford_3000 import OXFORD_3000
 from lib.dataset import load_custom_dataset, slice_dataset, skip_dataset_by_column
 from lib.text import simple_split_text
+from lib.utils import print_args
 
 
 try:
@@ -229,7 +230,7 @@ def read_args():
 
 def main():
     args = read_args()
-    print(vars(args))
+    print_args(vars(args))
     out_path = args.out_path
     Path(out_path).mkdir(parents=True, exist_ok=True)
 

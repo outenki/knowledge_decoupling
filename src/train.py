@@ -17,8 +17,8 @@ from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
 from datasets import concatenate_datasets
 
-
 from lib.dataset import load_custom_dataset
+from lib.utils import print_args
 
 
 DECAY_RATE = 0.9  # for WSD
@@ -147,7 +147,7 @@ def main():
         print(f"GPU {i}: {torch.cuda.get_device_name(i)}")
 
     args = read_args()
-    print(vars(args))
+    print_args(vars(args))
     Path(args.out_path).mkdir(parents=True, exist_ok=True)
 
     # === Load model

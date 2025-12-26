@@ -9,6 +9,6 @@
 
 module load singularity-ce
 
-cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts/train/continue || exit 1
+cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts/train/continue/ext-train || exit 1
 
-singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif /bin/bash continue_train_gpt_sml_ext-train.sh
+singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif /bin/bash continue_train_gpt2_sml_ext-train.sh

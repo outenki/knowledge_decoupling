@@ -1,7 +1,7 @@
 #!/bin/bash
 
 BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling/output/HuggingFaceTB/SmolLM2-135M
-EVAL_DATA="squad_v2"
+EVAL_DATA="squad_v2_ctxt"
 
 #  gpt2
 for m in random hf hf-sft/mix-e3 hf-sft/squad_v2_ctxt-e3; do

@@ -18,7 +18,9 @@ cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts/sft || exit
 # EPOCHS=$5
 singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif /bin/bash sft.sh \
     gpt2 \
-    /home/pj25000107/ku50001566/projects/knowledge_decoupling/output/gpt2/smolLM2/smolLM2-nonce-mn3-bs1024-dl0-ep1 \
-    squad_v2_ctxt \
-    smolLM2-nonce-mn3-bs1024-dl0-ep1 \
+    /home/pj25000107/ku50001566/projects/knowledge_decoupling/output/gpt2/smolLM2/smolLM2-bs1024-dl0-ep1
+    gpt2/qa_boolq_ctxt \
+    smolLM2/smolLM2-bs1024-dl0-ep1-sft-qa_boolq_ctxt-ep3 \
     3
+
+

@@ -5,7 +5,7 @@ from functools import partial
 from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
 from datasets.load import load_dataset, load_from_disk
-from lib.text import simple_split_text
+from lib.text import split_text_to_sentences
 
 
 def load_custom_dataset(data_name: str, data_type: str | None, load_from: str) -> Dataset | DatasetDict | Any:
@@ -26,14 +26,14 @@ def load_custom_dataset(data_name: str, data_type: str | None, load_from: str) -
         print(f"Loading dataset {data_name} from Hugging Face...")
         if data_name.lower() == "wikimedia":
             return load_dataset("wikimedia/wikipedia", "20231101.en")
-        if data_name.lower() == "smollm2":
-            return load_dataset("EleutherAI/SmolLM2-135M-10B")
         if data_name.lower() == "wikipedia":
             return load_dataset("wikipedia", "20220301.en")
         if data_name.lower() == "wikitext-103":
             return load_dataset("wikitext", "wikitext-103-v1")
         if data_name.lower() == "wikitext-2":
             return load_dataset("wikitext", "wikitext-2-v1")
+        if data_name.lower() == "smollm2":
+            return load_dataset("EleutherAI/SmolLM2-135M-10B")
         else:
             return load_dataset(data_name)
     else:
@@ -82,7 +82,7 @@ def split_column_to_sents(examples, column: str):
     # 返回新的列 "sentences"，每条文本拆成句子
     all_sents = []
     for text in examples[column]:
-        all_sents.extend(simple_split_text(text))
+        all_sents.extend(split_text_to_sentences(text))
     return {column: all_sents}
 
 
