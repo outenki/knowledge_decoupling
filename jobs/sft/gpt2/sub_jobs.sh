@@ -1,0 +1,4 @@
+pjsub job_sft_gpt2_hf_c.sh
+pjsub job_sft_gpt2_random_c.sh
+pjsub job_sft_gpt2_nonce_sent_c.sh
+pjsub job_sft_gpt2_sml_c.sh
