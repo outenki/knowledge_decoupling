@@ -12,14 +12,12 @@ module load singularity-ce
 cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts/train/from_init || exit 1
 
 # CONFIG_NAME=$1
-# MODEL_NAME=$2
-# DATA_NAME=$3
-# EPOCHS=$4
-# DATA_LIMITE=$5
-# SUFFIX=${6:-""}
+# DATA_NAME=$2
+# EPOCHS=$3
+# DATA_LIMITE=$4
+# SUFFIX=${5:-""}
 singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif /bin/bash train_from_init.sh \
-    Qwen/Qwen3-0.6B \
-    qwen3_0.6B \
-    smolLM2-nonce-mn3-bs1024 \
+    Qwen/Qwen3-0.6B-Base \
+    smolLM2-nonce-mn3-qwen3-bs1024 \
     1 \
     0

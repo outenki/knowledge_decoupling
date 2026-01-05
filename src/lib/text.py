@@ -2,11 +2,10 @@ from spacy.lang.en import English
 from spacy.tokens import Doc
 import re
 
+import nltk
+from nltk.tokenize import sent_tokenize
 
-# if spacy.prefer_gpu():
-#     print("Using GPU")
-# else:
-#     print("Using CPU")
+
 NLP = English()
 NLP.add_pipe("sentencizer")
 
@@ -35,8 +34,15 @@ def split_text_to_sentences(text: str) -> list:
     Returns:
         list: A list of sentences.
     """
-    doc: Doc = NLP(text)
-    return [sent.text.strip() for sent in doc.sents if sent.text.strip()]
+    # doc: Doc = NLP(text)
+    # return [sent.text.strip() for sent in doc.sents if sent.text.strip()]
+    texts = text.split("\n")
+
+    sents = []
+    for _t in texts:
+        if _t.strip():
+            sents += sent_tokenize(_t)
+    return sents
 
 
 def split_texts_to_sentences(texts: list, min_len: int = 0) -> list:

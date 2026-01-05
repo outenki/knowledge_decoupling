@@ -1,0 +1,12 @@
+#!/bin/bash
+pjsub job_tokenize_and_slice_smolLM2_part0.sh
+pjsub job_tokenize_and_slice_smolLM2_part1.sh
+pjsub job_tokenize_and_slice_smolLM2_part2.sh
+pjsub job_tokenize_and_slice_smolLM2_part3.sh
+pjsub job_tokenize_and_slice_smolLM2_part4.sh
+pjsub job_tokenize_and_slice_smolLM2_part5.sh
+pjsub job_tokenize_and_slice_smolLM2_part6.sh
+pjsub job_tokenize_and_slice_smolLM2_part7.sh
+pjsub job_tokenize_and_slice_smolLM2_part8.sh
+pjsub job_tokenize_and_slice_smolLM2_part9.sh
+pjsub job_tokenize_and_slice_smolLM2_part10.sh

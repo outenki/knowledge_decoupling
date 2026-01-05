@@ -1,6 +1,6 @@
 #!/bin/bash
 #PJM -L "rscgrp=a-batch"
-#PJM -L "elapse=48:00:00"
+#PJM -L "elapse=100:00:00"
 #PJM -L "vnode-core=10"
 #PJM -L "jobenv=singularity"
 #PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/generate_nonce_smolLM2_0.out

@@ -13,6 +13,7 @@ from datasets.dataset_dict import DatasetDict
 
 from lib.dataset import load_custom_dataset, skip_dataset_by_column
 from lib.text import clean_text, split_texts_to_sentences
+from lib.utils import print_args
 
 
 def read_args():
@@ -67,9 +68,27 @@ def batch_split_texts_to_sentences(batch: Dataset) -> dict:
     return {"text": sentences}
 
 
+def process_dataset(dataset: Dataset, args):
+    if args.data_limit:
+        dataset = dataset.select(range(args.data_limit))
+
+    if args.skip_key and args.skip_values:
+        dataset = skip_dataset_by_column(dataset, args.skip_key, args.skip_values)
+
+    # ======== Clean and split texts into sentences =========
+    return dataset.map(
+        batch_split_texts_to_sentences,
+        batched=True,
+        batch_size=10000,
+        remove_columns=dataset.column_names,
+        keep_in_memory=False,
+        desc="Processing texts to sentences"
+    )
+
+
 def main():
     args = read_args()
-    print(vars(args))
+    print_args(vars(args))
 
     # ======== Load dataset =========
     dataset = load_custom_dataset(
@@ -80,36 +99,24 @@ def main():
 
     # ======== Limit dataset size if specified =========
     if isinstance(dataset, DatasetDict):
-        dataset = dataset['train']
-    if args.data_limit:
-        dataset = dataset.select(range(args.data_limit))
+        processed_dataset_dict = DatasetDict({
+            k: process_dataset(d, args) for k, d in dataset.items()
+        })
+    else:
+        processed_dataset_dict = DatasetDict({
+            "train": process_dataset(dataset, args)
+        })
+    
 
-    if args.skip_key and args.skip_values:
-        dataset = skip_dataset_by_column(dataset, args.skip_key, args.skip_values)
-
-    # ======== Clean and split texts into sentences =========
-    processed_dataset = dataset.map(
-        batch_split_texts_to_sentences,
-        batched=True,
-        batch_size=10000,
-        remove_columns=dataset.column_names,
-        keep_in_memory=False,
-        desc="Processing texts to sentences"
-    )
-
-    _dict = processed_dataset.train_test_split(shuffle=True, test_size=0.01, seed=42)
-    processed_dataset_dict = DatasetDict({
-        "train": _dict["train"],
-        "val": _dict["test"]
-    })
     # Save the processed dataset if out_path is provided
     Path(args.out_path).parent.mkdir(parents=True, exist_ok=True)
     processed_dataset_dict.save_to_disk(args.out_path)
     print("Processed dataset saved to:", args.out_path)
 
     # Save some examples to verify
-    processed_dataset.select(range(5)).to_json(Path(args.out_path) / "example_sentences.json")
-    print(f"Generated {len(processed_dataset)} sentences from the dataset.")
+    for k in processed_dataset_dict:
+        processed_dataset_dict[k].select(range(5)).to_json(Path(args.out_path) / "example_sentences.json")
+        return
 
 
 if __name__ == "__main__":

@@ -5,6 +5,8 @@ from pathlib import Path
 
 from datasets import load_dataset, Dataset
 
+from lib.utils import print_args
+
 
 def read_args():
     parser = argparse.ArgumentParser()
@@ -29,16 +31,21 @@ def generate_qa_data_from_ai2_arc(dataset: Dataset) -> list[dict]:
     qa_data = []
     for sample in tqdm(dataset, total=len(dataset), desc="Generating QA data"):
         assert isinstance(sample, dict)
-        prompt = sample["question"]
-        if not prompt.endswith("?"):
-            prompt += "?"
-        options = sample["choices"]["text"]
+        question = sample["question"]
+        if not question.endswith("?") and not question.endswith("."):
+            question += "?"
+        
         labels = sample["choices"]["label"]
         answer_key = sample["answerKey"]
+        options = sample["choices"]["text"]
         answer = options[labels.index(answer_key)]
+        text = question + "\n" + answer,
+
+        options = [f"{c}" for c in options]
+        prompt = f"<QUESTION>{question}<ANSWER>"
         qa_data.append({
             "context": "",
-            "text": prompt + " " + answer,
+            "text": text,
             "prompt": prompt,
             "options": options,
             "answer": answer
@@ -46,18 +53,25 @@ def generate_qa_data_from_ai2_arc(dataset: Dataset) -> list[dict]:
     return qa_data
 
 
-def generate_qa_data_from_boolq(dataset: Dataset, context=False) -> list[dict]:
+def generate_qa_data_from_boolq(dataset: Dataset, with_context=False) -> list[dict]:
     qa_data = []
     for sample in tqdm(dataset, total=len(dataset), desc="Generating QA data"):
         assert isinstance(sample, dict)
-        if not prompt.endswith("?"):
-            prompt += "?"
-        if context:
-            prompt = sample["passage"] + " " + prompt
+        question = sample["question"]
+        if not question.endswith("?") and not question.endswith("."):
+            question += "?"
         answer = "Yes" if sample["answer"] else "No"
+        text = question + "\n" + answer
+
+        prompt = f"<QUESTION>{question}<ANSWER>"
+        if with_context:
+            context = sample["passage"]
+            text = context + "\n" + text 
+            prompt = f"<CONTEXT>{context}{prompt}"
+        answer = f"{answer}"
         qa_data.append({
             "context": sample["passage"],
-            "text": prompt + " " + answer,
+            "text": text,
             "prompt": prompt,
             "options": ["Yes", "No"],
             "answer": answer
@@ -69,18 +83,22 @@ def generate_qa_data_from_qasc(dataset: Dataset) -> list[dict]:
     qa_data = []
     for sample in tqdm(dataset, total=len(dataset), desc="Generating QA data"):
         assert isinstance(sample, dict)
-        prompt = sample["question"]
-        if not prompt.endswith("?"):
-            prompt += "?"
+        question = sample["question"]
+        if not question.endswith("?") and not question.endswith("."):
+            question += "?"
         options = sample["choices"]["text"]
         labels = sample["choices"]["label"]
         answer_key = sample["answerKey"]
         if answer_key not in labels:
             continue  # Skip if the answer key is not in the labels
         answer = options[labels.index(answer_key)]
+        text = question + "\n" + answer
+        
+        prompt = f"<QUESTION>{question}<ANSWER>"
+
         qa_data.append({
             "context": "",
-            "text": prompt + " " + answer,
+            "text": text,
             "prompt": prompt,
             "options": options,
             "answer": answer
@@ -92,15 +110,19 @@ def generate_qa_data_from_squad(dataset: Dataset, with_context=False) -> list[di
     qa_data = []
     for sample in tqdm(dataset, total=len(dataset), desc="Generating QA data"):
         assert isinstance(sample, dict)
-        prompt = sample["question"]
+        question = sample["question"]
         context = sample["context"]
         answers = list(set(sample["answers"]["text"]))
         answer = answers[0] if answers else "I don't know."
+        text = question + "\n" + answer
+
+        prompt = f"<QUESTION>{question}<ANSWER>"
         if with_context:
-            prompt = context + " " + prompt
+            text = context + "\n" + text
+            prompt = "<CONTEXT>" + context + " " + prompt
         qa_data.append({
             "context": context,
-            "text": prompt + " " + answer,
+            "text": text,
             "prompt": prompt,
             "options": [],
             "answer": answer,
@@ -110,7 +132,7 @@ def generate_qa_data_from_squad(dataset: Dataset, with_context=False) -> list[di
 
 
 args = read_args()
-print(vars(args))
+print_args(vars(args))
 print(f"making dirs: {args.output_path}")
 Path(args.output_path).mkdir(parents=True, exist_ok=True)
 

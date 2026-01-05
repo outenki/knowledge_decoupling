@@ -26,6 +26,7 @@ import pyinflect
 
 from lib.dataset import load_custom_dataset
 from lib.text import clean_text, split_texts_to_sentences
+from lib.utils import print_args
 
 
 if not Token.has_extension("inflect"):
@@ -145,7 +146,7 @@ Returns:
 
 def main():
     args = read_args()
-    print(vars(args))
+    print_args(vars(args))
 
     # ======== Load dataset =========
     dataset = load_custom_dataset(

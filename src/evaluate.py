@@ -12,11 +12,11 @@ import tqdm
 import random
 
 import torch
-from transformers import GPT2Tokenizer
+from transformers import AutoTokenizer
 from transformers import AutoModelForCausalLM
 
 import pandas as pd
-from lib.utils import get_device
+from lib.utils import get_device, print_args
 
 
 random.seed(42)
@@ -25,8 +25,11 @@ random.seed(42)
 def read_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--model-path', '-mp', dest='model_path', type=str, required=True,
+        '--model', '-m', dest='model', type=str, required=True,
         help='Model path to load from. (pt or safetensors)'
+    )
+    parser.add_argument(
+        '--tokenizer', '-t', dest='tokenizer', type=str, required=False, default="gpt2"
     )
     parser.add_argument(
         '--test-data', '-vd', dest='data_path', type=str, required=True,
@@ -43,6 +46,10 @@ def read_args():
     parser.add_argument(
         '--example-data', '-ed', dest='example_data', type=str, required=False,
         help='Path to few-shots data. (json)'
+    )
+    parser.add_argument(
+        '--mode', dest='mode', type=str, required=False, default="full", choices={"full", "simple"},
+        help='The pred will be truncated if "simple" is set.'
     )
     parser.add_argument(
         '--out-path', '-o', dest='out_path', type=str, required=True,
@@ -65,11 +72,13 @@ def get_input_ids(model, tokenizer, texts):
     input_ids = enc["input_ids"]
     attention_mask = enc["attention_mask"]
 
+
     # control the max length
     block_size = get_max_block_size(model)
     if block_size is not None and input_ids.size(1) > block_size:
         input_ids = input_ids[:, -block_size:]
         attention_mask = attention_mask[:, -block_size:]
+
 
     return input_ids.to(model.device), attention_mask.to(model.device)
 
@@ -106,6 +115,7 @@ def score_continuations_batch(model, tokenizer, prompt, continuations):
 
         # continuation mask
         mask = torch.zeros_like(shift_labels, dtype=torch.bool)
+        mask[len(prompt_ids) - 1: len(prompt_ids)-1 + cont_len] = True
         mask[len(prompt_ids) - 1: len(prompt_ids)-1 + cont_len] = True
 
         loss_fct = torch.nn.CrossEntropyLoss(reduction="none")
@@ -158,7 +168,7 @@ def score_on_options(model, tokenizer, prompt, options, answer) -> dict:
     return res
 
 
-def generate_answer(model, tokenizer, prompt, max_new_tokens=50):
+def generate_answer(model, tokenizer, prompt, mode, max_new_tokens=50):
     """
     Evaluate a causal LM on a one sample.
     Automatically truncates prompt if longer than model context.
@@ -170,10 +180,13 @@ def generate_answer(model, tokenizer, prompt, max_new_tokens=50):
     # truncate if too long
     block_size = get_max_block_size(model)
     if block_size:
+        if block_size:
         max_input_len = block_size - max_new_tokens
     else:
         max_input_len = None
-    if block_size is not None and max_input_len is not None and input_ids.size(1) > max_input_len:
+    else:
+        max_input_len = None
+    if block_size is not None and max_input_len is not None and max_input_len is not None and input_ids.size(1) > max_input_len:
         input_ids = input_ids[:, -max_input_len:]
         attention_mask = attention_mask[:, -max_input_len:]
 
@@ -187,13 +200,15 @@ def generate_answer(model, tokenizer, prompt, max_new_tokens=50):
             use_cache=True
         )
 
-    gen_text = tokenizer.decode(gen_ids[0][input_ids.shape[1]:], skip_special_tokens=True)
+    gen_text = tokenizer.decode(gen_ids[0][input_ids.shape[1]:], skip_special_tokens=True).strip()
+    if mode == "simple":
+        gen_text = gen_text.split(". ")[0]
     return gen_text
 
 
-def score_on_generation(model, tokenizer, prompt, answers) -> dict:
+def score_on_generation(model, tokenizer, prompt, answers, mode) -> dict:
     res = {}
-    pred = generate_answer(model, tokenizer, prompt).lower()
+    pred = generate_answer(model, tokenizer, prompt, mode).lower().strip()
     res["pred"] = pred
     res["answers"] = answers
     res["pred_score"] = max(score_continuations_batch(model, tokenizer, prompt, [pred]))
@@ -203,7 +218,7 @@ def score_on_generation(model, tokenizer, prompt, answers) -> dict:
     return res
 
 
-def score_samples(model, tokenizer, samples, score_on, few_shots="") -> list[dict]:
+def score_samples(model, tokenizer, samples, score_on, generation_mode, few_shots="") -> list[dict]:
     # Score a list of samples with prompts and two options.
     filtered_samples = []
     for sample in tqdm.tqdm(samples, total=len(samples), desc="scoring samples"):
@@ -215,10 +230,12 @@ def score_samples(model, tokenizer, samples, score_on, few_shots="") -> list[dic
             answers = ["i don't know."]
 
         res = {}
+
+        res = {}
         if score_on == "options":
             res = score_on_options(model, tokenizer, prompt, options, answer)
         elif score_on == "generation":
-            res = score_on_generation(model, tokenizer, prompt, answers)
+            res = score_on_generation(model, tokenizer, prompt, answers, generation_mode)
         sample.update(res)
         filtered_samples.append(sample)
     return filtered_samples
@@ -244,10 +261,10 @@ def analyze_results(samples) -> dict:
 
 def main():
     args = read_args()
-    print(vars(args))
+    print_args(vars(args))
 
     # ======== Check arguments ========
-    model_path = args.model_path
+    model_path = args.model
     eval_data_path = args.data_path
     out_path = args.out_path
     Path(out_path).mkdir(parents=True, exist_ok=True)
@@ -257,13 +274,14 @@ def main():
     print(f"Using device: {device}")
 
     # ======== Load model and tokenizer ========
-    tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+    tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
     tokenizer.pad_token = tokenizer.eos_token
     tokenizer.padding_side = "left"
     print(f"Loading model from {model_path}...")
 
     model = AutoModelForCausalLM.from_pretrained(model_path)
-    model.to(device)
+    if device:
+        model.to(device)
 
     model.eval()
 
@@ -281,6 +299,7 @@ def main():
     total_count = len(eval_samples)
     print(f"Total evaluation samples: {total_count}")
 
+
     # ========= Load few shots examples ========
     few_shots = ""
     if args.example_data:
@@ -293,7 +312,7 @@ def main():
         print(f"Generated few_shots: \n{few_shots}")
 
     # ========= Score samples ========
-    used_samples = score_samples(model, tokenizer, eval_samples, args.score_on, few_shots)
+    used_samples = score_samples(model, tokenizer, eval_samples, args.score_on, args.mode, few_shots)
     used_count = len(used_samples)
     print(f"Evaluated on {used_count} samples")
     results = analyze_results(used_samples)

@@ -8,9 +8,7 @@ from math import ceil
 from pathlib import Path
 from functools import partial
 import json
-import os
 import multiprocessing
-import random
 
 import tqdm
 import spacy
@@ -19,13 +17,14 @@ from spacy.tokens import Token
 from lib.dataset import load_custom_dataset, load_texts_from_dataset_batch
 from lib.dataset import slice_dataset, skip_dataset_by_column, simple_split_to_sents
 from lib.parser import extract_token_morph_features, is_content_word, is_vowel
+from lib.utils import print_args
 
 # if spacy.prefer_gpu():
 #     print("Using GPU")
 # else:
 #     print("Using CPU")
 
-CPU_NUM = min(2, multiprocessing.cpu_count())
+CPU_NUM = min(4, multiprocessing.cpu_count())
 NLP = None
 BATCH_SIZE = 64
 NONCE_WORD_BANK = {}
@@ -127,7 +126,7 @@ def generate_nonce_sentence(doc, max_n: int) -> list[str]:
 # ================= Blacklist =================
 # Blacklist words that should not be used as nonce words
 # e.g., words with multiple POS tags, stop words, etc.
-# We will generate the blacklist based on the dataset
+# We generate the blacklist based on the dataset
 def count_pos_tags(texts, multi_process: bool, update_dict: dict | None = None) -> dict:
     """
     Counts the occurrences of each POS tag in a list of spaCy Doc objects.
@@ -157,9 +156,7 @@ def count_pos_tags(texts, multi_process: bool, update_dict: dict | None = None) 
     return pos_counts
 
 
-def generate_lemma_blacklist(
-    pos_counts: dict
-) -> set:
+def _generate_lemma_blacklist(pos_counts: dict) -> set:
     blacklist = set()
     for lemma, pos_dict in tqdm.tqdm(pos_counts.items(), desc="Generating lemma blacklist", total=len(pos_counts)):
         total = sum(pos_dict.values())
@@ -178,7 +175,7 @@ def _generate_nonce_word_bank(texts, lemma_blacklist: set, multi_process, update
         docs = NLP.pipe(texts, batch_size=64, n_process=CPU_NUM)
     else:
         docs = NLP.pipe(texts, batch_size=64)
-    for doc in tqdm.tqdm(docs, total=len(texts), desc="Generating nonce words"):
+    for doc in docs:
         for token in doc:
             text, lemma, morph = extract_token_morph_features(token)
             if lemma in lemma_blacklist:
@@ -253,27 +250,28 @@ def generate_nonce_for_dataset(
     print(f"***Processing {dataset.num_rows} samples in {batch_number} batches of size {BATCH_SIZE}...")
 
     # ========== Generate lemma blacklist ==========
-    out_path_blacklist = Path(out_path) / "lemma_blacklist"
     lemma_blacklist = set()
-    if lemma_blacklist_path and Path(lemma_blacklist_path).exists():
-        # try to load existing lemma blacklist
-        # If it exists, use it to speed up the process
-        print(f"**Loading existing lemma blacklist from {lemma_blacklist_path}...")
-        with open(lemma_blacklist_path, "r") as f:
-            lemma_blacklist = set([line.strip() for line in f.readlines()])
-        print("**done")
-    elif not lemma_blacklist_generation:
-        print("**Skipping lemma blacklist generation.")
-    else:
-        pos_counts = {}
-        for i in range(batch_number):
-            print(f"Generating blacklist for batch {i + 1}/{batch_number}...")
-            texts = load_texts_from_dataset_batch(dataset, i, BATCH_SIZE)
-            pos_counts = count_pos_tags(texts, multi_process, pos_counts)
-        lemma_blacklist = generate_lemma_blacklist(pos_counts)
-        with open(out_path_blacklist, "w") as f:
-            for lemma in lemma_blacklist:
-                f.write(f"{lemma}\n")
+    # out_path_blacklist = Path(out_path) / "lemma_blacklist"
+    # lemma_blacklist = set()
+    # if lemma_blacklist_path and Path(lemma_blacklist_path).exists():
+    #     # try to load existing lemma blacklist
+    #     # If it exists, use it to speed up the process
+    #     print(f"**Loading existing lemma blacklist from {lemma_blacklist_path}...")
+    #     with open(lemma_blacklist_path, "r") as f:
+    #         lemma_blacklist = set([line.strip() for line in f.readlines()])
+    #     print("**done")
+    # elif not lemma_blacklist_generation:
+    #     print("**Skipping lemma blacklist generation.")
+    # else:
+    #     pos_counts = {}
+    #     for i in range(batch_number):
+    #         print(f"Generating blacklist for batch {i + 1}/{batch_number}...")
+    #         texts = load_texts_from_dataset_batch(dataset, i, BATCH_SIZE)
+    #         pos_counts = count_pos_tags(texts, multi_process, pos_counts)
+    #     lemma_blacklist = _generate_lemma_blacklist(pos_counts)
+    #     with open(out_path_blacklist, "w") as f:
+    #         for lemma in lemma_blacklist:
+    #             f.write(f"{lemma}\n")
 
     # ========== Generate nonce word bank ==========
     out_path_word_bank = Path(out_path) / "nonce_word_bank.json"
@@ -290,10 +288,11 @@ def generate_nonce_for_dataset(
         print("**Skipping nonce word bank generation.")
     else:
         NONCE_WORD_BANK = {}
-        for i in range(batch_number):
-            print(f"Generating nonce bank for batch {i + 1}/{batch_number}...")
+        for i in tqdm.tqdm(range(batch_number), total=batch_number, desc="Generating nonce bank"):
             texts = load_texts_from_dataset_batch(dataset, i, BATCH_SIZE)
             NONCE_WORD_BANK = _generate_nonce_word_bank(texts, lemma_blacklist, multi_process, NONCE_WORD_BANK)
+
+        # save nouce_word_bank
         _nonce_word_bank = {k: tuple(v) for k, v in NONCE_WORD_BANK.items()}
         json.dump(_nonce_word_bank, open(out_path_word_bank, "w"), indent=4)
         print(f"Saved nonce word bank to {out_path_word_bank}")
@@ -323,7 +322,7 @@ def generate_nonce_for_dataset(
 def read_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        '--data-name', '-dn', dest='data_name', type=str,
+        '--data', '-d', dest='data', type=str,
         help='Dataset path to load from.'
     )
     parser.add_argument(
@@ -392,9 +391,33 @@ def read_args():
     return parser.parse_args()
 
 
+def _prcocess_dataset(
+    dataset: Dataset, start_from: int, data_limit: int,
+    args, out_path: str
+) -> Dataset | None:
+    dt = slice_dataset(dataset, start_from, data_limit)
+    print(f"Dataset has {dt.num_rows} samples after slicing.")
+    if args.skip_key and args.skip_values:
+        dt = skip_dataset_by_column(dt, args.skip_key, args.skip_values)
+    if args.split_sents:
+        dt = simple_split_to_sents(dt, args.split_sents, CPU_NUM, BATCH_SIZE)
+    processed_dataset = generate_nonce_for_dataset(
+        dt,
+        out_path=out_path,
+        multi_process=args.multi_process,
+        max_n=args.max_n,
+        lemma_blacklist_path=args.lemma_blacklist,
+        nonce_word_bank_path=args.word_bank,
+        lemma_blacklist_generation=not args.skip_lemma_blacklist_generation,
+        nonce_word_bank_generation=not args.skip_nonce_word_bank_generation,
+        nonce_data_generation=not args.skip_nonce_data_generation
+    )
+    return processed_dataset
+
+
 def main():
     args = read_args()
-    print(vars(args))
+    print_args(vars(args))
     out_path = args.out_path
     Path(out_path).mkdir(parents=True, exist_ok=True)
     if args.multi_process:
@@ -405,7 +428,7 @@ def main():
     # ========  Load dataset ========
     print("**** Loading dataset...")
     dataset = load_custom_dataset(
-        data_name=args.data_name,
+        data_name=args.data,
         data_type=args.data_type,
         load_from=args.load_from
     )
@@ -414,56 +437,35 @@ def main():
     # ======== Generate nonce sentences ========
     if isinstance(dataset, DatasetDict):
         dataset_dict = {}
+        train_size = 0
+        if "train" in dataset_dict:
+            train_size = len(dataset_dict["train"])
+
         for key, dt in dataset.items():
-            dt_limit = args.data_limit if key == "train" else int(args.data_limit * 0.1)
-            start_from = args.start_from if key == "train" else int(args.start_from * 0.1) 
-            dt = slice_dataset(dt, start_from, dt_limit)
             print(f"========= Processing dataset {key}... ==========")
-            print(f"Dataset {key} has {dt.num_rows} samples after slicing.")
-            if args.skip_key and args.skip_values:
-                dt = skip_dataset_by_column(dt, args.skip_key, args.skip_values)
-            if args.split_sents:
-                dt = simple_split_to_sents(dt, args.split_sents, CPU_NUM, BATCH_SIZE)
-            _dataset = generate_nonce_for_dataset(
-                dt,
-                out_path=out_path,
-                multi_process=args.multi_process,
-                max_n=args.max_n,
-                lemma_blacklist_path=Path(args.lemma_blacklist),
-                nonce_word_bank_path=Path(args.word_bank),
-                lemma_blacklist_generation=not args.skip_lemma_blacklist_generation,
-                nonce_word_bank_generation=not args.skip_nonce_word_bank_generation,
-                nonce_data_generation=not args.skip_nonce_data_generation
-            )
+            ds_size = len(dt)
+            data_limit: int = args.data_limit
+            start_from: int = args.start_from
+            if train_size > 0:
+                data_limit = int(data_limit * ds_size / train_size)
+                start_from = int(start_from * ds_size / train_size)
+            _dataset = _prcocess_dataset(dt, start_from, data_limit, args, out_path)
             if _dataset is not None:
                 dataset_dict[key] = _dataset
-        if "train" in dataset_dict:
-            dataset_dict["train"].select(range(5)).to_json(Path(out_path) / "example_nonce_sent.json")
         if dataset_dict:
+            # save samples
+            for k in dataset_dict:
+                dataset_dict[k].select(range(5)).to_json(Path(args.out_path) / "example_sentences.json")
+                break
             print(f"Saving dataset with nonce sentences to {out_path}...")
             dataset_dict = DatasetDict(dataset_dict)
             print("Dataset structure:", dataset_dict)
             dataset_dict.save_to_disk(out_path)
     else:
         print("**** Processing dataset ...")
-        dataset = slice_dataset(dataset, args.start_from, args.data_limit)
-        if args.skip_key and args.skip_values:
-            dataset = skip_dataset_by_column(dataset, args.skip_key, args.skip_values)
-        if args.split_sents:
-            dataset = simple_split_to_sents(dataset, args.split_sents, CPU_NUM, BATCH_SIZE)
-        print(f"Dataset has {dataset.num_rows} samples after slicing.")
-        dataset = generate_nonce_for_dataset(
-            dataset,
-            out_path=out_path,
-            multi_process=args.multi_process,
-            max_n=args.max_n,
-            lemma_blacklist_path=Path(args.lemma_blacklist),
-            nonce_word_bank_path=Path(args.word_bank),
-            lemma_blacklist_generation=not args.skip_lemma_blacklist_generation,
-            nonce_word_bank_generation=not args.skip_nonce_word_bank_generation,
-            nonce_data_generation=not args.skip_nonce_data_generation
-        )
+        dataset = _prcocess_dataset(dataset, args.start_from, args.data_limit, args, out_path)
         if dataset:
+            dataset.select(range(5)).to_json(Path(args.out_path) / "example_sentences.json")
             print(f"Dataset has {dataset.num_rows} samples after generating nonce sentences.")
             print(f"Saving dataset with nonce sentences to {out_path}...")
             dataset.save_to_disk(out_path)

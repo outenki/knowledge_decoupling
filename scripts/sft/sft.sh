@@ -7,7 +7,7 @@ DATA_PATH=$BASE_PATH/input/tokenized/sft
 CONFIG_NAME=$1
 INIT_MODEL=$2
 DATA_NAME=$3
-OUTPUT_NAME=$4
+OUTPUT=$4
 EPOCHS=$5
 
 
@@ -23,7 +23,7 @@ echo "start time: $(date -d @$start_time +"%D %T")"
     -dp $DATA_PATH/${DATA_NAME} \
     -e $EPOCHS \
     -dl 0 \
-    -o $OUT_PATH/$CONFIG_NAME/${OUTPUT_NAME}-sft_${DATA_NAME}-e${EPOCHS}
+    -o $OUT_PATH/$CONFIG_NAME/${OUTPUT}
 
 end_time=$(date +"%s")
 echo "end time: $(date -d @$end_time +"%D %T")"

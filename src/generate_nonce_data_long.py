@@ -10,7 +10,6 @@ from functools import partial
 import json
 import os
 import multiprocessing
-import random
 import pickle
 
 
@@ -22,6 +21,7 @@ from lib.dataset import load_custom_dataset, load_texts_from_dataset_batch
 from lib.dataset import slice_dataset, skip_dataset_by_column, simple_split_to_sents
 from lib.parser import extract_token_morph_features, is_content_word, is_vowel
 from lib.text import simple_split_text
+from lib.utils import print_args
 
 # if spacy.prefer_gpu():
 #     print("Using GPU")
@@ -401,7 +401,7 @@ def read_args():
 
 def main():
     args = read_args()
-    print(vars(args))
+    print_args(vars(args))
     out_path = args.out_path
     Path(out_path).mkdir(parents=True, exist_ok=True)
     print("NON-Multi process for NLP.pipe")

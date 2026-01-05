@@ -17,6 +17,7 @@ from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
 
 from lib.dataset import load_custom_dataset, slice_dataset
+from lib.utils import print_args
 
 
 import warnings
@@ -151,7 +152,7 @@ def main():
         print(f"GPU {i}: {torch.cuda.get_device_name(i)}")
 
     args = read_args()
-    print(vars(args))
+    print_args(vars(args))
     out_path= args.out_path
 
     # === Load model

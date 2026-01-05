@@ -1,7 +1,10 @@
 #!/bin/bash
+
 BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
-PARTS=$1  # e.g., 0-99
+INPUT_PATH=$BASE_PATH/data/SmolLM2-1.7B-100B/sents/mn_8/tokenized-nonce/HuggingFaceTB/SmolLM2-1.7B/tokenized_bs1024
+OUTPUT_PATH=$BASE_PATH/input/tokenized/SmolLM2-1.7B-100B-nonce-SmolLM2-1.7B
 
 /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/merge_dataset.py \
-    -dd $BASE_PATH/data/wikimedia-nonce/$PARTS \
-    -o $BASE_PATH/data/wikimedia-nonce/merged-$PARTS
+    -pr 0 100 \
+    -dd $INPUT_PATH \
+    -o $OUTPUT_PATH

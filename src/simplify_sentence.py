@@ -17,6 +17,7 @@ from lib.basic_words.basic_words_850 import BASIC_WORDS_850
 from lib.basic_words.oxford_3000 import OXFORD_3000
 from lib.dataset import load_custom_dataset, slice_dataset, skip_dataset_by_column
 from lib.text import simple_split_text
+from lib.utils import print_args
 
 
 try:
@@ -168,6 +169,7 @@ def simplify_sentence(doc):
 
         candidate = get_simple_candidate(token)
         if candidate is None:
+            print(f"failed to simplify token: {token}")
             return ""
             # out_tokens.append(token.text_with_ws)
             # continue
@@ -228,7 +230,7 @@ def read_args():
 
 def main():
     args = read_args()
-    print(vars(args))
+    print_args(vars(args))
     out_path = args.out_path
     Path(out_path).mkdir(parents=True, exist_ok=True)
 
@@ -295,6 +297,16 @@ def main():
     else:
         raise TypeError
 
+def test():
+    # text = "Free was george justified in killing lennie essay killing papers, essays, and research papers."
+    # text = "What is the percent of increase to the nearest percent?"
+    text = "Pay day loan around $1000."
+    print(f"ori: {text}")
+    print("simplified:")
+    print(simplify_long_text(text))
+
+
 
 if __name__ == "__main__":
-    main()
+    # main()
+    test()

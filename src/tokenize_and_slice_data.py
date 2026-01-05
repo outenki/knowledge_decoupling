@@ -1,15 +1,14 @@
 import argparse
 from functools import partial
 from pathlib import Path
-from datasets import Dataset
-from transformers import GPT2Tokenizer
-from tqdm import tqdm
+from transformers import AutoTokenizer
 
 from lib.dataset import load_custom_dataset
 
 
 def read_args():
     parser = argparse.ArgumentParser()
+    parser.add_argument("--tokenizer", type=str, required=False, default="gpt2")
     parser.add_argument("--data-name", "-dn", type=str, required=True)
     parser.add_argument("--load-from", "-lf", type=str, choices=["local", "hf"], required=True)
     parser.add_argument("--data-type", "-dt", type=str, default=None)
@@ -53,8 +52,9 @@ def main():
     tokenized_datasets = datasets
     if args.tokenize:
         print(">>> Tokenizing ...")
-        tokenizer = GPT2Tokenizer.from_pretrained("gpt2")
+        tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
         tokenizer.pad_token = tokenizer.eos_token
+        tokenizer.padding_side = "left"
 
         map_func = partial(tokenize_examples, tokenizer=tokenizer, column_name=args.data_column)
         tokenized_datasets = datasets.map(
@@ -64,35 +64,33 @@ def main():
             remove_columns=[args.data_column],
             desc="Tokenizing data"
         )
-
-        tokenized_path = output_path / "tokenized"
-        print(f">>> Save tokenized dataset to: {tokenized_path}")
-        tokenized_datasets.save_to_disk(str(tokenized_path))
+        if not args.slice:
+            tokenized_path = output_path
+            print(f">>> Save tokenized dataset to: {tokenized_path}")
+            tokenized_datasets.save_to_disk(str(tokenized_path))
 
     # === BINARIZATION / SLICE ===
-    if not args.slice:
-        print(">>> Skip slicing")
-        return
+    if args.slice:
 
-    print(">>> Slicing ...")
-    block_sizes = [args.block_size] if args.block_size else [128, 512, 1024]
+        print(">>> Slicing ...")
+        block_sizes = [args.block_size] if args.block_size else [128, 512, 1024]
 
-    for bs in block_sizes:
-        print(f"  -> block_size = {bs}")
-        map_func = partial(group_texts_to_blocks, block_size=bs)
+        for bs in block_sizes:
+            print(f"  -> block_size = {bs}")
+            map_func = partial(group_texts_to_blocks, block_size=bs)
 
-        lm_datasets = tokenized_datasets.map(
-            map_func,
-            batched=True,
-            batch_size=3000,
-            num_proc=4,
-            desc=f"Chunking to blocks ({bs})",
-            remove_columns=tokenized_datasets["train"].column_names
-        )
+            lm_datasets = tokenized_datasets.map(
+                map_func,
+                batched=True,
+                batch_size=3000,
+                num_proc=4,
+                desc=f"Chunking to blocks ({bs})",
+                remove_columns=tokenized_datasets["train"].column_names
+            )
 
-        bin_path = output_path / f"tokenized_bs{bs}"
-        print(f"  -> Save to: {bin_path}")
-        lm_datasets.save_to_disk(str(bin_path))
+            bin_path = output_path
+            print(f"  -> Save to: {bin_path}")
+            lm_datasets.save_to_disk(str(bin_path))
 
     print("✅ Done！")
 
