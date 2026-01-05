@@ -14,7 +14,6 @@ import random
 import torch
 from transformers import GPT2Tokenizer
 from transformers import AutoModelForCausalLM
-from torch.nn import CrossEntropyLoss
 
 import pandas as pd
 from lib.utils import get_device
@@ -65,13 +64,13 @@ def get_input_ids(model, tokenizer, texts):
     )
     input_ids = enc["input_ids"]
     attention_mask = enc["attention_mask"]
-    
+
     # control the max length
     block_size = get_max_block_size(model)
     if block_size is not None and input_ids.size(1) > block_size:
         input_ids = input_ids[:, -block_size:]
         attention_mask = attention_mask[:, -block_size:]
-    
+
     return input_ids.to(model.device), attention_mask.to(model.device)
 
 
@@ -107,7 +106,7 @@ def score_continuations_batch(model, tokenizer, prompt, continuations):
 
         # continuation mask
         mask = torch.zeros_like(shift_labels, dtype=torch.bool)
-        mask[len(prompt_ids)-1 : len(prompt_ids)-1 + cont_len] = True
+        mask[len(prompt_ids) - 1: len(prompt_ids)-1 + cont_len] = True
 
         loss_fct = torch.nn.CrossEntropyLoss(reduction="none")
         token_losses = loss_fct(shift_logits, shift_labels)
@@ -170,8 +169,11 @@ def generate_answer(model, tokenizer, prompt, max_new_tokens=50):
 
     # truncate if too long
     block_size = get_max_block_size(model)
-    max_input_len = block_size - max_new_tokens
-    if block_size is not None and input_ids.size(1) > max_input_len:
+    if block_size:
+        max_input_len = block_size - max_new_tokens
+    else:
+        max_input_len = None
+    if block_size is not None and max_input_len is not None and input_ids.size(1) > max_input_len:
         input_ids = input_ids[:, -max_input_len:]
         attention_mask = attention_mask[:, -max_input_len:]
 
@@ -181,7 +183,8 @@ def generate_answer(model, tokenizer, prompt, max_new_tokens=50):
             attention_mask=attention_mask,
             max_new_tokens=max_new_tokens,
             do_sample=False,
-            pad_token_id=tokenizer.eos_token_id
+            pad_token_id=tokenizer.eos_token_id,
+            use_cache=True
         )
 
     gen_text = tokenizer.decode(gen_ids[0][input_ids.shape[1]:], skip_special_tokens=True)
@@ -210,6 +213,8 @@ def score_samples(model, tokenizer, samples, score_on, few_shots="") -> list[dic
         answers = sample.get("answers", [answer])
         if not answers:
             answers = ["i don't know."]
+
+        res = {}
         if score_on == "options":
             res = score_on_options(model, tokenizer, prompt, options, answer)
         elif score_on == "generation":
@@ -276,7 +281,6 @@ def main():
     total_count = len(eval_samples)
     print(f"Total evaluation samples: {total_count}")
 
-    
     # ========= Load few shots examples ========
     few_shots = ""
     if args.example_data:
