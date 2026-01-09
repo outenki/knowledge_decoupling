@@ -11,5 +11,5 @@ module load singularity-ce
 
 cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts/evaluate/gpt2_sft || exit 1
 
-singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif /bin/bash evaluate_on_options_0shots.sh
+# singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif /bin/bash evaluate_on_options_0shots.sh
 singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif /bin/bash evaluate_on_generation_0shots.sh

@@ -25,15 +25,20 @@ args = parser.parse_args()
 
 print(f"Using tokenizer: {args.tokenizer}")
 TOKENIZER = GPT2Tokenizer.from_pretrained(args.tokenizer)
-TOKENIZER.pad_token = TOKENIZER.eos_token
 TOKENIZER.padding_side = "left"
+if TOKENIZER.pad_token_id is None:
+    TOKENIZER.pad_token = TOKENIZER.eos_token
+PAD_ID = TOKENIZER.pad_token_id 
 
 def preprocess(example):
     prompt = example["prompt"]
     response = example["answer"]
 
-    prompt_ids = TOKENIZER(prompt, add_special_tokens=False).input_ids
-    response_ids = TOKENIZER(response, add_special_tokens=False).input_ids
+    p_out = TOKENIZER(prompt, add_special_tokens=False)
+    r_out = TOKENIZER(response, add_special_tokens=False)
+    
+    prompt_ids = p_out.input_ids if p_out.input_ids is not None else []
+    response_ids = r_out.input_ids if r_out.input_ids is not None else []
 
     input_ids = prompt_ids + response_ids
     if args.mask_prompt:
@@ -41,17 +46,17 @@ def preprocess(example):
     else:
         labels = input_ids
 
-    # pad to max_length
     max_length = 1024
+    input_ids = input_ids[:max_length]
+    labels = labels[:max_length]
+    
     pad_len = max_length - len(input_ids)
+    
     if pad_len > 0:
-        input_ids = input_ids + [TOKENIZER.pad_token_id] * pad_len
+        input_ids = input_ids + [PAD_ID] * pad_len
         labels = labels + [-100] * pad_len
-    else:
-        input_ids = input_ids[:max_length]
-        labels = labels[:max_length]
 
-    attention_mask = [1 if id != TOKENIZER.pad_token_id else 0 for id in input_ids]
+    attention_mask = [1 if i < (max_length - pad_len) else 0 for i in range(max_length)]
 
     return {
         "input_ids": input_ids,

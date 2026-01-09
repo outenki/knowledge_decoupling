@@ -180,10 +180,7 @@ def generate_answer(model, tokenizer, prompt, mode, max_new_tokens=50):
     # truncate if too long
     block_size = get_max_block_size(model)
     if block_size:
-        if block_size:
         max_input_len = block_size - max_new_tokens
-    else:
-        max_input_len = None
     else:
         max_input_len = None
     if block_size is not None and max_input_len is not None and max_input_len is not None and input_ids.size(1) > max_input_len:

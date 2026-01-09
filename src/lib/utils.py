@@ -17,3 +17,4 @@ def print_args(args: dict):
     for k, v in args.items():
         print(f"{k}: {v}")
     print("↑↑↑↑↑↑↑↑↑↑ Arguments ↑↑↑↑↑↑↑↑↑↑") 
+    print()

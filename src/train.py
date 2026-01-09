@@ -87,7 +87,7 @@ def read_args():
         '--epochs', '-e', dest='epochs', type=int, required=False, default=3,
     )
     parser.add_argument(
-        '--data-limit', '-dl', dest='data_limit', type=int, required=False, default=0,
+        '--data-limit', '-dl', dest='data_limit', type=int, action='append',
         help='Max number of samples for training. 0 for no limit.'
     )
     parser.add_argument(
@@ -182,17 +182,19 @@ def main():
 
     # === load data
     data_list = []
-    for data_path in args.data_path:
-        print(f"Loading dataset from {data_path}")
+    for data_path, data_limit in zip(args.data_path, args.data_limit):
+        print(f">>> Loading dataset from {data_path}")
         _data_dict = load_dataset_dict(data_path)
+        print(_data_dict)
+        print(">>> data loaded")
+        if data_limit > 0:
+            _data_dict = limit_dataset_dict(_data_dict, data_limit)
         data_list.append(_data_dict)
     data_dict = DatasetDict({
         split: concatenate_datasets([dd[split] for dd in data_list])
         for split in data_list[0].keys()
     })
 
-    if args.data_limit > 0:
-        data_dict = limit_dataset_dict(data_dict, args.data_limit)
 
     print("Dataset:", data_dict)
 
@@ -223,13 +225,15 @@ def main():
     world_size = max(1, torch.cuda.device_count())
 
     effective_batch_size = per_device_train_batch_size * gradient_accumulation_steps * world_size
-    steps_per_epoch = train_dataset_size // effective_batch_size
 
-    save_steps = max(50, steps_per_epoch // 20)
-    logging_steps = max(50, steps_per_epoch // 20)
-    print("save steps:", save_steps)
-    print("logging steps:", logging_steps)
-    print("eval steps:", logging_steps)
+    total_steps = train_dataset_size // effective_batch_size
+
+    target_total_checkpoints = 50
+    save_steps = max(1, total_steps // target_total_checkpoints)
+
+    print(f"Total training steps: {total_steps}")
+    print(f"Targeting {target_total_checkpoints} checkpoints.")
+    print(f"Computed save/eval steps: {save_steps}")
 
     training_args = TrainingArguments(
         output_dir=args.out_path,
@@ -241,16 +245,15 @@ def main():
         per_device_eval_batch_size=per_device_train_batch_size,
         num_train_epochs=args.epochs,
         logging_dir=log_path,
-        logging_steps=logging_steps,
-        eval_steps=logging_steps,
+        logging_steps=save_steps,
+        eval_steps=save_steps,
         save_steps=save_steps,
         logging_strategy="steps",
         save_strategy="steps",
         eval_strategy="steps",
         report_to="none",
         fp16=torch.cuda.is_available(),
-        remove_unused_columns=False,
-
+        save_total_limit=2,
         # speed up with fused AdamW optimizer
         optim="adamw_torch_fused",
     )
