@@ -1,11 +1,11 @@
 #!/bin/bash
-#PJM -L "rscgrp=b-batch"
-#PJM -L "elapse=100:00:00"
+#PJM -L "rscgrp=c-batch"
+#PJM -L "elapse=24:00:00"
 #PJM -L "gpu=4"
 #PJM -L "jobenv=singularity"
-#PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_gpt_large_on_smolLM2_qa_test_ep1.err
-#PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_gpt_large_on_smolLM2_qa_test_ep1.out
-#PJM -N "tr_gsm"
+#PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_gpt_large_on_smolLM2_qa_test_ep1_c.err
+#PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_gpt_large_on_smolLM2_qa_test_ep1_c.out
+#PJM -N "tr_gsm_c"
 
 module load singularity-ce
 

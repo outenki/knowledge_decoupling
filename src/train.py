@@ -139,6 +139,14 @@ def load_dataset_dict(data_path: str) -> DatasetDict:
     return data_dict
 
 
+def normalize_dataset(ds):
+    def fix(x):
+        if "attention_mask" not in x or x["attention_mask"] is None:
+            x["attention_mask"] = [1] * len(x["input_ids"])
+        return x
+    return ds.map(fix)
+
+
 def main():
     print("CUDA available:", torch.cuda.is_available())
     print("GPU count:", torch.cuda.device_count())
@@ -189,6 +197,8 @@ def main():
         print(">>> data loaded")
         if data_limit > 0:
             _data_dict = limit_dataset_dict(_data_dict, data_limit)
+        for k in _data_dict.keys():
+            _data_dict[k] = normalize_dataset(_data_dict[k])
         data_list.append(_data_dict)
     data_dict = DatasetDict({
         split: concatenate_datasets([dd[split] for dd in data_list])
@@ -209,6 +219,11 @@ def main():
         data_dict = train_dataset .train_test_split(test_size=0.01, shuffle=True, seed=42)
         train_dataset = data_dict["train"]
         eval_dataset = data_dict["test"]
+
+    for i in range(10):
+        print(len(train_dataset[i]["input_ids"]))
+    print(train_dataset.features)
+
 
     train_dataset.set_format("torch")
     eval_dataset.set_format("torch")

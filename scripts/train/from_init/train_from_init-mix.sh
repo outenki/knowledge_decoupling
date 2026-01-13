@@ -12,13 +12,13 @@ start_time=$(date +"%s")
 echo "start time: $(date -d @$start_time +"%D %T")"
 
 
-    # -dp $DATA_PATH/$CONFIG_NAME/train/mix_qa_test_without_options \
-    # -dl 100 \
 /home/pj25000107/ku50001566/.local/bin/uv run python $SCRIPT_PATH/train.py \
     --speedup \
-    -dp $DATA_PATH/$CONFIG_NAME/train/smolLM2-bs1024 \
-    -dl 100 \
     -cn $CONFIG_NAME \
+    -dp $DATA_PATH/$CONFIG_NAME/train/mix_qa_test_without_options \
+    -dl 0 \
+    -dp $DATA_PATH/$CONFIG_NAME/train/smolLM2-bs1024 \
+    -dl 0 \
     -e $EPOCHS \
     -o $OUT_PATH/$CONFIG_NAME/smolLM2/smolLM2-mix_qa_test-ep${EPOCHS}
 
