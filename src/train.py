@@ -197,8 +197,8 @@ def main():
         print(">>> data loaded")
         if data_limit > 0:
             _data_dict = limit_dataset_dict(_data_dict, data_limit)
-        for k in _data_dict.keys():
-            _data_dict[k] = normalize_dataset(_data_dict[k])
+        # for k in _data_dict.keys():
+        #     _data_dict[k] = normalize_dataset(_data_dict[k])
         data_list.append(_data_dict)
     data_dict = DatasetDict({
         split: concatenate_datasets([dd[split] for dd in data_list])

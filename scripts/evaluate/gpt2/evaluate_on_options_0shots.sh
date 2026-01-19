@@ -12,47 +12,13 @@ for eval_name in verb_agreement fce_5gram qa_arc_easy qa_arc_challenge qa_qasc q
     echo
     echo "============ $eval_name ============"
 
-    # hf model
     for model_folder in \
-        hf-ext_train-ep1 \
-        hf-ext_train-ep3
+        HuggingFace/hf-ext_test-ep3 \
+        smolLM2/smolLM2-bs1024-dl0-ep1-ext_test-ep3 \
+        nonce/smolLM2-nonce-bs1024-dl0-ep1-ext_test-ep3
     do
         echo "====== Evaluating $model_folder of $MODEL_NAME ======"
         model_path=$BASE_PATH/output/$MODEL_NAME/$model_folder
-        /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/evaluate.py \
-            --model $model_path \
-            --mode $MODE \
-            --tokenizer $MODEL_NAME \
-            --test-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
-            --score-on $SCORE_ON \
-            --sample-num $SAMPLE_NUM \
-            -o $model_path/evaluation$SUFFIX/${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
-    done
-
-    # trained by smolLM2
-    for model_folder in \
-        smolLM2-bs1024-dl0-ep1-sft-qa_boolq_ctxt-ep3 \
-        smolLM2-bs1024-dl0-ep1-ext_train-ep1 \
-        smolLM2-bs1024-dl0-ep1-ext_train-ep3
-    do
-        echo "====== Evaluating $model_folder of $MODEL_NAME ======"
-        model_path=$BASE_PATH/output/$MODEL_NAME/smolLM2/$model_folder
-        /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/evaluate.py \
-            --model $model_path \
-            --mode $MODE \
-            --tokenizer $MODEL_NAME \
-            --test-data $BASE_PATH/input/evaluate_data/$eval_name/test.json \
-            --score-on $SCORE_ON \
-            --sample-num $SAMPLE_NUM \
-            -o $model_path/evaluation$SUFFIX/${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
-    done
-
-    # trained by nonce
-    for model_folder in \
-        smolLM2-nonce-mn3-bs1024-dl0-ep1-sft-qa_boolq_ctxt-ep3
-    do
-        echo "====== Evaluating $model_folder of $MODEL_NAME ======"
-        model_path=$BASE_PATH/output/$MODEL_NAME/nonce/$model_folder
         /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/evaluate.py \
             --model $model_path \
             --mode $MODE \
