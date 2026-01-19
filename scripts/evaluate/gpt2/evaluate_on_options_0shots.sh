@@ -8,7 +8,7 @@ SAMPLE_NUM=1000
 MODE="simple"
 SUFFIX="_20251215"
 
-for eval_name in verb_agreement fce_5gram qa_arc_easy qa_arc_challenge qa_qasc qa_boolq qa_boolq_ctxt; do
+for eval_name in verb_agreement fce_5gram qa_arc_easy qa_arc_challenge qa_qasc qa_boolq_ctxt; do
     echo
     echo "============ $eval_name ============"
 
