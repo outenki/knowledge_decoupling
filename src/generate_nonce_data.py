@@ -24,7 +24,7 @@ from lib.utils import print_args
 # else:
 #     print("Using CPU")
 
-CPU_NUM = min(4, multiprocessing.cpu_count())
+CPU_NUM = min(2, multiprocessing.cpu_count())
 NLP = None
 BATCH_SIZE = 64
 NONCE_WORD_BANK = {}

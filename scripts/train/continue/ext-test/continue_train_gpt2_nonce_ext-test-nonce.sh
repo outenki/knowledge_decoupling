@@ -1,12 +1,12 @@
 #!/bin/bash
 BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
 SCRIPT_PATH=$BASE_PATH/src
-OUT_PATH=$BASE_PATH/output/HuggingFaceTB/SmolLM2-1.7B/SmolLM2-1.7B-100B-nonce-SmolLM2-1.7B-dl0-ep1-tr_0120
-DATA_PATH=$BASE_PATH/input/tokenized/SmolLM2-1.7B-100B-nonce-SmolLM2-1.7B
+OUT_PATH=$BASE_PATH/output
+DATA_PATH=$BASE_PATH/input/tokenized/gpt2/ext
 
-CONFIG_NAME="HuggingFaceTB/SmolLM2-1.7B"
-INIT_MODEL=/home/pj25000107/ku50001566/projects/knowledge_decoupling/output/HuggingFaceTB/SmolLM2-1.7B/checkpoint/SmolLM2-1.7B-100B-nonce-SmolLM2-1.7B-dl0-ep1-tr_/checkpoint-10336
-EPOCHS=1
+CONFIG_NAME="gpt2"
+INIT_MODEL=$BASE_PATH/output/gpt2/nonce/smolLM2-nonce-bs1024-dl0-ep1
+EPOCHS=3
 
 
 echo "====== continue training ${INIT_MODEL} ======"
@@ -17,11 +17,11 @@ echo "start time: $(date -d @$start_time +"%D %T")"
 /home/pj25000107/ku50001566/.local/bin/uv run python $SCRIPT_PATH/train.py \
     --speedup \
     -cn $CONFIG_NAME \
-    -cp $INIT_MODEL \
-    -dp $DATA_PATH \
-    -dl 0 \
+    -im $INIT_MODEL \
+    -dp $DATA_PATH/ext-test-nonce \
     -e $EPOCHS \
-    -o $OUT_PATH
+    -dl 0\
+    -o $OUT_PATH/$CONFIG_NAME/nonce/smolLM2-nonce-bs1024-dl0-ep1-ext_test-nonce-ep$EPOCHS
 
 end_time=$(date +"%s")
 echo "end time: $(date -d @$end_time +"%D %T")"

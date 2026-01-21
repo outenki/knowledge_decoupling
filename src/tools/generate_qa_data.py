@@ -2,8 +2,12 @@ import argparse
 import json
 from tqdm import tqdm
 from pathlib import Path
+from config import GPT_API_KEY
+from openai import OpenAI
 
 from datasets import load_dataset, Dataset
+
+client = OpenAI(api_key=GPT_API_KEY)
 
 
 def print_args(args: dict):
@@ -20,7 +24,9 @@ def read_args():
         choices=['ai2_arc', 'boolq', 'qasc', "squad_v2"],
         help='Name of the dataset to load from Hugging Face'
     )
-    parser.add_argument('--with-options', '-op', dest='with_options', action='store_true')
+    parser.add_argument('--format', '-f', dest='format', action='store_true')
+    parser.add_argument('--format-with-options', '-op', dest='format_with_options', action='store_true')
+    parser.add_argument('--probing', '-p', dest='probing', action='store_true')
     parser.add_argument(
         '--subset-name', '-sn', dest='subset_name', type=str, required=False,
         default=None,
@@ -33,7 +39,75 @@ def read_args():
     return parser.parse_args()
 
 
-def generate_qa_data_from_ai2_arc(dataset: Dataset, with_options: bool) -> list[dict]:
+def gpt_chat(prompt: str) -> str:
+    response = client.responses.create(
+        model="gpt-4.1-mini",
+        input=prompt,
+        timeout=10
+    )
+    return response.output_text.strip()
+    
+
+def convert_qa_to_probing(question: str, answer: str) -> dict:
+    gpt_prompt = "把问答句转换为填空题，确保答案出现在句末。 \n"
+    gpt_prompt += "input: \nWhat is the last action that the student should perform before leaving the lab area? wash hands\n"
+    gpt_prompt += "output: \n"
+    gpt_prompt += "text: The last action that the student should perform before leaving the lab area is washing hands\n"
+    gpt_prompt += "q: The last action that the student should perform before leaving the lab area is\n"
+    gpt_prompt += "a: washing hands\n\n"
+    gpt_prompt += "input:\n" + f"{question} {answer}\n\n"
+    text, q, a  = gpt_chat(gpt_prompt).split("\n")
+    return {
+        "text": text.split(":", maxsplit=1)[1],
+        "question": q.split(":", maxsplit=1)[1],
+        "answer": a.split(":", maxsplit=1)[1],
+    }
+
+def construct_data(
+    context: str, question: str, options: list[str], answer: str,
+    format: bool,
+    format_with_options: bool,
+    probing: bool
+) -> dict:
+    ori_context = context
+    ori_question = question
+    ori_options = options
+    ori_answer = answer
+
+    if probing:
+        probing_text = convert_qa_to_probing(question, answer)
+        text = probing_text["text"]
+        question = probing_text["question"]
+        answer = probing_text["answer"]
+    else:
+        text = question + " " + answer
+    text = context + text
+
+    
+    if format:
+        prompt = ""
+        if context:
+            prompt = f"### Context\n{context}"
+        
+        prompt += f"\n\n### Query\n{question}"
+        if options and format_with_options:
+            prompt += "\n\n### Options\n" + "\n".join(options)
+        prompt += "\n\n Response\n"
+
+        return {
+            "ori_context": ori_context,
+            "ori_question": ori_question,
+            "ori_options": ori_options,
+            "ori_answer": ori_answer,
+            "prompt": prompt,
+            "answer": answer,
+            "text": text
+        }
+
+
+def generate_qa_data_from_ai2_arc(
+    dataset: Dataset, format: bool, format_with_options: bool, probing: bool
+) -> list[dict]:
     qa_data = []
     for sample in tqdm(dataset, total=len(dataset), desc="Generating QA data"):
         assert isinstance(sample, dict)
@@ -45,23 +119,17 @@ def generate_qa_data_from_ai2_arc(dataset: Dataset, with_options: bool) -> list[
         answer_key = sample["answerKey"]
         options = sample["choices"]["text"]
         answer = options[labels.index(answer_key)]
-        text = question + "\n" + answer
+        context = ""
 
-        prompt = f"### Query\n{question}"
-        if with_options:
-            prompt += "\n\n### Options\n" + "\n".join(sample["choices"]["text"])
-        prompt += "\n\n### Response\n"
-        qa_data.append({
-            "context": "",
-            "text": text,
-            "options": options,
-            "prompt": prompt,
-            "answer": answer
-        })
+        qa_data.append(
+            construct_data(context, question, options, answer, format, format_with_options, probing)
+        )
     return qa_data
 
 
-def generate_qa_data_from_boolq(dataset: Dataset, with_options) -> list[dict]:
+def generate_qa_data_from_boolq(
+    dataset: Dataset, format: bool, format_with_options: bool, probing: bool
+) -> list[dict]:
     qa_data = []
     for sample in tqdm(dataset, total=len(dataset), desc="Generating QA data"):
         assert isinstance(sample, dict)
@@ -69,26 +137,18 @@ def generate_qa_data_from_boolq(dataset: Dataset, with_options) -> list[dict]:
         if not question.endswith("?") and not question.endswith("."):
             question += "?"
         answer = "Yes." if sample["answer"] else "No."
-        text = question + "\n" + answer
-
         context = sample["passage"]
-        text = context + "\n" + text 
-        prompt = f"### Context\n{context}\n\n"
-        prompt += f"### Query\n{question}"
-        if with_options:
-            prompt += f"### Options\n" + "\n".join(["Yes.", "No."])
-        prompt += "\n\n### Response\n"
-        qa_data.append({
-            "context": sample["passage"],
-            "options": ["Yes.", "No."],
-            "text": text,
-            "prompt": prompt,
-            "answer": answer
-        })
+        options = ["Yes", "No"]
+
+        qa_data.append(
+            construct_data(context, question, options, answer, format, format_with_options, probing)
+        )
     return qa_data
 
 
-def generate_qa_data_from_qasc(dataset: Dataset, with_options: bool) -> list[dict]:
+def generate_qa_data_from_qasc(
+    dataset: Dataset, format: bool, format_with_options: bool, probing: bool
+) -> list[dict]:
     qa_data = []
     for sample in tqdm(dataset, total=len(dataset), desc="Generating QA data"):
         assert isinstance(sample, dict)
@@ -101,24 +161,18 @@ def generate_qa_data_from_qasc(dataset: Dataset, with_options: bool) -> list[dic
         if answer_key not in labels:
             continue  # Skip if the answer key is not in the labels
         answer = options[labels.index(answer_key)]
-        text = question + "\n" + answer
-        
-        prompt = f"### Query\n{question}"
-        if with_options:
-            prompt += f"### Options\n" + "\n".join(options)
-        prompt += "\n\n### Response\n"
+        context = ""
 
-        qa_data.append({
-            "context": "",
-            "text": text,
-            "prompt": prompt,
-            "options": options,
-            "answer": answer
-        })
+        
+        qa_data.append(
+            construct_data(context, question, options, answer, format, format_with_options, probing)
+        )
     return qa_data
 
 
-def generate_qa_data_from_squad(dataset: Dataset) -> list[dict]:
+def generate_qa_data_from_squad(
+    dataset: Dataset, format: bool, format_with_options: bool, probing: bool
+) -> list[dict]:
     qa_data = []
     for sample in tqdm(dataset, total=len(dataset), desc="Generating QA data"):
         assert isinstance(sample, dict)
@@ -126,20 +180,11 @@ def generate_qa_data_from_squad(dataset: Dataset) -> list[dict]:
         context = sample["context"]
         answers = list(set(sample["answers"]["text"]))
         answer = answers[0] if answers else "I don't know."
-        text = question + "\n" + answer
+        options = []
 
-        text = context + "\n" + text
-        prompt = f"### Context\n{context}\n\n"
-        prompt += f"### Query\n{question}"
-        prompt += f"\n\n### Response\n"
-        qa_data.append({
-            "context": context,
-            "text": text,
-            "prompt": prompt,
-            "options": [],
-            "answer": answer,
-            "answers": answers,
-        })
+        qa_data.append(
+            construct_data(context, question, options, answer, format, format_with_options, probing)
+        )
     return qa_data
 
 
@@ -149,12 +194,6 @@ print("")
 print(f"making dirs: {args.output_path}")
 Path(args.output_path).mkdir(parents=True, exist_ok=True)
 
-# context = False
-# if args.data_name.endswith("_ctxt"):
-#     context = True
-#     data_name = args.data_name[:-5]
-# else:
-#     data_name = args.data_name
 print("Loading data...")
 dataset_dict = load_dataset(args.data_name, args.subset_name)
 
@@ -162,15 +201,21 @@ assert isinstance(dataset_dict, dict)
 for split, dataset in dataset_dict.items():
     print(f"Processing split: {split} with {len(dataset)} samples")
     if args.data_name == "ai2_arc":
-        qa_data = generate_qa_data_from_ai2_arc(dataset, with_options=args.with_options)
+        qa_data = generate_qa_data_from_ai2_arc(
+            dataset, args.format, args.format_with_options, args.probing
+        )
     elif args.data_name == "boolq":
-        qa_data = generate_qa_data_from_boolq(dataset, with_options=args.with_options)
+        qa_data = generate_qa_data_from_boolq(
+            dataset, args.format, args.format_with_options, args.probing
+        )
     elif args.data_name == "qasc":
-        qa_data = generate_qa_data_from_qasc(dataset, with_options=args.with_options)
-    # elif args.data_name == "squad":
-    #     qa_data = generate_qa_data_from_squad(dataset)
+        qa_data = generate_qa_data_from_qasc(
+            dataset, args.format, args.format_with_options, args.probing
+        )
     elif args.data_name == "squad_v2":
-        qa_data = generate_qa_data_from_squad(dataset)
+        qa_data = generate_qa_data_from_squad(
+            dataset, args.format, args.format_with_options, args.probing
+        )
     else:
         raise ValueError(f"Unsupported dataset: {args.data_name}")
     output_file = Path(args.output_path) / f"{split}.json"
