@@ -1,15 +1,15 @@
 #!/bin/bash
 BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
 SCRIPT_PATH=$BASE_PATH/src
+OUT_PATH=$BASE_PATH/output
+DATA_PATH=$BASE_PATH/input/tokenized/gpt2/ext
 
-CONFIG_NAME=$1
-INIT_MODEL=$2
-DATA_PATH=$3
-OUT_PATH=$4
-EPOCHS=$5
+CONFIG_NAME="gpt2"
+INIT_MODEL=$BASE_PATH/output/gpt2/nonce/smolLM2-nonce-bs1024-dl0-ep1
+EPOCHS=3
 
 
-echo "====== training on ${DATA_PATH} ======"
+echo "====== continue training ${INIT_MODEL} ======"
 start_time=$(date +"%s")
 echo "start time: $(date -d @$start_time +"%D %T")"
 
@@ -18,10 +18,10 @@ echo "start time: $(date -d @$start_time +"%D %T")"
     --speedup \
     -cn $CONFIG_NAME \
     -im $INIT_MODEL \
-    -dp $DATA_PATH \
+    -dp $DATA_PATH/ext-test-nonce-ne \
     -e $EPOCHS \
-    -dl 0 \
-    -o $OUT_PATH
+    -dl 0\
+    -o $OUT_PATH/$CONFIG_NAME/nonce/smolLM2-nonce-bs1024-dl0-ep1-ext_test_nonce_ne-ep$EPOCHS
 
 end_time=$(date +"%s")
 echo "end time: $(date -d @$end_time +"%D %T")"

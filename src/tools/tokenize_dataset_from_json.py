@@ -14,7 +14,7 @@ parser.add_argument(
 parser.add_argument('--output-path', '-output', dest='output_path', type=str,)
 parser.add_argument(
     '--tokenizer', '-tk', dest='tokenizer', type=str,
-    choices={"gpt2", "Qwen/Qwen3-0.6B-Base", "HuggingFaceTB/SmolLM2-135M"}
+    choices={"gpt2", "Qwen/Qwen3-0.6B-Base", "HuggingFaceTB/SmolLM2-135M", "HuggingFaceTB/SmolLM2-1.7B"}
 )
 parser.add_argument(
     '--mask-prompt', '-mp', dest='mask_prompt', action='store_true',

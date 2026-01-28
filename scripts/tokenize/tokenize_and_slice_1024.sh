@@ -1,7 +1,7 @@
 #!/bin/bash
 BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
-OUTPUT_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling/input/tokenized/gpt2/ext/ext-test-nonce
-DATA_NAME=/home/pj25000107/ku50001566/projects/knowledge_decoupling/data/ext/test/nonce/sents/mn_8
+OUTPUT_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling/input/tokenized/gpt2/ext/ext-test-nonce-ne
+DATA_NAME=/home/pj25000107/ku50001566/projects/knowledge_decoupling/data/ext/test/nonce/sents_ne/mn_8
 TOKENIZER=gpt2
 
 start_time=$(date +"%s")
