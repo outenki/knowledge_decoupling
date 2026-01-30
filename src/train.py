@@ -148,11 +148,11 @@ def normalize_dataset(ds):
 
 
 def main():
-    print("CUDA available:", torch.cuda.is_available())
-    print("GPU count:", torch.cuda.device_count())
+    print(">>> CUDA available:", torch.cuda.is_available())
+    print(">>> GPU count:", torch.cuda.device_count())
 
     for i in range(torch.cuda.device_count()):
-        print(f"GPU {i}: {torch.cuda.get_device_name(i)}")
+        print(f">>> GPU {i}: {torch.cuda.get_device_name(i)}")
 
     args = read_args()
     print_args(vars(args))
@@ -160,10 +160,10 @@ def main():
 
     # === Load model
     model = None
-    print("Loading model from config:", args.config_name)
+    print(">>> Loading model from config:", args.config_name)
     model = load_model_from_config(args.config_name)
     if args.init_model:
-        print("Loading init model from:", args.init_model)
+        print(">>> Loading init model from:", args.init_model)
         model = AutoModelForCausalLM.from_pretrained(
             args.init_model,
             quantization_config=None,
@@ -173,7 +173,7 @@ def main():
 
 
     if args.speedup:
-        print("Applying speedup options...")
+        print(">>> Applying speedup options...")
         # print("- speed up with xformers")
         # torch.backends.cuda.enable_flash_sdp(True)
         # torch.backends.cuda.enable_mem_efficient_sdp(True)
@@ -206,7 +206,7 @@ def main():
     })
 
 
-    print("Dataset:", data_dict)
+    print(">>> Dataset:", data_dict)
 
     train_dataset: Dataset | None = None
     eval_dataset: Dataset | None = None
@@ -220,16 +220,14 @@ def main():
         train_dataset = data_dict["train"]
         eval_dataset = data_dict["test"]
 
-    for i in range(10):
-        print(len(train_dataset[i]["input_ids"]))
-    print(train_dataset.features)
+    print(">>> dataset features:", train_dataset.features)
 
 
     train_dataset.set_format("torch")
     eval_dataset.set_format("torch")
 
-    print(f"Training data size: {len(train_dataset)}")
-    print(f"Eval data size: {len(eval_dataset)}")
+    print(f">>> Training data size: {len(train_dataset)}")
+    print(f">>> Eval data size: {len(eval_dataset)}")
 
     log_path = f"{args.out_path}/logs"
     Path(log_path).mkdir(parents=True, exist_ok=True)
@@ -246,9 +244,9 @@ def main():
     target_total_checkpoints = 50
     save_steps = max(1, total_steps // target_total_checkpoints)
 
-    print(f"Total training steps: {total_steps}")
-    print(f"Targeting {target_total_checkpoints} checkpoints.")
-    print(f"Computed save/eval steps: {save_steps}")
+    print(f">>> Total training steps: {total_steps}")
+    print(f">>> Targeting {target_total_checkpoints} checkpoints.")
+    print(f">>> Computed save/eval steps: {save_steps}")
 
     training_args = TrainingArguments(
         output_dir=args.out_path,
@@ -276,7 +274,7 @@ def main():
     with open(Path(args.out_path) / "training_args.json", "w") as f:
         json.dump(training_args.to_dict(), f, indent=4)
 
-    print("eval_dataset:", eval_dataset)
+    print(">>> eval_dataset:", eval_dataset)
     trainer = Trainer(
         model=model,
         args=training_args,
@@ -315,11 +313,11 @@ def main():
     checkpoint = args.checkpoint
     if not checkpoint or not Path(checkpoint).exists() or not Path(checkpoint).is_dir():
         checkpoint = None
-        print(f"Starting from random model")
+        print(f">>> Starting from random model")
     else:
-        print(f"Resuming from checkpoint: {checkpoint}")
+        print(f">>> Resuming from checkpoint: {checkpoint}")
     trainer.train(resume_from_checkpoint=checkpoint)
-    print(f"Save model to: {args.out_path}")
+    print(f">>> Save model to: {args.out_path}")
     model.save_pretrained(Path(args.out_path))
 
 

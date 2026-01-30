@@ -5,7 +5,7 @@ OUT_PATH=$PROJECT_BASE_PATH/output
 DATA_PATH=$PROJECT_BASE_PATH/input/tokenized/gpt2/ext
 
 CONFIG_NAME="gpt2"
-INIT_MODEL=$PROJECT_BASE_PATH/output/gpt2/nonce/smolLM2-nonce-bs1024-dl0-ep1
+INIT_MODEL=$PROJECT_BASE_PATH/output/gpt2/nonce/smolLM2_nonce_mn3_bs1024_dl0_ep1
 EPOCHS=3
 
 
@@ -14,14 +14,14 @@ start_time=$(date +"%s")
 echo "start time: $(date -d @$start_time +"%D %T")"
 
 
-/home/pj25000107/ku50001566/.local/bin/uv run python $SCRIPT_PATH/train.py \
+uv run python $SCRIPT_PATH/train.py \
     --speedup \
     -cn $CONFIG_NAME \
     -im $INIT_MODEL \
     -dp $DATA_PATH/ext-test-nonce \
     -e $EPOCHS \
     -dl 0\
-    -o $OUT_PATH/$CONFIG_NAME/nonce/smolLM2-nonce-bs1024-dl0-ep1-ext_test-nonce-ep$EPOCHS
+    -o $OUT_PATH/$CONFIG_NAME/nonce/smolLM2_nonce_mn3_bs1024_dl0_ep1-ext_test_nonce_ep$EPOCHS
 
 end_time=$(date +"%s")
 echo "end time: $(date -d @$end_time +"%D %T")"
