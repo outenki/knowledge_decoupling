@@ -35,12 +35,13 @@ def preprocess(example):
     response = example["answer"]
 
     p_out = TOKENIZER(prompt, add_special_tokens=False)
-    r_out = TOKENIZER(response, add_special_tokens=False)
+    r_out = TOKENIZER(response + TOKENIZER.eos_token, add_special_tokens=False)
     
     prompt_ids = p_out.input_ids if p_out.input_ids is not None else []
     response_ids = r_out.input_ids if r_out.input_ids is not None else []
 
     input_ids = prompt_ids + response_ids
+    
     if args.mask_prompt:
         labels = [-100] * len(prompt_ids) + response_ids
     else:

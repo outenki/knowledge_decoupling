@@ -1,8 +1,8 @@
 #!/bin/bash
-BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
-SCRIPT_PATH=$BASE_PATH/src
-OUT_PATH=$BASE_PATH/output
-DATA_PATH=$BASE_PATH/input/tokenized
+PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-/home/pj25000107/ku50001566/projects/knowledge_decoupling}"
+SCRIPT_PATH=$PROJECT_BASE_PATH/src
+OUT_PATH=$PROJECT_BASE_PATH/output
+DATA_PATH=$PROJECT_BASE_PATH/input/tokenized
 CONFIG_NAME=$1
 EPOCHS=$2
 

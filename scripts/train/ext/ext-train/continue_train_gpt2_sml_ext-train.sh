@@ -1,11 +1,11 @@
 #!/bin/bash
-BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
-SCRIPT_PATH=$BASE_PATH/src
-OUT_PATH=$BASE_PATH/output
-DATA_PATH=$BASE_PATH/input/tokenized/ext/sml2
+PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-/home/pj25000107/ku50001566/projects/knowledge_decoupling}"
+SCRIPT_PATH=$PROJECT_BASE_PATH/src
+OUT_PATH=$PROJECT_BASE_PATH/output
+DATA_PATH=$PROJECT_BASE_PATH/input/tokenized/ext/sml2
 
 CONFIG_NAME="gpt2"
-INIT_MODEL=$BASE_PATH/output/gpt2/smolLM2/smolLM2-bs1024-dl0-ep1
+INIT_MODEL=$PROJECT_BASE_PATH/output/gpt2/smolLM2/smolLM2-bs1024-dl0-ep1
 # EPOCHS=1
 
 

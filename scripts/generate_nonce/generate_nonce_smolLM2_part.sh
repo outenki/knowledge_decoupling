@@ -1,5 +1,5 @@
 #!/bin/bash
-BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
+PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-/home/pj25000107/ku50001566/projects/knowledge_decoupling}"
 DATA_NAME=SmolLM2
 SIZE=100000
 
@@ -10,16 +10,16 @@ for part in 5 10 26 37
 do
     echo
     echo "====== preprocess $part ======"
-    /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/generate_nonce_data_long.py \
+    /home/pj25000107/ku50001566/.local/bin/uv run python $PROJECT_BASE_PATH/src/generate_nonce_data_long.py \
         -dn "EleutherAI/SmolLM2-135M-10B" \
         -lf hf \
-        -o $BASE_PATH/data/$DATA_NAME/1020/test/part$part \
+        -o $PROJECT_BASE_PATH/data/$DATA_NAME/1020/test/part$part \
         -sf $(($part * $SIZE)) \
         -ss text \
         -sk source \
         -sv stack_edu infimm_webmath \
-        -lb $BASE_PATH/data/wikimedia-nonce/vocab/lemma_blacklist \
-        -wb $BASE_PATH/data/wikimedia-nonce/vocab/nonce_word_bank.json \
+        -lb $PROJECT_BASE_PATH/data/wikimedia-nonce/vocab/lemma_blacklist \
+        -wb $PROJECT_BASE_PATH/data/wikimedia-nonce/vocab/nonce_word_bank.json \
         -l $SIZE
 done
 

@@ -1,6 +1,0 @@
-pjsub job_generate_nonce_5.sh
-pjsub job_generate_nonce_6.sh
-pjsub job_generate_nonce_7.sh
-pjsub job_generate_nonce_8.sh
-pjsub job_generate_nonce_9.sh
-pjsub job_generate_nonce_10.sh

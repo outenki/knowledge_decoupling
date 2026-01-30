@@ -1,8 +1,8 @@
 #!/bin/bash
-BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
-SCRIPT_PATH=$BASE_PATH/src
-OUT_PATH=$BASE_PATH/output/HuggingFaceTB/SmolLM2-1.7B/SmolLM2-1.7B-100B-nonce-SmolLM2-1.7B-dl0-ep1-tr_0120
-DATA_PATH=$BASE_PATH/input/tokenized/SmolLM2-1.7B-100B-nonce-SmolLM2-1.7B
+PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-/home/pj25000107/ku50001566/projects/knowledge_decoupling}"
+SCRIPT_PATH=$PROJECT_BASE_PATH/src
+OUT_PATH=$PROJECT_BASE_PATH/output/HuggingFaceTB/SmolLM2-1.7B/SmolLM2-1.7B-100B-nonce-SmolLM2-1.7B-dl0-ep1-tr_0120
+DATA_PATH=$PROJECT_BASE_PATH/input/tokenized/SmolLM2-1.7B-100B-nonce-SmolLM2-1.7B
 
 CONFIG_NAME="HuggingFaceTB/SmolLM2-1.7B"
 INIT_MODEL=/home/pj25000107/ku50001566/projects/knowledge_decoupling/output/HuggingFaceTB/SmolLM2-1.7B/checkpoint/SmolLM2-1.7B-100B-nonce-SmolLM2-1.7B-dl0-ep1-tr_/checkpoint-10336

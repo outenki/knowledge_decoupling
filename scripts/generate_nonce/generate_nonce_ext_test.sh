@@ -1,13 +1,13 @@
 #!/bin/bash
-BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
-DATA_NAME=$BASE_PATH/data/ext/test/dataset
+PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-/home/pj25000107/ku50001566/projects/knowledge_decoupling}"
+DATA_NAME=$PROJECT_BASE_PATH/data/ext/test/dataset
 MAX_N=8
 
 start_time=$(date +"%s")
 echo "start time: $(date -d @$start_time +"%D %T")"
-/home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/generate_nonce_data.py \
+/home/pj25000107/ku50001566/.local/bin/uv run python $PROJECT_BASE_PATH/src/generate_nonce_data.py \
     -d $DATA_NAME \
-    -wb $BASE_PATH/data/SmolLM2-1.7B-100B/nonce/vocab/nonce_word_bank.json \
+    -wb $PROJECT_BASE_PATH/data/SmolLM2-1.7B-100B/nonce/vocab/nonce_word_bank.json \
     -lf local \
     -ss text \
     -mn $MAX_N \

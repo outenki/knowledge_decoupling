@@ -1,15 +1,15 @@
 #!/bin/bash
-BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
-SCRIPT_PATH=$BASE_PATH/src
-OUT_PATH=$BASE_PATH/output
-DATA_PATH=$BASE_PATH/input/tokenized/gpt2/ext
+PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-/home/pj25000107/ku50001566/projects/knowledge_decoupling}"
+SCRIPT_PATH=$PROJECT_BASE_PATH/src
 
-CONFIG_NAME="gpt2"
-INIT_MODEL="gpt2"
-EPOCHS=3
+CONFIG_NAME=$1
+INIT_MODEL=$2
+DATA_PATH=$3
+OUT_PATH=$4
+EPOCHS=$5
 
 
-echo "====== continue training ${INIT_MODEL} ======"
+echo "====== training on ${DATA_PATH} ======"
 start_time=$(date +"%s")
 echo "start time: $(date -d @$start_time +"%D %T")"
 
@@ -18,10 +18,10 @@ echo "start time: $(date -d @$start_time +"%D %T")"
     --speedup \
     -cn $CONFIG_NAME \
     -im $INIT_MODEL \
-    -dp $DATA_PATH/ext-test \
+    -dp $DATA_PATH \
     -e $EPOCHS \
-    -dl 0\
-    -o $OUT_PATH/$CONFIG_NAME/HuggingFace/hf-ext_test-ep${EPOCHS}
+    -dl 0 \
+    -o $OUT_PATH
 
 end_time=$(date +"%s")
 echo "end time: $(date -d @$end_time +"%D %T")"

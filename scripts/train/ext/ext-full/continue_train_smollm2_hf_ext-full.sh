@@ -1,11 +1,11 @@
 #!/bin/bash
-BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
-SCRIPT_PATH=$BASE_PATH/src
-OUT_PATH=$BASE_PATH/output
-DATA_PATH=$BASE_PATH/input/tokenized/gpt2/ext
+PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-/home/pj25000107/ku50001566/projects/knowledge_decoupling}"
+SCRIPT_PATH=$PROJECT_BASE_PATH/src
+OUT_PATH=$PROJECT_BASE_PATH/output
+DATA_PATH=$PROJECT_BASE_PATH/input/tokenized/ext/sml2
 
-CONFIG_NAME="gpt2"
-INIT_MODEL=$BASE_PATH/output/gpt2/smolLM2/smolLM2-bs1024-dl0-ep1
+CONFIG_NAME="HuggingFaceTB/SmolLM2-135M"
+INIT_MODEL="HuggingFaceTB/SmolLM2-135M"
 EPOCHS=3
 
 
@@ -18,10 +18,12 @@ echo "start time: $(date -d @$start_time +"%D %T")"
     --speedup \
     -cn $CONFIG_NAME \
     -im $INIT_MODEL \
-    -dp $DATA_PATH/ext-test \
+    -dp $DATA_PATH/ext-train-sml2 \
+    -dp $DATA_PATH/ext-val-sml2 \
+    -dp $DATA_PATH/ext-test-sml2 \
     -e $EPOCHS \
     -dl 0\
-    -o $OUT_PATH/$CONFIG_NAME/smolLM2/smolLM2-bs1024-dl0-ep1-ext_test-ep$EPOCHS
+    -o $OUT_PATH/$CONFIG_NAME/hf-ext_full-ep${EPOCHS}
 
 end_time=$(date +"%s")
 echo "end time: $(date -d @$end_time +"%D %T")"

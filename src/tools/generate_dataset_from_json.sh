@@ -1,5 +1,6 @@
-BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
-JSON_DIR=$BASE_PATH/data/ext/test
+#!/bin/bash
+PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-/home/pj25000107/ku50001566/projects/knowledge_decoupling}"
+JSON_DIR=$PROJECT_BASE_PATH/data/ext/test
 
 uv run python generate_dataset_from_json.py \
     -jf $JSON_DIR/qa_arc_easy.json \

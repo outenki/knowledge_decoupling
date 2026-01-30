@@ -1,5 +1,5 @@
 #!/bin/bash
-BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
+PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-/home/pj25000107/ku50001566/projects/knowledge_decoupling}"
 DATA_NAME=SmolLM2-1.7B-100B
 MULTI_PROC=10
 SIZE=100000
@@ -16,7 +16,7 @@ do
     part=$(($i / $SIZE))
     echo
     echo "====== preprocess $part ======"
-    /home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/generate_nonce_data.py \
+    /home/pj25000107/ku50001566/.local/bin/uv run python $PROJECT_BASE_PATH/src/generate_nonce_data.py \
         -d "EleutherAI/SmolLM2-135M-10B" \
         -lf hf \
         -sf $i \
@@ -25,7 +25,7 @@ do
         -sv stack_edu infimm_webmath \
         -l $SIZE \
         -mn $MAX_N \
-        -o $BASE_PATH/data/$DATA_NAME/sents/mn_$MAX_N/nonce-parts/part$part
+        -o $PROJECT_BASE_PATH/data/$DATA_NAME/sents/mn_$MAX_N/nonce-parts/part$part
 done
 
 end_time=$(date +"%s")

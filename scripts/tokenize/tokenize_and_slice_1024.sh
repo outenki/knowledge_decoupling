@@ -1,7 +1,7 @@
 #!/bin/bash
-BASE_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling
-OUTPUT_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling/input/tokenized/gpt2/ext/ext-test-nonce-ne
-DATA_NAME=/home/pj25000107/ku50001566/projects/knowledge_decoupling/data/ext/test/nonce/sents_ne/mn_8
+PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-/home/pj25000107/ku50001566/projects/knowledge_decoupling}"
+OUTPUT_PATH=$PROJECT_BASE_PATH/input/tokenized/gpt2/ext/ext-test-nonce-ne
+DATA_NAME=$PROJECT_BASE_PATH/data/ext/test/nonce/sents_ne/mn_8
 TOKENIZER=gpt2
 
 start_time=$(date +"%s")
@@ -9,7 +9,7 @@ echo "start time: $(date -d @$start_time +"%D %T")"
 
 echo
 echo "====== preprocess part$part ======"
-/home/pj25000107/ku50001566/.local/bin/uv run python $BASE_PATH/src/tokenize_and_slice_data.py \
+/home/pj25000107/ku50001566/.local/bin/uv run python $PROJECT_BASE_PATH/src/tokenize_and_slice_data.py \
     --tokenizer $TOKENIZER \
     -dn $DATA_NAME \
     -lf local -dc text -t -s -bs 1024 \
