@@ -7,6 +7,7 @@ parser = argparse.ArgumentParser()
 parser.add_argument('--input-json', '-i', dest='input_json', type=str)
 parser.add_argument('--column-name', '-cn', dest='column_name', type=str)
 parser.add_argument('--column-value', '-cv', dest='column_value', type=str)
+parser.add_argument('--not-equal', '-ne', dest='not_equal', action='store_true')
 parser.add_argument('--output-json', '-o', dest='output_json', type=str)
 args = parser.parse_args()
 
@@ -22,7 +23,10 @@ with open(args.input_json, "r") as f:
 
 cn = args.column_name
 cv = args.column_value
-output_json = [s for s in tqdm.tqdm(input_json, desc="Extracting") if s[cn] == cv]
+if args.not_equal:
+    output_json = [s for s in tqdm.tqdm(input_json, desc="Extracting") if s[cn] != cv]
+else:
+    output_json = [s for s in tqdm.tqdm(input_json, desc="Extracting") if s[cn] == cv]
 
 
 print(f"Saving samples to {args.output_json}({len(output_json)})")
