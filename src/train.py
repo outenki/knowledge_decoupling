@@ -87,6 +87,9 @@ def read_args():
         '--epochs', '-e', dest='epochs', type=int, required=False, default=3,
     )
     parser.add_argument(
+        '--save-checkpoints', '-sc', dest='save_checkpoints', type=int, required=False, default=50,
+    )
+    parser.add_argument(
         '--data-limit', '-dl', dest='data_limit', type=int, action='append',
         help='Max number of samples for training. 0 for no limit.'
     )
@@ -131,7 +134,11 @@ def limit_dataset_dict(data_dict: DatasetDict, data_limit: int) -> DatasetDict:
 def load_dataset_dict(data_path: str) -> DatasetDict:
     dataset = load_custom_dataset(data_path, None, "local")
     if isinstance(dataset, Dataset):
-        data_dict = dataset.train_test_split(train_size=1/1.1, shuffle=True, seed=42)
+        total_len = len(dataset)
+        test_size = min(max(20, total_len // 10), total_len // 2)
+        if total_len < 2:
+            raise ValueError(f"Dataset at {data_path} is too small to split.")
+        data_dict = dataset.train_test_split(test_size=test_size, shuffle=True, seed=42)
     elif isinstance(dataset, DatasetDict):
         data_dict = dataset
     else:
@@ -241,7 +248,7 @@ def main():
 
     total_steps = train_dataset_size // effective_batch_size
 
-    target_total_checkpoints = 50
+    target_total_checkpoints = args.save_checkpoints
     save_steps = max(1, total_steps // target_total_checkpoints)
 
     print(f">>> Total training steps: {total_steps}")
