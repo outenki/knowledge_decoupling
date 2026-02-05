@@ -1,6 +1,6 @@
 #!/bin/bash
 #PJM -L "rscgrp=c-batch"
-#PJM -L "elapse=24:00:00"
+#PJM -L "elapse=10:00:00"
 #PJM -L "gpu=4"
 #PJM -L "jobenv=singularity"
 #PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_sft_gpt2_nonce_sent.err
@@ -9,16 +9,11 @@
 
 module load singularity-ce
 
-cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts/sft || exit 1
+cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts/train/sft/gpt2 || exit 1
 
 # CONFIG_NAME=$1
 # INIT_MODEL=$2
 # DATA_NAME=$3
 # OUTPUT_NAME=$4
 # EPOCHS=$5
-singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif /bin/bash sft.sh \
-    gpt2 \
-    /home/pj25000107/ku50001566/projects/knowledge_decoupling/output/gpt2/nonce/smolLM2-nonce-mn3-bs1024-dl0-ep1 \
-    gpt2/mix_qa_without_options \
-    nonce/smolLM2-nonce-mn3-bs1024-dl0-ep1-sft-mix_qa_without_options-ep3 \
-    3
+singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif /bin/bash ./sft_gpt2_nonce_squad.sh

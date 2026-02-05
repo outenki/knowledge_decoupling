@@ -86,7 +86,7 @@ def main():
     print(f"Loading samples from {args.input_json}")
     with open(args.input_json, "r") as f:
         samples = json.load(f)
-    
+
     precision_scores = []
     recall_scores = []
     f1_scores = []
@@ -97,25 +97,24 @@ def main():
         recall_scores.append(evaluated["recall"])
         f1_scores.append(evaluated["f1"])
         evaluated_samples.append(evaluated)
-    
-    
+
     results = {
         "avg_precision": avg(precision_scores),
         "avg_recall": avg(recall_scores),
         "avg_f1": avg(f1_scores)
     }
-    
+
     output_fn = Path(output_path) / "prf_samples.json"
     print(f"Saving evaluated samples to {output_fn}")
     with open(output_fn, "w") as f:
         json.dump(evaluated_samples, f, indent=4)
-    
+
     output_fn = Path(output_path) / "avg_prf.json"
     print(f"Saving summary to {output_fn}")
     with open(output_fn, "w") as f:
         json.dump(results, f, indent=4)
     print(results)
 
-    
+
 if __name__ == "__main__":
     main()

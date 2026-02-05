@@ -9,13 +9,20 @@ SCRIPT_PATH=$PROJECT_BASE_PATH/scripts/train/sft
 /bin/bash $SCRIPT_PATH/sft.sh \
     gpt2 \
     gpt2 \
-    $PROJECT_BASE_PATH/input/tokenized/gpt2/sft/squad_v2_ctxt_ans \
-    $PROJECT_BASE_PATH/output/gpt2/HuggingFace/hf-sft_squad_ans_ep3 \
+    $PROJECT_BASE_PATH/input/tokenized/gpt2/sft/squad_v2_ctxt_train_val_ans \
+    $PROJECT_BASE_PATH/output/gpt2/HuggingFace/hf-sft_squad_train_val_ans_ep3 \
     3
 
 /bin/bash $SCRIPT_PATH/sft.sh \
     gpt2 \
     $PROJECT_BASE_PATH/output/gpt2/HuggingFace/hf-ext_test_ep3 \
-    $PROJECT_BASE_PATH/input/tokenized/gpt2/sft/squad_v2_ctxt_ans \
-    $PROJECT_BASE_PATH/output/gpt2/HuggingFace/hf-ext_test_ep3-sft_squad_ans_ep3 \
+    $PROJECT_BASE_PATH/input/tokenized/gpt2/sft/squad_v2_ctxt_train_val_ans \
+    $PROJECT_BASE_PATH/output/gpt2/HuggingFace/hf-ext_test_ep3-sft_squad_train_val_ans_ep3 \
+    3
+
+/bin/bash $SCRIPT_PATH/sft.sh \
+    gpt2 \
+    $PROJECT_BASE_PATH/output/gpt2/random/rnd \
+    $PROJECT_BASE_PATH/input/tokenized/gpt2/sft/squad_v2_ctxt_train_val_ans \
+    $PROJECT_BASE_PATH/output/gpt2/random/rnd-sft_squad_train_val_ans_ep3 \
     3

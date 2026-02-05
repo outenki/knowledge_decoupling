@@ -21,7 +21,7 @@ uv run python $SCRIPT_PATH/train.py \
     -dp $DATA_PATH \
     -e $EPOCHS \
     -dl 0\
-    -o $OUT_PATH/$CONFIG_NAME/HuggingFace/hf-ext_test-ep${EPOCHS}
+    -o $OUT_PATH/$CONFIG_NAME/HuggingFace/hf-ext_test_squad_answerable_ep${EPOCHS}
 
 end_time=$(date +"%s")
 echo "end time: $(date -d @$end_time +"%D %T")"

@@ -20,6 +20,10 @@ parser.add_argument(
     '--mask-prompt', '-mp', dest='mask_prompt', action='store_true',
     help='Mask prompt for SFT'
 )
+parser.add_argument(
+    '--custom-token', '-pad', dest='add_pad', action='store_true',
+    help='Add custom PAD token'
+)
 args = parser.parse_args()
 
 
@@ -28,7 +32,13 @@ TOKENIZER = GPT2Tokenizer.from_pretrained(args.tokenizer)
 TOKENIZER.padding_side = "left"
 if TOKENIZER.pad_token_id is None:
     TOKENIZER.pad_token = TOKENIZER.eos_token
-PAD_ID = TOKENIZER.pad_token_id 
+
+TOKENIZER.add_special_tokens({'pad_token': '[PAD]'})
+
+print(f"EOS ID: {TOKENIZER.eos_token_id}")
+print(f"PAD ID: {TOKENIZER.pad_token_id}")
+PAD_ID = TOKENIZER.pad_token_id
+
 
 def preprocess(example):
     prompt = example["prompt"]
@@ -36,12 +46,12 @@ def preprocess(example):
 
     p_out = TOKENIZER(prompt, add_special_tokens=False)
     r_out = TOKENIZER(response + TOKENIZER.eos_token, add_special_tokens=False)
-    
+
     prompt_ids = p_out.input_ids if p_out.input_ids is not None else []
     response_ids = r_out.input_ids if r_out.input_ids is not None else []
 
     input_ids = prompt_ids + response_ids
-    
+
     if args.mask_prompt:
         labels = [-100] * len(prompt_ids) + response_ids
     else:
@@ -50,9 +60,9 @@ def preprocess(example):
     max_length = 1024
     input_ids = input_ids[:max_length]
     labels = labels[:max_length]
-    
+
     pad_len = max_length - len(input_ids)
-    
+
     if pad_len > 0:
         input_ids = input_ids + [PAD_ID] * pad_len
         labels = labels + [-100] * pad_len

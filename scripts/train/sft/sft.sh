@@ -14,8 +14,9 @@ start_time=$(date +"%s")
 echo "start time: $(date -d @$start_time +"%D %T")"
 
 
-uv run python $SCRIPT_PATH/train.py \
+/home/pj25000107/ku50001566/.local/bin/uv run python $SCRIPT_PATH/train.py \
     --speedup \
+    -pad \
     -cn $CONFIG_NAME \
     -im $INIT_MODEL \
     -dp $DATA_PATH \

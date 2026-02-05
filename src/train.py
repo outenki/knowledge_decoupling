@@ -98,6 +98,10 @@ def read_args():
         help='Enable speedup options.'
     )
     parser.add_argument(
+        '--custom-pad', '-pad', dest='custom_pad', action='store_true',
+        help='Add custom PAD token'
+    )
+    parser.add_argument(
         '--out-path', '-o', dest='out_path', type=str,
         help='Path to save the dataset with nonce sentences.'
     )
@@ -176,8 +180,12 @@ def main():
             quantization_config=None,
             device_map="auto",
         )
-            
-
+    if args.custom_pad:
+        print(">>> Adding custom PAD token to the tokenizer and model.")
+        from transformers import AutoTokenizer
+        tokenizer = AutoTokenizer.from_pretrained(args.config_name)
+        tokenizer.add_special_tokens({'pad_token': '[PAD]'})
+        model.resize_token_embeddings(len(tokenizer))
 
     if args.speedup:
         print(">>> Applying speedup options...")
