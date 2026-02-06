@@ -35,6 +35,7 @@ def main():
     from_part, end_part  = args.part_range
     for part in range(from_part, end_part + 1):
         data_path = Path(args.data_dir) / f"part{part}"
+        print(f"Loading dataset from {data_path}...")
         if not data_path.is_dir():
             continue
         try:
