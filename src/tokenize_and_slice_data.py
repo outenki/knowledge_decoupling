@@ -5,7 +5,7 @@ from itertools import chain
 
 from transformers import AutoTokenizer
 
-from lib.dataset import load_custom_dataset
+from lib.dataset import load_custom_dataset, slice_dataset
 
 
 def read_args():
@@ -15,9 +15,18 @@ def read_args():
     parser.add_argument("--load-from", "-lf", type=str, choices=["local", "hf"], required=True)
     parser.add_argument("--data-type", "-dt", type=str, default=None)
     parser.add_argument("--data-column", "-dc", type=str, choices=["text", "nonce"], required=True)
+    parser.add_argument("--data-split", "-ds", type=str, required=True, help="train/dev/test")
     parser.add_argument("--tokenize", "-t", action="store_true")
     parser.add_argument("--slice", "-s", action="store_true")
     parser.add_argument("--block-size", "-bs", type=int, required=True)
+    parser.add_argument(
+        '--start-from', '-sf', dest='start_from', type=int, default=0, required=False,
+        help='Load data from line.'
+    )
+    parser.add_argument(
+        '--limit', '-l', dest='data_limit', type=int, default=0, required=False,
+        help='Limit the number of samples to process. 0 means no limit.'
+    )
     parser.add_argument("--output-path", "-o", type=str, required=True)
     return parser.parse_args()
 
@@ -64,9 +73,17 @@ def main():
 
     print(">>> Loading data ...")
     datasets = load_custom_dataset(args.data_name, args.data_type, args.load_from)
+    if isinstance(datasets, dict):
+        dataset = datasets[args.data_split]
+    else:
+        dataset = datasets
+    print(f"  -> Dataset size: {len(dataset)}")
+
+    dataset = dataset.shuffle(seed=42)
+    dataset = slice_dataset(dataset, args.start_from, args.data_limit)
 
     # === TOKENIZATION ===
-    tokenized_datasets = datasets
+    tokenized_dataset = dataset
     if args.tokenize:
         print(">>> Tokenizing ...")
         tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
@@ -82,7 +99,7 @@ def main():
             padding=padding,
             max_length=args.block_size
         )
-        tokenized_datasets = datasets.map(
+        tokenized_dataset = dataset.map(
             map_func,
             batched=True,
             num_proc=4,
@@ -92,7 +109,7 @@ def main():
         if not args.slice:
             tokenized_path = output_path
             print(f">>> Save tokenized dataset to: {tokenized_path}")
-            tokenized_datasets.save_to_disk(str(tokenized_path))
+            tokenized_dataset.save_to_disk(str(tokenized_path))
 
     # === BINARIZATION / SLICE ===
     if args.slice:
@@ -104,18 +121,18 @@ def main():
             print(f"  -> block_size = {bs}")
             map_func = partial(group_texts_to_blocks, block_size=bs)
 
-            lm_datasets = tokenized_datasets.map(
+            lm_dataset = tokenized_dataset.map(
                 map_func,
                 batched=True,
                 batch_size=3000,
                 num_proc=4,
                 desc=f"Chunking to blocks ({bs})",
-                remove_columns=tokenized_datasets["train"].column_names
+                remove_columns=tokenized_dataset.column_names
             )
 
             bin_path = output_path / f"bs_{bs}"
             print(f"  -> Save to: {bin_path}")
-            lm_datasets.save_to_disk(str(bin_path))
+            lm_dataset.save_to_disk(str(bin_path))
 
     print("✅ Done！")
 
