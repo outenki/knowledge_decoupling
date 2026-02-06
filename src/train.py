@@ -138,11 +138,14 @@ def limit_dataset_dict(data_dict: DatasetDict, data_limit: int) -> DatasetDict:
 def load_dataset_dict(data_path: str) -> DatasetDict:
     dataset = load_custom_dataset(data_path, None, "local")
     if isinstance(dataset, Dataset):
-        total_len = len(dataset)
-        test_size = min(max(20, total_len // 10), total_len // 2)
-        if total_len < 2:
-            raise ValueError(f"Dataset at {data_path} is too small to split.")
-        data_dict = dataset.train_test_split(test_size=test_size, shuffle=True, seed=42)
+        # total_len = len(dataset)
+        # test_size = min(max(20, total_len // 20), total_len // 2)
+        # if total_len < 2:
+        #     raise ValueError(f"Dataset at {data_path} is too small to split.")
+        # data_dict = dataset.train_test_split(test_size=test_size, shuffle=True, seed=42)
+        data_dict = DatasetDict({
+            "train": dataset,
+        })
     elif isinstance(dataset, DatasetDict):
         data_dict = dataset
     else:
