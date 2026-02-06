@@ -1,5 +1,4 @@
 #!/bin/bash
-export PATH="$HOME/.local/bin:$PATH"
 PROJECT_BASE_PATH="$HOME/projects/knowledge_decoupling"
 DATA_PATH=$PROJECT_BASE_PATH/data/SmolLM2/sents
 OUTPUT_PATH=$PROJECT_BASE_PATH/data/SmolLM2/tokenized/gpt2/sents
@@ -17,7 +16,7 @@ do
     part=$(($i / $SIZE))
     echo
     echo "====== tokenizing part$part $i ======"
-    uv run python $PROJECT_BASE_PATH/src/tokenize_and_slice_data.py \
+    $HOME/.local/bin/uv run python $PROJECT_BASE_PATH/src/tokenize_and_slice_data.py \
         --tokenizer $TOKENIZER \
         -dn $DATA_PATH \
         -lf local \
