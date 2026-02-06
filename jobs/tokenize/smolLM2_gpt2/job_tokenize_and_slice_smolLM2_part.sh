@@ -2,7 +2,6 @@
 #PJM -L "rscgrp=a-batch"
 #PJM -L "elapse=10:00:00"
 #PJM -L "vnode-core=10"
-#PJM -L "jobenv=singularity"
 #PJM -N "tk_sml"
 #PJM -e ./logs/%n_%j_%J.err
 #PJM -o ./logs/%n_%j_%J.out
