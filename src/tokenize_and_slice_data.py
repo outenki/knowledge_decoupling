@@ -106,6 +106,7 @@ def main():
             remove_columns=[args.data_column],
             desc="Tokenizing data"
         )
+        tokenizer.save_pretrained(output_path / "tokenizer")
         if not args.slice:
             tokenized_path = output_path
             print(f">>> Save tokenized dataset to: {tokenized_path}")

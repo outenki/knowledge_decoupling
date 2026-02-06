@@ -10,6 +10,5 @@
 # module load singularity-ce
 
 cd $HOME/projects/knowledge_decoupling/scripts/tokenize || exit 1
-mkdir -p ./logs
 
 /bin/bash tokenize_smolLM2_1024_part.sh gpt2 ${PJM_BULKNUM:-0}
