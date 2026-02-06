@@ -62,7 +62,7 @@ def main():
         print("Merging datasets...")
         merged = concatenate_datasets(datasets)
         print(f"Merged Dataset size: {len(merged)}")
-    if isinstance(datasets[0], DatasetDict):
+    elif isinstance(datasets[0], DatasetDict):
         # merge dataset dicts
         for dc in datasets[0].keys():
             sizes = " ".join([str(len(dt[dc])) for dt in datasets])
