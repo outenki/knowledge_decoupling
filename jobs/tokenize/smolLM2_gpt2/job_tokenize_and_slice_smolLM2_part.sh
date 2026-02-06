@@ -3,9 +3,9 @@
 #PJM -L "elapse=10:00:00"
 #PJM -L "vnode-core=10"
 #PJM -L "jobenv=singularity"
-#PJM -e ./logs/tokenize_smolLM2_%j.err
-#PJM -o ./logs/tokenize_smolLM2_%j.out
-#PJM -N "tk_sml_0"
+#PJM -e ./logs/tokenize_smolLM2_%j_%n.err
+#PJM -o ./logs/tokenize_smolLM2_%j_%n.out
+#PJM -N "tk_sml"
 
 # module load singularity-ce
 
