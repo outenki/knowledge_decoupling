@@ -2,7 +2,7 @@
 PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-/home/pj25000107/ku50001566/projects/knowledge_decoupling}"
 SCRIPT_PATH=$PROJECT_BASE_PATH/src
 OUT_PATH=$PROJECT_BASE_PATH/output
-DATA_PATH=$PROJECT_BASE_PATH/input/tokenized/gpt2/ext/test-squad_answerable
+DATA_PATH=$PROJECT_BASE_PATH/input/tokenized/gpt2/ext/test
 
 CONFIG_NAME="gpt2"
 INIT_MODEL="gpt2"
@@ -18,10 +18,16 @@ uv run python $SCRIPT_PATH/train.py \
     --speedup \
     -cn $CONFIG_NAME \
     -im $INIT_MODEL \
-    -dp $DATA_PATH \
+    -dp "$DATA_PATH"/metaqa_1hop \
+    -dp "$DATA_PATH"/metaqa_2hop \
+    -dp "$DATA_PATH"/metaqa_3hop \
+    -dp "$DATA_PATH"/mintaka_multihop \
+    -dp "$DATA_PATH"/qa_arc_challenge \
+    -dp "$DATA_PATH"/qa_arc_easy \
+    -dp "$DATA_PATH"/qa_qasc \
+    -dp "$DATA_PATH"/squad_v2_ctxt_answerable \
     -e $EPOCHS \
-    -dl 0\
-    -o $OUT_PATH/$CONFIG_NAME/HuggingFace/hf-ext_test_squad_answerable_ep${EPOCHS}
+    -o $OUT_PATH/$CONFIG_NAME/HuggingFace/hf-ext_test_mix_ep${EPOCHS}
 
 end_time=$(date +"%s")
 echo "end time: $(date -d @$end_time +"%D %T")"

@@ -4,7 +4,7 @@ SCRIPT_PATH=$PROJECT_BASE_PATH/src
 DATA_PATH=$PROJECT_BASE_PATH/input/tokenized/gpt2/train/smolLM2_135M_sents_shuffled_bs1024
 
 CONFIG_NAME=gpt2
-EPOCHS=3
+EPOCHS=1
 
 
 echo "====== training on ${DATA_NAME} ======"

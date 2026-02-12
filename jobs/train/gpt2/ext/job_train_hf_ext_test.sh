@@ -3,12 +3,10 @@
 #PJM -L "elapse=24:00:00"
 #PJM -L "gpu=4"
 #PJM -L "jobenv=singularity"
-#PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_gpt_hf_on_ext_test.err
-#PJM -o /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_gpt_hf_on_ext_test.out
-#PJM -N "sml_e1"
+#PJM -N "gpt2_hf_ext_test"
+#PJM -e ./logs/%n_%j_%J.err
+#PJM -o ./logs/%n_%j_%J.out
 
-module load singularity-ce
+cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts/train/ext/ext-test || exit 1
 
-cd /home/pj25000107/ku50001566/projects/knowledge_decoupling/scripts/train/continue/ext-test || exit 1
-
-singularity exec --nv /home/pj25000107/ku50001566/nlp-singularity/nlp-singularity.sif /bin/bash continue_train_gpt2_hf_ext-test.sh
+/bin/bash continue_train_gpt2_hf_ext-test.sh

@@ -1,6 +1,5 @@
 import argparse
 from pathlib import Path
-from math import ceil
 import random
 import json
 from dataclasses import asdict, is_dataclass
@@ -33,6 +32,7 @@ def training_args_to_dict(args) -> dict:
             serializable_args[k] = v
         except (TypeError, OverflowError):
             serializable_args[k] = str(v)
+    return serializable_args
 
 
 class LossLoggerCallback(TrainerCallback):
@@ -208,6 +208,8 @@ def main():
 
     # === load data
     data_list = []
+    if args.data_limit is None:
+        args.data_limit = [0] * len(args.data_path)
     for data_path, data_limit in zip(args.data_path, args.data_limit):
         print(f">>> Loading dataset from {data_path}")
         _data_dict = load_dataset_dict(data_path)
@@ -222,7 +224,6 @@ def main():
         split: concatenate_datasets([dd[split] for dd in data_list])
         for split in data_list[0].keys()
     })
-
 
     print(">>> Dataset:", data_dict)
 
@@ -239,7 +240,6 @@ def main():
         eval_dataset = data_dict["test"]
 
     print(">>> dataset features:", train_dataset.features)
-
 
     train_dataset.set_format("torch")
     eval_dataset.set_format("torch")
@@ -329,9 +329,11 @@ def main():
 
     # Load checkpoint if provided
     checkpoint = args.checkpoint
-    if not checkpoint or not Path(checkpoint).exists() or not Path(checkpoint).is_dir():
+    if args.init_model and not checkpoint:
+        print(f">>> Staring from model: {args.init_model}")
+    elif not checkpoint or not Path(checkpoint).exists() or not Path(checkpoint).is_dir():
         checkpoint = None
-        print(f">>> Starting from random model")
+        print(">>> Starting from random model")
     else:
         print(f">>> Resuming from checkpoint: {checkpoint}")
     trainer.train(resume_from_checkpoint=checkpoint)

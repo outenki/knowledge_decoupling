@@ -210,6 +210,8 @@ def generate_qa_data_from_mintaka(
         question = sample["question"]
         options = []
         answers = []
+        if sample["complexityType"] != "multihop":
+            continue
         if not sample["answer"]["answer"]:
             continue
         for _ans in sample["answer"]["answer"]:

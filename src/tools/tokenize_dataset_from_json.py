@@ -33,7 +33,7 @@ TOKENIZER.padding_side = "left"
 if TOKENIZER.pad_token_id is None:
     TOKENIZER.pad_token = TOKENIZER.eos_token
 
-TOKENIZER.add_special_tokens({'pad_token': '[PAD]'})
+# TOKENIZER.add_special_tokens({'pad_token': '[PAD]'})
 
 print(f"EOS ID: {TOKENIZER.eos_token_id}")
 print(f"PAD ID: {TOKENIZER.pad_token_id}")
