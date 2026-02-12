@@ -5,8 +5,8 @@ MODEL_NAME=gpt2
 SCORE_ON=generation
 FEWSHOTS=0
 SAMPLE_NUM=1000
-MODE="simple"
-SUFFIX=""
+MODE="full"
+SUFFIX="_$MODE"
 
 
 for eval_name in unformated/squad_v2_ctxt_answerable; do
@@ -35,7 +35,9 @@ for eval_name in unformated/squad_v2_ctxt_answerable; do
         # nonce/smolLM2_nonce_mn3_bs1024_dl0_ep1-sft_squad_ans_ep3 \
         # nonce/smolLM2_nonce_mn3_bs1024_dl0_ep1-ext_test_nonce_ep3-sft_squad_ans_ep3
     for model_folder in \
-        random/rnd-sft_squad_test_ans_ep3
+        nonce/smolLM2_nonce_mn3_bs1024_dl0_ep1-ext_test_nonce_ep3-sft_squad_train_val_ans_ep3 \
+        smolLM2/smolLM2_bs1024_dl0_ep1-ext_test_ep3-sft_squad_train_val_ans_ep3 \
+        HuggingFace/hf-ext_test_ep3-sft_squad_train_val_ans_ep3
     do
         echo "====== Evaluating $model_folder of $MODEL_NAME ======"
         model_path=$PROJECT_BASE_PATH/output/$MODEL_NAME/$model_folder

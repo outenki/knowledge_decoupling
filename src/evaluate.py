@@ -72,13 +72,11 @@ def get_input_ids(model, tokenizer, texts):
     input_ids = enc["input_ids"]
     attention_mask = enc["attention_mask"]
 
-
     # control the max length
     block_size = get_max_block_size(model)
     if block_size is not None and input_ids.size(1) > block_size:
         input_ids = input_ids[:, -block_size:]
         attention_mask = attention_mask[:, -block_size:]
-
 
     return input_ids.to(model.device), attention_mask.to(model.device)
 
@@ -143,16 +141,17 @@ def normalize_text(s: str) -> str:
     return " ".join(s.split())
 
 
-def f1_score(pred: str, answer: str) -> float:
+def f1_score(pred: str, answer: str) -> tuple:
     """逐词计算 F1"""
     pred_tokens = normalize_text(pred).split()
     ref_tokens = normalize_text(answer).split()
     common = set(pred_tokens) & set(ref_tokens)
     if len(common) == 0:
-        return 0.0
+        return 0, 0, 0
     precision = len(common) / len(pred_tokens)
     recall = len(common) / len(ref_tokens)
-    return 2 * precision * recall / (precision + recall)
+    f1 = 2 * precision * recall / (precision + recall)
+    return precision, recall, f1
 
 
 def score_on_options(model, tokenizer, prompt, options, answer) -> dict:
@@ -211,7 +210,14 @@ def score_on_generation(model, tokenizer, prompt, answers, mode) -> dict:
     res["pred_score"] = max(score_continuations_batch(model, tokenizer, prompt, [pred]))
     res["answer_score"] = max(score_continuations_batch(model, tokenizer, prompt, answers))
     res["is_correct"] = any([normalize_text(pred).startswith(normalize_text(answer)) for answer in answers])
-    res["f1"] = max([f1_score(pred, answer) for answer in answers])
+    p, r, f = 0, 0, 0
+    for answer in answers:
+        _p, _r, _f = f1_score(pred, answer)
+        if _f > f:
+            p, r, f = _p, _r, _f
+    res["precision"] = p
+    res["recall"] = r
+    res["f1"] = f
     return res
 
 
@@ -246,14 +252,20 @@ def analyze_results(samples) -> dict:
     correct = 0
     total = 0
     f1 = 0
+    recall = 0
+    precision = 0
     for sample in samples:
         is_correct = (sample["pred"] == sample["answer"])
         correct += int(is_correct)
         total += 1
         f1 += sample.get("f1", 0)
+        recall += sample.get("recall", 0)
+        precision += sample.get("precision", 0)
     accuracy = correct / total if total > 0 else 0
     avg_f1 = f1 / total if total > 0 else 0
-    return {"correct": correct, "total": total, "accuracy": accuracy, "f1": avg_f1}
+    avg_recall = recall / total if total > 0 else 0
+    avg_precision = precision / total if total > 0 else 0
+    return {"correct": correct, "total": total, "accuracy": accuracy, "f1": avg_f1, "precision": avg_precision, "recall": avg_recall}
 
 
 def main():
@@ -296,7 +308,6 @@ def main():
     total_count = len(eval_samples)
     print(f"Total evaluation samples: {total_count}")
 
-
     # ========= Load few shots examples ========
     few_shots = ""
     if args.example_data:
@@ -329,8 +340,8 @@ def main():
     print(f"Saving summary to {out_file}...")
     with open(out_file, "w") as f:
         json.dump(results, f, indent=4)
-    print("accuracy:", results["accuracy"])
-    print("f1:", results["f1"])
+    
+    print(results)
 
 
 if __name__ == "__main__":
