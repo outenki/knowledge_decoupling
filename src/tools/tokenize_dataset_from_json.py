@@ -17,12 +17,12 @@ parser.add_argument(
     choices={"gpt2", "Qwen/Qwen3-0.6B-Base", "HuggingFaceTB/SmolLM2-135M", "HuggingFaceTB/SmolLM2-1.7B"}
 )
 parser.add_argument(
-    '--mask-prompt', '-mp', dest='mask_prompt', action='store_true',
-    help='Mask prompt for SFT'
+    '--skip-answer', '-sa', dest='skip_answer', action='store_true',
+    help='Skip answer field (for unsupervised pretraining or nonce model training)'
 )
 parser.add_argument(
-    '--custom-token', '-pad', dest='add_pad', action='store_true',
-    help='Add custom PAD token'
+    '--mask-prompt', '-mp', dest='mask_prompt', action='store_true',
+    help='Mask prompt for SFT'
 )
 args = parser.parse_args()
 
@@ -50,6 +50,8 @@ def preprocess(example):
     prompt_ids = p_out.input_ids if p_out.input_ids is not None else []
     response_ids = r_out.input_ids if r_out.input_ids is not None else []
 
+    if args.skip_answer:
+        response_ids = []
     input_ids = prompt_ids + response_ids
 
     if args.mask_prompt:
