@@ -13,12 +13,13 @@ for eval_name in \
     cwq \
     qa_arc_easy \
     qa_arc_challenge \
-    qa_qasc \
     metaqa_1hop \
     metaqa_2hop \
     metaqa_3hop \
     mintaka_multihop \
-    squad_v2_ctxt_answerable; do
+    squad_v2_ctxt_answerable \
+    qa_qasc
+do
     echo
     echo "============ $eval_name ============"
     echo "====== Evaluating Pretrained $MODEL_NAME ======"
