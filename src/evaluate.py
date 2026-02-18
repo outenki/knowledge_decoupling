@@ -226,7 +226,6 @@ def score_samples(model, tokenizer, samples, score_on, generation_mode, few_shot
     filtered_samples = []
     for sample in tqdm.tqdm(samples, total=len(samples), desc="scoring samples"):
         prompt = few_shots + "\n" + sample["prompt"]
-        options = sample["options"]
         answer = sample["answer"]
         answers = sample.get("answers", [answer])
         if not answers:
@@ -236,6 +235,7 @@ def score_samples(model, tokenizer, samples, score_on, generation_mode, few_shot
 
         res = {}
         if score_on == "options":
+            options = sample["options"]
             res = score_on_options(model, tokenizer, prompt, options, answer)
         elif score_on == "generation":
             res = score_on_generation(model, tokenizer, prompt, answers, generation_mode)

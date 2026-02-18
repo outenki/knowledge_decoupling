@@ -1,6 +1,6 @@
 #!/bin/bash
 #PJM -L "rscgrp=c-batch"
-#PJM -L "elapse=24:00:00"
+#PJM -L "elapse=4:00:00"
 #PJM -L "gpu=4"
 #PJM -L "jobenv=singularity"
 #PJM -e /home/pj25000107/ku50001566/projects/knowledge_decoupling/logs/job_train_gpt_sml_on_ext_test.err

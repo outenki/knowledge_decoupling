@@ -5,7 +5,7 @@ OUT_PATH=$PROJECT_BASE_PATH/output
 DATA_PATH=$PROJECT_BASE_PATH/input/tokenized/gpt2/ext/test_wo_answer
 
 CONFIG_NAME="gpt2"
-INIT_MODEL=$PROJECT_BASE_PATH/output/gpt2/nonce/smolLM2_135M_sents_shuffled_bs1024_ep3
+INIT_MODEL=$PROJECT_BASE_PATH/output/gpt2/nonce/smolLM2_135M_sents_shuffled_bs1024_ep1
 EPOCHS=3
 
 
@@ -27,7 +27,7 @@ uv run python $SCRIPT_PATH/train.py \
     -dp "$DATA_PATH"/qa_qasc \
     -dp "$DATA_PATH"/squad_v2_ctxt_answerable \
     -e $EPOCHS \
-    -o $OUT_PATH/$CONFIG_NAME/nonce/smolLM2_135M_sents_shuffled_bs1024_ep3-ext_test_mix_ep${EPOCHS}
+    -o $OUT_PATH/$CONFIG_NAME/nonce/smolLM2_135M_sents_shuffled_bs1024_ep1-ext_test_mix_ep${EPOCHS}
 
 end_time=$(date +"%s")
 echo "end time: $(date -d @$end_time +"%D %T")"

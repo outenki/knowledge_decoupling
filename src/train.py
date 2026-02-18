@@ -172,6 +172,13 @@ def main():
     print_args(vars(args))
     Path(args.out_path).mkdir(parents=True, exist_ok=True)
 
+    # === save arguments as json
+    try:
+        with open(Path(args.out_path)/"arguments.json", "w") as f:
+            json.dump(vars(args), f, indent=4)
+    except Exception as e:
+        print(f"‼️Failed to dumpt arguments!")
+
     # === Load model
     model = None
     print(">>> Loading model from config:", args.config_name)
