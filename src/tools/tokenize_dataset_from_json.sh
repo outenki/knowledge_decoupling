@@ -1,7 +1,7 @@
 #! /bin/bash
 # For extensive pretraining
 INPUT_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling/input/evaluate_data/unformated/
-OUTPUT_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling/input/tokenized/gpt2/ext/test_wo_answer
+OUTPUT_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling/input/tokenized/gpt2/sft
 
 for dn in \
     mintaka_multihop \
@@ -18,6 +18,7 @@ do
     uv run python ./tokenize_dataset_from_json.py \
         --tokenizer gpt2 \
         --skip-answer \
+        -mp \
         --input-path $INPUT_PATH/$dn/test.json \
-        --output-path $OUTPUT_PATH/$dn
+        --output-path $OUTPUT_PATH/$dn/test
 done

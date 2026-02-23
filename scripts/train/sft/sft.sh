@@ -1,12 +1,10 @@
 #!/bin/bash
-PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-/home/pj25000107/ku50001566/projects/knowledge_decoupling}"
+PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-$HOME/projects/knowledge_decoupling}"
 SCRIPT_PATH=$PROJECT_BASE_PATH/src
 
-CONFIG_NAME=$1
-INIT_MODEL=$2
-DATA_PATH=$3
-OUT_PATH=$4
-EPOCHS=$5
+INIT_MODEL=$1
+OUT_PATH=$2
+EPOCHS=$3
 
 
 echo "====== training on ${DATA_PATH} ======"
@@ -17,9 +15,15 @@ echo "start time: $(date -d @$start_time +"%D %T")"
 /home/pj25000107/ku50001566/.local/bin/uv run python $SCRIPT_PATH/train.py \
     --speedup \
     -pad \
-    -cn $CONFIG_NAME \
+    -cn gpt2 \
     -im $INIT_MODEL \
-    -dp $DATA_PATH \
+    -dp $PROJECT_BASE_PATH/input/tokenized/gpt2/sft/mintaka_multihop/test \
+    -dp $PROJECT_BASE_PATH/input/tokenized/gpt2/sft/metaqa_1hop/test \
+    -dp $PROJECT_BASE_PATH/input/tokenized/gpt2/sft/metaqa_2hop/test \
+    -dp $PROJECT_BASE_PATH/input/tokenized/gpt2/sft/metaqa_3hop/test \
+    -dp $PROJECT_BASE_PATH/input/tokenized/gpt2/sft/qa_arc_challenge/test \
+    -dp $PROJECT_BASE_PATH/input/tokenized/gpt2/sft/qa_arc_easy/test \
+    -dp $PROJECT_BASE_PATH/input/tokenized/gpt2/sft/qa_qasc/test \
     -e $EPOCHS \
     -dl 0 \
     -o $OUT_PATH
