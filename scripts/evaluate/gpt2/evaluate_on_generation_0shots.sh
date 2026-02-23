@@ -34,8 +34,8 @@ do
     #     -o $PROJECT_BASE_PATH/output/$MODEL_NAME/HuggingFace/hf/evaluation$SUFFIX/${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
 
     for model_folder in \
-        HuggingFace/hf-ext_test_mix_ep3-sft_qa_test_wo_context \
-        nonce/smolLM2_135M_sents_shuffled_bs1024_ep1-ext_test_mix_ep3-sft_qa_test_wo_context
+        smolLM2/smolLM2_bs1024_dl0_ep1-ext_test_mix_ep3-sft_qa_test_wo_context \
+        random/rnd-sft_qa_test_wo_context
     do
         echo "====== Evaluating $model_folder of $MODEL_NAME ======"
         model_path=$PROJECT_BASE_PATH/output/$MODEL_NAME/$model_folder
