@@ -217,6 +217,7 @@ def main():
     data_list = []
     if args.data_limit is None:
         args.data_limit = [0] * len(args.data_path)
+    assert len(args.data_path) == len(args.data_limit), "data_path and data_limit should have the same length."
     for data_path, data_limit in zip(args.data_path, args.data_limit):
         print(f">>> Loading dataset from {data_path}")
         _data_dict = load_dataset_dict(data_path)

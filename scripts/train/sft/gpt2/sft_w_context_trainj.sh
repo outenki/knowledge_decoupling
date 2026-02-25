@@ -17,22 +17,9 @@ uv run python $SCRIPT_PATH/train.py \
     -pad \
     -cn gpt2 \
     -im $INIT_MODEL \
-    -dp $PROJECT_BASE_PATH/input/tokenized/gpt2/sft/mintaka_multihop/test \
-    -dl 0 \
-    -dp $PROJECT_BASE_PATH/input/tokenized/gpt2/sft/metaqa_1hop/test \
-    -dl 0 \
-    -dp $PROJECT_BASE_PATH/input/tokenized/gpt2/sft/metaqa_2hop/test \
-    -dl 0 \
-    -dp $PROJECT_BASE_PATH/input/tokenized/gpt2/sft/metaqa_3hop/test \
-    -dl 0 \
-    -dp $PROJECT_BASE_PATH/input/tokenized/gpt2/sft/qa_arc_challenge/test \
-    -dl 0 \
-    -dp $PROJECT_BASE_PATH/input/tokenized/gpt2/sft/qa_arc_easy/test \
-    -dl 0 \
-    -dp $PROJECT_BASE_PATH/input/tokenized/gpt2/sft/qa_qasc/test \
+    -dp $PROJECT_BASE_PATH/input/tokenized/gpt2/sft/squad_v2_ctxt_answerable/train \
     -dl 0 \
     -e $EPOCHS \
-    -dl 0 \
     -o $OUT_PATH
 
 end_time=$(date +"%s")
