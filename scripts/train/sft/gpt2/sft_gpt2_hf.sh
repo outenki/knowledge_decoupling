@@ -21,4 +21,5 @@ SCRIPT_PATH=$PROJECT_BASE_PATH/scripts/train/sft/gpt2
 /bin/bash "$SCRIPT_PATH"/sft_wo_context_train.sh \
     gpt2 \
     "$PROJECT_BASE_PATH"/output/gpt2/HuggingFace/hf-sft_qa_wo_context_train \
-    3
+    3 \
+    "$PROJECT_BASE_PATH"/output/gpt2/HuggingFace/hf-sft_qa_wo_context_train/checkpoint-3892 \
