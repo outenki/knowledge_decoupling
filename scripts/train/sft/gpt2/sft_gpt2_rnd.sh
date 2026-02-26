@@ -23,4 +23,4 @@ INPUT_MODEL=$PROJECT_BASE_PATH/output/gpt2/random/rnd
     "$INPUT_MODEL" \
     "$PROJECT_BASE_PATH"/output/gpt2/random/rnd-sft_qa_wo_context_train \
     3 \
-    "$PROJECT_BASE_PATH"/output/gpt2/random/rnd-sft_qa_wo_context_train/checkpoint-3808 \
+    "$PROJECT_BASE_PATH"/output/gpt2/random/rnd-sft_qa_wo_context_train/checkpoint-3864 \

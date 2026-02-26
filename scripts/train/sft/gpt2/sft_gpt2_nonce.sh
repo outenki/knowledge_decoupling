@@ -23,4 +23,4 @@ INPUT_MODEL=$PROJECT_BASE_PATH/output/gpt2/nonce/smolLM2_nonce_mn3_bs1024_dl0_ep
     "$INPUT_MODEL" \
     "$PROJECT_BASE_PATH"/output/gpt2/nonce/smolLM2_nonce_mn3_bs1024_dl0_ep1-sft_qa_wo_context_train \
     3 \
-    "$PROJECT_BASE_PATH"/output/gpt2/nonce/smolLM2_nonce_mn3_bs1024_dl0_ep1-sft_qa_wo_context_train/checkpoint-3836 \
+    "$PROJECT_BASE_PATH"/output/gpt2/nonce/smolLM2_nonce_mn3_bs1024_dl0_ep1-sft_qa_wo_context_train/checkpoint-4200 \
