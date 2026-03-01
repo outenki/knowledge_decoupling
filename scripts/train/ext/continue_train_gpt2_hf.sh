@@ -18,6 +18,7 @@ uv run python "$SCRIPT_PATH"/train.py \
     --speedup \
     -cn $CONFIG_NAME \
     -im $INIT_MODEL \
+    -cp /lustre1/work/c30897/wtq/projects/knowledge_decoupling/output/gpt2/HuggingFace/hf-ext_qa_test_ep3/checkpoint-598 \
     -dp "$DATA_PATH"/metaqa_1hop/$split \
     -dl 0 \
     -dp "$DATA_PATH"/metaqa_2hop/$split \
