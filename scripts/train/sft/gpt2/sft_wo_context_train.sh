@@ -5,7 +5,6 @@ SCRIPT_PATH=$PROJECT_BASE_PATH/src
 INIT_MODEL=$1
 OUT_PATH=$2
 EPOCHS=$3
-CHECK_POINT=$4
 
 
 echo "====== training on qa_wo_context_train ======"
@@ -17,7 +16,6 @@ uv run python "$SCRIPT_PATH"/train.py \
     --speedup \
     -pad \
     -cn gpt2 \
-    -cp $CHECK_POINT \
     -im "$INIT_MODEL" \
     -dp "$PROJECT_BASE_PATH"/input/tokenized/gpt2/sft/mintaka_multihop/train \
     -dl 0 \
