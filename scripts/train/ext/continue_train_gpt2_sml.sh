@@ -1,7 +1,7 @@
 #!/bin/bash
 PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-/home/pj25000107/ku50001566/projects/knowledge_decoupling}"
 SCRIPT_PATH=$PROJECT_BASE_PATH/src
-DATA_PATH=$PROJECT_BASE_PATH/input/tokenized/gpt2/ext/test
+DATA_PATH=$PROJECT_BASE_PATH/input/tokenized/gpt2/ext
 
 CONFIG_NAME="gpt2"
 INIT_MODEL=$PROJECT_BASE_PATH/output/gpt2/smolLM2/smolLM2_bs1024_dl0_ep1
