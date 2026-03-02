@@ -21,16 +21,16 @@ for eval_name in \
     qa_qasc
 do
     echo
-    echo "====== Evaluating $model_folder of $MODEL_NAME ======"
-    model_path="gpt2"
-    uv run python "$PROJECT_BASE_PATH"/src/evaluate.py \
-        --model "$model_path" \
-        --mode $MODE \
-        --tokenizer $MODEL_NAME \
-        --test-data "$PROJECT_BASE_PATH"/input/evaluate_data/unformated/$eval_name/test.json \
-        --score-on $SCORE_ON \
-        --sample-num $SAMPLE_NUM \
-        -o "$PROJECT_BASE_PATH"/output/$MODEL_NAME/HuggingFace/hf/evaluation$SUFFIX/${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
+    # echo "====== Evaluating $model_folder of $MODEL_NAME ======"
+    # model_path="gpt2"
+    # uv run python "$PROJECT_BASE_PATH"/src/evaluate.py \
+    #     --model "$model_path" \
+    #     --mode $MODE \
+    #     --tokenizer $MODEL_NAME \
+    #     --test-data "$PROJECT_BASE_PATH"/input/evaluate_data/unformated/$eval_name/test.json \
+    #     --score-on $SCORE_ON \
+    #     --sample-num $SAMPLE_NUM \
+    #     -o "$PROJECT_BASE_PATH"/output/$MODEL_NAME/HuggingFace/hf/evaluation$SUFFIX/${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
     echo "============ $eval_name ============"
     for model_folder in \
         hf-sft_qa_context_train \

@@ -23,8 +23,7 @@ do
     echo
     echo "============ $eval_name ============"
     for model_folder in \
-        rnd-sft_qa_w_context_train \
-        rnd-sft_qa_wo_context_train
+        rnd-sft_qa_w_context_train
     do
         echo "====== Evaluating $model_folder of $MODEL_NAME ======"
         model_path=$PROJECT_BASE_PATH/output/$MODEL_NAME/random/$model_folder
