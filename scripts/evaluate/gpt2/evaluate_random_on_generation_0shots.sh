@@ -23,10 +23,7 @@ do
     echo
     echo "============ $eval_name ============"
     for model_folder in \
-        random \
-        rnd-sft_qa_w_context_test \
         rnd-sft_qa_w_context_train \
-        rnd-sft_qa_wo_context_test \
         rnd-sft_qa_wo_context_train
     do
         echo "====== Evaluating $model_folder of $MODEL_NAME ======"

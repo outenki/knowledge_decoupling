@@ -33,15 +33,8 @@ do
         -o "$PROJECT_BASE_PATH"/output/$MODEL_NAME/HuggingFace/hf/evaluation$SUFFIX/${SCORE_ON}/${FEWSHOTS}_shots/$eval_name
     echo "============ $eval_name ============"
     for model_folder in \
-        hf-sft_qa_context_test \
-        hf-sft_qa_wo_context_test \
-        hf-sft_qa_wo_context_train \
         hf-sft_qa_context_train \
-        hf-ext_qa_test_ep3 \
-        hf-ext_qa_test_ep3-sft_qa_wo_context_train \
-        hf-ext_qa_test_ep3-sft_qa_wo_context_test \
-        hf-ext_qa_test_ep3-sft_qa_w_context_train \
-        hf-ext_qa_test_ep3-sft_qa_w_context_test
+        hf-ext_qa_test_ep3-sft_qa_w_context_train
     do
         echo "====== Evaluating $model_folder of $MODEL_NAME ======"
         model_path=$PROJECT_BASE_PATH/output/$MODEL_NAME/HuggingFace/$model_folder

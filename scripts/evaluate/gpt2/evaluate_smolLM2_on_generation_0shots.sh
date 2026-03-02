@@ -23,16 +23,8 @@ do
     echo
     echo "============ $eval_name ============"
     for model_folder in \
-        smolLM2_bs1024_dl0_ep1 \
-        smolLM2_bs1024_dl0_ep1-sft_qa_w_context_test \
-        smolLM2_bs1024_dl0_ep1-sft_qa_wo_context_test \
         smolLM2_bs1024_dl0_ep1-sft_qa_w_context_train \
-        smolLM2_bs1024_dl0_ep1-sft_qa_wo_context_train \
-        smolLM2_bs1024_dl0_ep1-ext_qa_test_ep3 \
-        smolLM2_bs1024_dl0_ep1-ext_qa_test_ep3-sft_qa_wo_context_train \
-        smolLM2_bs1024_dl0_ep1-ext_qa_test_ep3-sft_qa_wo_context_test \
-        smolLM2_bs1024_dl0_ep1-ext_qa_test_ep3-sft_qa_w_context_train \
-        smolLM2_bs1024_dl0_ep1-ext_qa_test_ep3-sft_qa_w_context_test
+        smolLM2_bs1024_dl0_ep1-ext_qa_test_ep3-sft_qa_w_context_train
     do
         echo "====== Evaluating $model_folder of $MODEL_NAME ======"
         model_path=$PROJECT_BASE_PATH/output/$MODEL_NAME/smolLM2/$model_folder

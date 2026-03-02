@@ -14,12 +14,19 @@ INPUT_MODEL=$PROJECT_BASE_PATH/output/gpt2/ss/smolLM2_135M_sents_shuffled_bs1024
 #     "$INPUT_MODEL"-sft_qa_wo_context_test \
 #     3
 
+INPUT_MODEL=$PROJECT_BASE_PATH/output/gpt2/ss/smolLM2_135M_sents_shuffled_bs1024_ep1
 /bin/bash "$SCRIPT_PATH"/sft_w_context_train.sh \
     "$INPUT_MODEL" \
     "$INPUT_MODEL"-sft_qa_w_context_train \
     3
 
-/bin/bash "$SCRIPT_PATH"/sft_w_context_test.sh \
+INPUT_MODEL=$PROJECT_BASE_PATH/output/gpt2/ss/smolLM2_135M_sents_shuffled_bs1024_ep1-ext_qa_test_que_ep3
+/bin/bash "$SCRIPT_PATH"/sft_w_context_train.sh \
     "$INPUT_MODEL" \
-    "$INPUT_MODEL"-sft_qa_w_context_test \
+    "$INPUT_MODEL"-sft_qa_w_context_train \
     3
+
+# /bin/bash "$SCRIPT_PATH"/sft_w_context_test.sh \
+#     "$INPUT_MODEL" \
+#     "$INPUT_MODEL"-sft_qa_w_context_test \
+#     3
