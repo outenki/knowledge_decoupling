@@ -22,12 +22,12 @@ do
         -sa \
         --tokenizer gpt2 \
         --input-path $INPUT_PATH/$dn/train.json \
-        --output-path $OUTPUT_PATH/$dn-ans/train
+        --output-path $OUTPUT_PATH/"$dn"_que/train
     uv run python ./tokenize_dataset_from_json.py \
         -sa \
         --tokenizer gpt2 \
         --input-path $INPUT_PATH/$dn/test.json \
-        --output-path $OUTPUT_PATH/$dn-ans/test
+        --output-path $OUTPUT_PATH/"$dn"_que/test
 done
 
 OUTPUT_PATH=$HOME/projects/knowledge_decoupling/input/tokenized/gpt2/sft
@@ -53,11 +53,11 @@ do
         -mp \
         --tokenizer gpt2 \
         --input-path $INPUT_PATH/$dn/train.json \
-        --output-path $OUTPUT_PATH/$dn-ans/train
+        --output-path $OUTPUT_PATH/"$dn"_que/train
     uv run python ./tokenize_dataset_from_json.py \
         -sa \
         -mp \
         --tokenizer gpt2 \
         --input-path $INPUT_PATH/$dn/test.json \
-        --output-path $OUTPUT_PATH/$dn-ans/test
+        --output-path $OUTPUT_PATH/"$dn"_que/test
 done

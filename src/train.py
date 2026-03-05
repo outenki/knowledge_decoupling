@@ -176,7 +176,7 @@ def main():
     try:
         with open(Path(args.out_path)/"arguments.json", "w") as f:
             json.dump(vars(args), f, indent=4)
-    except Exception as e:
+    except Exception:
         print(f"‼️Failed to dumpt arguments!")
 
     # === Load model
@@ -190,6 +190,10 @@ def main():
             quantization_config=None,
             device_map="auto",
         )
+
+    assert model is not None
+    model.save_pretrained(Path(args.out_path) / "init_model")
+
     if args.custom_pad:
         print(">>> Adding custom PAD token to the tokenizer and model.")
         from transformers import AutoTokenizer
@@ -210,8 +214,6 @@ def main():
         # speed up with torch 2.0 compile
         # model = torch.compile(model)
 
-    assert model is not None
-    model.save_pretrained(Path(args.out_path) / "init_model")
 
     # === load data
     data_list = []

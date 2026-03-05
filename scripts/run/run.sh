@@ -5,9 +5,9 @@ echo "start time: $(date -d @"$start_time" +"%D %T")"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        -m|--model)
+        -c|--config)
             if [[ -n "$2" && "$2" != -* ]]; then
-                MODEL_NAME="$2"
+                CONFIG_NAME="$2"
                 shift 2
             else
                 echo "err: --model need a value"
@@ -50,15 +50,6 @@ while [[ $# -gt 0 ]]; do
                 exit 1
             fi
             ;;
-        -o|--output-dir)
-            if [[ -n "$2" && "$2" != -* ]]; then
-                OUTPUT_DIR="$2"
-                shift 2
-            else
-                echo "err: --output-dir need a value"
-                exit 1
-            fi
-            ;;
         *)
         echo "未知参数: $1"
         exit 1
@@ -67,7 +58,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 missing_args=()
-[[ -z "$MODEL_NAME" ]] && missing_args+=("--model")
+[[ -z "$CONFIG_NAME" ]] && missing_args+=("--model")
 [[ -z "$MODEL_PATH" ]] && missing_args+=("--model-path")
 [[ -z "$EVALUATE_DATA" ]] && missing_args+=("--evaluate-data")
 [[ -z "$SFT_DATA" ]] && missing_args+=("--sft-data")
@@ -101,7 +92,7 @@ run_evaluate() {
     uv run python "$PROJECT_BASE_PATH/src/evaluate.py" \
         --model "$m_path" \
         --mode full \
-        --tokenizer "$MODEL_NAME" \
+        --tokenizer "$CONFIG_NAME" \
         --test-data "$PROJECT_BASE_PATH/input/evaluate_data/unformated/$EVALUATE_DATA/test.json" \
         --score-on generation \
         --sample-num 1000 \
@@ -123,7 +114,7 @@ run_train() {
     uv run python "$SCRIPT_PATH/train.py" \
         --speedup \
         -pad \
-        -cn "$MODEL_NAME" \
+        -cn "$CONFIG_NAME" \
         -im "$in_model" \
         -dp "$data_path" \
         -dl 0 \
@@ -136,7 +127,7 @@ run_train() {
     fi
 }
 
-echo ">>>>>> model name: $MODEL_NAME"
+echo ">>>>>> model config: $CONFIG_NAME"
 echo ">>>>>> model path: $MODEL_PATH"
 echo ">>>>>> extended training data: $EXT_TRAIN_DATA"
 echo ">>>>>> SFT data: $SFT_DATA"
@@ -144,13 +135,13 @@ echo ">>>>>> evaluation data: $EVALUATE_DATA"
 echo ">>>>>> option: output directory: $OUTPUT_DIR"
 
 # w/o extended training
-echo ">>>>>> model name: $MODEL_NAME"
+echo ">>>>>> model config: $CONFIG_NAME"
 echo ">>>>>> model path: $MODEL_PATH"
 echo ">>> evaluating "
 run_evaluate "$MODEL_PATH"
 for sft_split in train test
 do
-    echo ">>>>>> model name: $MODEL_NAME"
+    echo ">>>>>> model config: $CONFIG_NAME"
     echo ">>>>>> model path: $MODEL_PATH"
     echo ">>>>>> SFT data: $SFT_DATA/$sft_split.json"
     echo ">>> SFT training"
@@ -163,7 +154,7 @@ done
 # with extended training
 for ext_train_split in train test
 do
-    echo ">>>>>> model name: $MODEL_NAME"
+    echo ">>>>>> model config: $CONFIG_NAME"
     echo ">>>>>> model path: $MODEL_PATH"
     echo ">>>>>> extended training data: $EXT_TRAIN_DATA/$ext_train_split.json"
     echo ">>> extended training"
@@ -174,7 +165,7 @@ do
 
     for sft_split in train test
     do
-        echo ">>>>>> model name: $MODEL_NAME"
+        echo ">>>>>> model config: $CONFIG_NAME"
         echo ">>>>>> model path: $MODEL_PATH"
         echo ">>>>>> SFT data: $SFT_DATA/$sft_split.json"
         echo ">>> SFT training"
