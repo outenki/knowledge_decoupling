@@ -1,5 +1,4 @@
 #!/bin/bash
-echo "====== training on qa_w_context_train ======"
 start_time=$(date +"%s")
 echo "start time: $(date -d @"$start_time" +"%D %T")"
 
@@ -82,11 +81,11 @@ EPOCHS=3
 run_evaluate() {
     local m_path="$1"
     local save_dir="$m_path/evaluation/generation/0_shots/$EVALUATE_DATA"
-    if [[ ! -f "$m_path" ]]; then
-        echo "Error: model file not found at: $m_path"
-        echo "Aborting current evaluating task."
-        return 1
-    fi
+    # if [[ ! -f "$m_path" ]]; then
+    #     echo "Error: model file not found at: $m_path"
+    #     echo "Aborting current evaluating task."
+    #     return 1
+    # fi
     
     echo ">>> [Evaluating] Model: $m_path"
     uv run python "$PROJECT_BASE_PATH/src/evaluate.py" \
@@ -95,7 +94,7 @@ run_evaluate() {
         --tokenizer "$CONFIG_NAME" \
         --test-data "$PROJECT_BASE_PATH/input/evaluate_data/unformated/$EVALUATE_DATA/test.json" \
         --score-on generation \
-        --sample-num 1000 \
+        --sample-num 10 \
         -o "$save_dir"
 }
 
@@ -104,11 +103,11 @@ run_train() {
     local data_path="$2"
     local out_model="$3"
 
-    if [[ ! -f "$data_path" ]]; then
-        echo "Error: Training data file not found at: $data_path"
-        echo "Aborting current training task."
-        return 1
-    fi
+    # if [[ ! -f "$data_path" ]]; then
+    #     echo "Error: Training data file not found at: $data_path"
+    #     echo "Aborting current training task."
+    #     return 1
+    # fi
 
     echo ">>> [Training] Input: $in_model -> Output: $out_model"
     uv run python "$SCRIPT_PATH/train.py" \
@@ -117,7 +116,7 @@ run_train() {
         -cn "$CONFIG_NAME" \
         -im "$in_model" \
         -dp "$data_path" \
-        -dl 0 \
+        -dl 100 \
         -e "$EPOCHS" \
         -o "$out_model"
 
@@ -132,21 +131,25 @@ echo ">>>>>> model path: $MODEL_PATH"
 echo ">>>>>> extended training data: $EXT_TRAIN_DATA"
 echo ">>>>>> SFT data: $SFT_DATA"
 echo ">>>>>> evaluation data: $EVALUATE_DATA"
-echo ">>>>>> option: output directory: $OUTPUT_DIR"
 
 # w/o extended training
+echo
+echo
 echo ">>>>>> model config: $CONFIG_NAME"
 echo ">>>>>> model path: $MODEL_PATH"
 echo ">>> evaluating "
 run_evaluate "$MODEL_PATH"
+
 for sft_split in train test
 do
+    echo
+    echo
     echo ">>>>>> model config: $CONFIG_NAME"
     echo ">>>>>> model path: $MODEL_PATH"
-    echo ">>>>>> SFT data: $SFT_DATA/$sft_split.json"
+    echo ">>>>>> SFT data: $SFT_DATA/$sft_split"
     echo ">>> SFT training"
-    SFT_MODEL_PATH="$MODEL_PATH-$EVALUATE_DATA-sft_${sft_split}_ep${EPOCHS}"
-    run_train "$MODEL_PATH" "$SFT_DATA/$sft_split.json" "$SFT_MODEL_PATH"
+    SFT_MODEL_PATH="$MODEL_PATH-$EVALUATE_DATA/sft_${sft_split}_ep${EPOCHS}"
+    run_train "$MODEL_PATH" "$SFT_DATA/$sft_split" "$SFT_MODEL_PATH"
     echo ">>> evaluating "
     run_evaluate "$SFT_MODEL_PATH"
 done
@@ -154,23 +157,27 @@ done
 # with extended training
 for ext_train_split in train test
 do
+    echo
+    echo
     echo ">>>>>> model config: $CONFIG_NAME"
     echo ">>>>>> model path: $MODEL_PATH"
-    echo ">>>>>> extended training data: $EXT_TRAIN_DATA/$ext_train_split.json"
+    echo ">>>>>> extended training data: $EXT_TRAIN_DATA/$ext_train_split"
     echo ">>> extended training"
-    EXT_MODEL_PATH="$MODEL_PATH-$EVALUATE_DATA-ext_${ext_train_split}_ep${EPOCHS}"
-    run_train "$MODEL_PATH" "$EXT_TRAIN_DATA/$ext_train_split.json" "$EXT_MODEL_PATH"
+    EXT_MODEL_PATH="$MODEL_PATH-$EVALUATE_DATA/ext_${ext_train_split}_ep${EPOCHS}"
+    run_train "$MODEL_PATH" "$EXT_TRAIN_DATA/$ext_train_split" "$EXT_MODEL_PATH"
     echo ">>> evaluating "
     run_evaluate "$EXT_MODEL_PATH"
 
     for sft_split in train test
     do
+        echo
+        echo
         echo ">>>>>> model config: $CONFIG_NAME"
         echo ">>>>>> model path: $MODEL_PATH"
-        echo ">>>>>> SFT data: $SFT_DATA/$sft_split.json"
+        echo ">>>>>> SFT data: $SFT_DATA/$sft_split"
         echo ">>> SFT training"
         EXT_SFT_MODEL_PATH="$EXT_MODEL_PATH-sft_${sft_split}_ep${EPOCHS}"
-        run_train "$EXT_MODEL_PATH" "$SFT_DATA/$sft_split.json" "$EXT_SFT_MODEL_PATH"
+        run_train "$EXT_MODEL_PATH" "$SFT_DATA/$sft_split" "$EXT_SFT_MODEL_PATH"
         echo ">>> evaluating "
         run_evaluate "$EXT_SFT_MODEL_PATH"
     done

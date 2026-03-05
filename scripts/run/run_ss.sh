@@ -9,6 +9,7 @@ EXT_TRAIN_DATA="$PROJECT_BASE_PATH"/input/tokenized/gpt2/ext/"$EVAL_DATA_NAME"_q
 SFT_DATA="$PROJECT_BASE_PATH"/input/tokenized/gpt2/sft/"$EVAL_DATA_NAME"
 
 
+echo ">>> Running tasks on gpt2-ss"
 uv run bash "$SCRIPT_PATH"/run.sh \
     --config "$CONFIG_NAME" \
     --model-path "$MODEL_PATH" \
