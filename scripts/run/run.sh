@@ -94,7 +94,7 @@ run_evaluate() {
         --tokenizer "$CONFIG_NAME" \
         --test-data "$PROJECT_BASE_PATH/input/evaluate_data/unformated/$EVALUATE_DATA/test.json" \
         --score-on generation \
-        --sample-num 10 \
+        --sample-num 1000 \
         -o "$save_dir"
 }
 
@@ -116,7 +116,7 @@ run_train() {
         -cn "$CONFIG_NAME" \
         -im "$in_model" \
         -dp "$data_path" \
-        -dl 100 \
+        -dl 0 \
         -e "$EPOCHS" \
         -o "$out_model"
 
