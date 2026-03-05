@@ -5,6 +5,7 @@ from tqdm import tqdm
 from pathlib import Path
 from config import GPT_API_KEY
 from openai import OpenAI
+import random
 
 from datasets import load_dataset, Dataset
 
@@ -22,7 +23,7 @@ def read_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--data-name', '-dn', dest='data_name', type=str, required=True,
-        choices=['ai2_arc', 'boolq', 'qasc', "squad_v2", "mintaka", "cwq", "metaqa"],
+        choices=['ai2_arc', 'boolq', 'qasc', "squad_v2", "mintaka", "cwq", "metaqa", "google_re", "commonsense_qa"],
         help='Name of the dataset to load from Hugging Face'
     )
     parser.add_argument('--local-path', '-lp', dest='local_path', type=str)
@@ -35,6 +36,10 @@ def read_args():
     parser.add_argument('--format', '-f', dest='format', action='store_true')
     parser.add_argument('--format-with-options', '-op', dest='format_with_options', action='store_true')
     parser.add_argument('--probing', '-p', dest='probing', action='store_true')
+    parser.add_argument(
+        '--context-key', '-ck', dest='context_key', type=str, required=False, default=None,
+        help='Should be one of "snippet" or "considered_sentences". Only used when data_name is google_re.'
+    )
     parser.add_argument(
         '--output-path', '-o', dest='output_path', type=str, required=True,
         help='Path to save results.'
@@ -290,6 +295,98 @@ def generate_qa_data_from_metaqa(
     return qa_data
 
 
+def generate_qa_data_from_google_re(
+    dataset: list, format: bool, format_with_options: bool, probing: bool, context_key: str
+) -> list[dict]:
+    """
+    {
+        "pred": "/people/deceased_person/place_of_death",
+        "sub": "/m/0205jm",
+        "obj": "/m/06mzp",
+        "evidences": [{
+            "url": "http://en.wikipedia.org/wiki/John_Renshaw_Starr",
+            "snippet": "After the war John Starr opened a night-club in Hanley, Staffordshire, in partnership with the brothers Alfred and Henry Newton, SOE agents whom he had met during his training and also at the Avenue Foch. The Newton brothers had been in the Buchenwald concentration camp. He later returned to live in Paris, before moving to Switzerland, where he died in 1996.",
+            "considered_sentences": ["After the war John Starr opened a night-club in Hanley, Staffordshire, in partnership with the brothers Alfred and Henry Newton, SOE agents whom he had met during his training and also at the Avenue Foch .", "He later returned to live in Paris, before moving to Switzerland, where he died in 1996 ."]
+        }],
+        "judgments": [{
+            "rater": "17966044108931836156",
+            "judgment": "yes"
+        }, {
+            "rater": "1406006087371975930",
+            "judgment": "yes"
+        }, {
+            "rater": "16676975657004889938",
+            "judgment": "yes"
+        }, {
+            "rater": "13855588585185268925",
+            "judgment": "yes"
+        }, {
+            "rater": "4185483665120273114",
+            "judgment": "yes"
+        }],
+        "sub_w": "Q3182510",
+        "sub_label": "John Renshaw Starr",
+        "sub_aliases": [],
+        "obj_w": "Q39",
+        "obj_label": "Switzerland",
+        "obj_aliases": ["Swiss Confederation", "CH", "SUI", "Suisse", "Schweiz", "Svizzera", "\ud83c\udde8\ud83c\udded"],
+        "uuid": "61aad52c-4256-468a-a9ae-55e3fa4dc44e",
+        "masked_sentences": ["After the war John Starr opened a night-club in Hanley, Staffordshire, in partnership with the brothers Alfred and Henry Newton, SOE agents whom he had met during his training and also at the Avenue Foch .", "He later returned to live in Paris, before moving to [MASK], where he died in 1996 ."]
+    }
+    """
+    qa_data = []
+    for qid, sample in tqdm(enumerate(dataset), total=len(dataset), desc="Generating QA data"):
+        assert isinstance(sample, dict)
+        sub = sample["sub_label"]
+        if context_key == "snippet":
+            context = sample["evidences"][0]["snippet"]
+        elif context_key == "considered_sentences":
+            context = " ".join(sample["evidences"][0]["considered_sentences"])
+        else:
+            context = ""
+
+        target_relation = sample["target_relation"]
+        if target_relation == "place_of_birth":
+            question = f"Where was {sub} born?"
+        elif target_relation == "place_of_death":
+            question = f"Where did {sub} die?"
+        elif target_relation == "date_of_birth":
+            question = f"When was {sub} born?"
+        else:
+            raise ValueError(f"Unsupported target relation: {target_relation}")
+        answer = sample["obj_label"]
+
+        options = []
+
+        qa_data.append(
+            construct_data(str(qid), context, question, options, answer, format, format_with_options, probing, {})
+        )
+    return qa_data
+
+
+def generate_qa_data_from_commonsense_qa(
+    dataset: list, format: bool, format_with_options: bool, probing: bool
+) -> list[dict]:
+    qa_data = []
+    for sample in tqdm(dataset, total=len(dataset), desc="Generating QA data"):
+        assert isinstance(sample, dict)
+        qid = sample["id"]
+        question = sample["question"]
+
+        labels = sample["choices"]["label"]
+        answer_key = sample["answerKey"]
+        options = sample["choices"]["text"]
+        if answer_key not in labels:
+            continue
+        answer = options[labels.index(answer_key)]
+        context = ""
+
+        qa_data.append(
+            construct_data(str(qid), context, question, options, answer, format, format_with_options, probing)
+        )
+    return qa_data
+
+
 def load_metaqa(file_path: str) -> dict:
     dataset = {}
     for split in ["train", "dev", "test"]:
@@ -320,6 +417,33 @@ def load_cwq(file_path: str) -> dict:
     return dataset
 
 
+def load_jsonl(file_path: str) -> list[dict]:
+    data = []
+    with open(file_path, 'r') as f:
+        for line in tqdm(f, desc=f"Loading data from {file_path}", total=sum(1 for _ in open(file_path, 'r'))):
+            data.append(json.loads(line.strip()))
+    return data
+
+
+def load_google_re(dir_path: str) -> dict:
+    data = []
+    for fn in ["date_of_birth", "place_of_birth", "place_of_death"]:
+        fp = Path(dir_path) / f"{fn}_test.jsonl"
+        _data = load_jsonl(fp)
+        for sample in _data:
+            sample["target_relation"] = fn
+        data.extend(_data)
+
+    # shuffle and split into train/dev/test
+    random.shuffle(data)
+    n = len(data)
+    dataset = {
+        "train": data[:int(0.8 * n)],
+        "test": data[int(0.8 * n):]
+    }
+    return dataset
+
+
 args = read_args()
 print_args(vars(args))
 print("")
@@ -333,7 +457,8 @@ elif args.data_name == "mintaka":
     dataset_dict = load_mintaka(args.local_path)
 elif args.data_name == "cwq":
     dataset_dict = load_cwq(args.local_path)
-
+elif args.data_name == "google_re":
+    dataset_dict = load_google_re(args.local_path)
 else:
     dataset_dict = load_dataset(args.data_name, args.subset_name)
 
@@ -379,6 +504,18 @@ for split, dataset in dataset_dict.items():
         # https://github.com/yuyuz/MetaQA?tab=readme-ov-file
         assert isinstance(dataset, list)
         qa_data = generate_qa_data_from_metaqa(
+            dataset, args.format, args.format_with_options, args.probing
+        )
+    elif args.data_name == "google_re":
+        # https://github.com/facebookresearch/LAMA?tab=readme-ov-file
+        assert isinstance(dataset, list)
+        qa_data = generate_qa_data_from_google_re(
+            dataset, args.format, args.format_with_options, args.probing, args.context_key
+        )
+    elif args.data_name == "commonsense_qa":
+        # https://github.com/facebookresearch/LAMA?tab=readme-ov-file
+        assert isinstance(dataset, Dataset)
+        qa_data = generate_qa_data_from_commonsense_qa(
             dataset, args.format, args.format_with_options, args.probing
         )
     else:

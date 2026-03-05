@@ -9,6 +9,7 @@ input/
 logs/
 sub_jobs/.*
 jobs/**/.*
+jobs/
 scripts/speed_up/
 scripts/speed_up/
 src/tools/config.py

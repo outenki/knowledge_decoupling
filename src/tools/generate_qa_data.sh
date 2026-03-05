@@ -12,8 +12,8 @@ OUTPUT_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling/input/eval
 # uv run python generate_qa_data.py -dn squad_v2 -p -o $OUTPUT_PATH/squad_v2
 # echo ">>> mintaka"
 # uv run python generate_qa_data.py -dn mintaka -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/mintaka/data -o $OUTPUT_PATH/mintaka
-echo ">>> mintaka_multihop"
-uv run python generate_qa_data.py -dn mintaka -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/mintaka/data -o $OUTPUT_PATH/mintaka_multihop
+# echo ">>> mintaka_multihop"
+# uv run python generate_qa_data.py -dn mintaka -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/mintaka/data -o $OUTPUT_PATH/mintaka_multihop
 # echo ">>> complex_web_questions"
 # uv run python generate_qa_data.py -dn cwq -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/complexwebquestions_V1_1 -o $OUTPUT_PATH/cwq
 # echo ">>> metaqa_1hop"
@@ -22,3 +22,8 @@ uv run python generate_qa_data.py -dn mintaka -lp /home/pj25000107/ku50001566/pr
 # uv run python generate_qa_data.py -dn metaqa -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/metaqa_ntm/metaqa_ntm_2hop -o $OUTPUT_PATH/metaqa_2hop
 # echo ">>> metaqa_3hop"
 # uv run python generate_qa_data.py -dn metaqa -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/metaqa_ntm/metaqa_ntm_3hop -o $OUTPUT_PATH/metaqa_3hop
+# echo ">>> google_re"
+# uv run python generate_qa_data.py -dn google_re -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/Google_RE -o $OUTPUT_PATH/google_re_long_context -ck snippet
+# uv run python generate_qa_data.py -dn google_re -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/Google_RE -o $OUTPUT_PATH/google_re_short_context -ck considered_sentences
+echo ">>> commonsense_qa"
+uv run python generate_qa_data.py -dn commonsense_qa  -o $OUTPUT_PATH/commonsense_qa
