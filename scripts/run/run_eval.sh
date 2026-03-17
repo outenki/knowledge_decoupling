@@ -48,7 +48,7 @@ while [[ $# -gt 0 ]]; do
 done
 
 missing_args=()
-[[ -z "$CONFIG_NAME" ]] && missing_args+=("--model")
+[[ -z "$CONFIG_NAME" ]] && missing_args+=("--config")
 [[ -z "$MODEL_PATH" ]] && missing_args+=("--model-path")
 [[ -z "$EVALUATE_DATA" ]] && missing_args+=("--evaluate-data")
 [[ -z "$SCORE_ON" ]] && missing_args+=("--score-on")
