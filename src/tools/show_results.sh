@@ -49,7 +49,12 @@ print_evaluate() {
     local m_path="$1"
     local save_dir="$m_path/evaluation/$EVALUATE_ON/0_shots/$EVALUATE_DATA"
     f1=$(cat "$save_dir/evaluation_summary.json"|grep f1|cut -d":" -f 2|cut -d"," -f1)
-    echo "F1 Score for $m_path: $f1"
+    acc=$(cat "$save_dir/evaluation_summary.json"|grep accuracy|cut -d":" -f 2|cut -d"," -f1)
+    if [ "$EVALUATE_ON" == "generation" ]; then
+        echo "F1 Score for $m_path: $f1"
+    elif [ "$EVALUATE_ON" == "options" ]; then
+        echo "Accuracy for $m_path: $acc"
+    fi
 }
 
 CONFIG_PATH="$PROJECT_BASE_PATH/output/gpt2"
