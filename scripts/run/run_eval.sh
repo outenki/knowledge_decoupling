@@ -91,8 +91,6 @@ echo ">>>>>> evaluation data: $EVALUATE_DATA"
 # w/o extended training
 echo
 echo
-echo ">>>>>> model config: $CONFIG_NAME"
-echo ">>>>>> model path: $MODEL_PATH"
 echo ">>> evaluating "
 run_evaluate "$MODEL_PATH" "$SCORE_ON"
 
@@ -100,8 +98,6 @@ for sft_split in train test
 do
     echo
     echo
-    echo ">>>>>> model config: $CONFIG_NAME"
-    echo ">>>>>> model path: $MODEL_PATH"
     SFT_MODEL_PATH="$MODEL_PATH-$EVALUATE_DATA/sft_${sft_split}_ep${EPOCHS}"
     echo ">>> evaluating "
     run_evaluate "$SFT_MODEL_PATH" "$SCORE_ON"
@@ -112,8 +108,6 @@ for ext_train_split in train test
 do
     echo
     echo
-    echo ">>>>>> model config: $CONFIG_NAME"
-    echo ">>>>>> model path: $MODEL_PATH"
     EXT_MODEL_PATH="$MODEL_PATH-$EVALUATE_DATA/ext_${ext_train_split}_ep${EPOCHS}"
     echo ">>> evaluating "
     run_evaluate "$EXT_MODEL_PATH" "$SCORE_ON"
@@ -122,8 +116,6 @@ do
     do
         echo
         echo
-        echo ">>>>>> model config: $CONFIG_NAME"
-        echo ">>>>>> model path: $MODEL_PATH"
         EXT_SFT_MODEL_PATH="$EXT_MODEL_PATH-sft_${sft_split}_ep${EPOCHS}"
         echo ">>> evaluating "
         run_evaluate "$EXT_SFT_MODEL_PATH" "$SCORE_ON"
