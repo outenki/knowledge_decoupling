@@ -9,7 +9,7 @@ while [[ $# -gt 0 ]]; do
                 CONFIG_NAME="$2"
                 shift 2
             else
-                echo "err: --model need a value"
+                echo "err: -c | --config need a value"
                 exit 1
             fi
             ;;
@@ -18,7 +18,7 @@ while [[ $# -gt 0 ]]; do
                 MODEL_PATH="$2"
                 shift 2
             else
-                echo "err: --model-path need a value"
+                echo "err: -p | --model-path need a value"
                 exit 1
             fi
             ;;
@@ -27,7 +27,7 @@ while [[ $# -gt 0 ]]; do
                 EXT_TRAIN_DATA="$2"
                 shift 2
             else
-                echo "err: --ext-train-data need a value"
+                echo "err: -e | --ext-train-data need a value"
                 exit 1
             fi
             ;;
@@ -36,7 +36,7 @@ while [[ $# -gt 0 ]]; do
                 SFT_DATA="$2"
                 shift 2
             else
-                echo "err: --sft-data need a value"
+                echo "err: -s | --sft-data need a value"
                 exit 1
             fi
             ;;
@@ -45,7 +45,7 @@ while [[ $# -gt 0 ]]; do
                 EVALUATE_DATA="$2"
                 shift 2
             else
-                echo "err: --evaluate-data need a value"
+                echo "err: -t | --evaluate-data need a value"
                 exit 1
             fi
             ;;

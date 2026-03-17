@@ -9,7 +9,7 @@ while [[ $# -gt 0 ]]; do
                 CONFIG_NAME="$2"
                 shift 2
             else
-                echo "err: --model need a value"
+                echo "err: -c | --config need a value"
                 exit 1
             fi
             ;;
@@ -18,7 +18,7 @@ while [[ $# -gt 0 ]]; do
                 MODEL_PATH="$2"
                 shift 2
             else
-                echo "err: --model-path need a value"
+                echo "err: -p | --model-path need a value"
                 exit 1
             fi
             ;;
@@ -27,16 +27,16 @@ while [[ $# -gt 0 ]]; do
                 EVALUATE_DATA="$2"
                 shift 2
             else
-                echo "err: --evaluate-data need a value"
+                echo "err: -t | --evaluate-data need a value"
                 exit 1
             fi
             ;;
-        -t|--score-on)
+        -s|--score-on)
             if [[ -n "$2" && "$2" != -* ]]; then
                 SCORE_ON="$2"
                 shift 2
             else
-                echo "err: --score-on need a value"
+                echo "err: -s | --score-on need a value"
                 exit 1
             fi
             ;;
