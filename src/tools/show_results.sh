@@ -2,12 +2,21 @@
 
 while [[ $# -gt 0 ]]; do
     case $1 in
-        -t|--evaluate-data)
+        -d|--evaluate-data)
             if [[ -n "$2" && "$2" != -* ]]; then
                 EVALUATE_DATA="$2"
                 shift 2
             else
-                echo "err: --evaluate-data need a value"
+                echo "err: -d | --evaluate-data need a value"
+                exit 1
+            fi
+            ;;
+        -on|--evaluate-on)
+            if [[ -n "$2" && "$2" != -* ]]; then
+                EVALUATE_ON="$2"
+                shift 2
+            else
+                echo "err: -on | --evaluate-on need a value"
                 exit 1
             fi
             ;;
@@ -20,6 +29,7 @@ done
 
 missing_args=()
 [[ -z "$EVALUATE_DATA" ]] && missing_args+=("--evaluate-data")
+[[ -z "$EVALUATE_ON" ]] && missing_args+=("--evaluate-on")
 
 if [ ${#missing_args[@]} -ne 0 ]; then
     echo "Error: Missing required arguments: ${missing_args[*]}"
@@ -37,7 +47,7 @@ EPOCHS=3
 
 print_evaluate() {
     local m_path="$1"
-    local save_dir="$m_path/evaluation/generation/0_shots/$EVALUATE_DATA"
+    local save_dir="$m_path/evaluation/$EVALUATE_ON/0_shots/$EVALUATE_DATA"
     f1=$(cat "$save_dir/evaluation_summary.json"|grep f1|cut -d":" -f 2|cut -d"," -f1)
     echo "F1 Score for $m_path: $f1"
 }

@@ -82,47 +82,66 @@ def get_input_ids(model, tokenizer, texts):
 
 
 def score_continuations_batch(model, tokenizer, prompt, continuations):
-    texts = [prompt + " " + c for c in continuations]
-    input_ids, attention_mask = get_input_ids(model, tokenizer, texts)
+    """
+    1. 处理 BPE 拼接一致性
+    2. 使用 Left Padding 确保对齐
+    3. 矩阵化计算 CrossEntropy
+    """
+    # 1. 编码 Prompt 获取长度 (不带特殊 token)
+    prompt_ids = tokenizer(prompt, add_special_tokens=False).input_ids
+    prompt_len = len(prompt_ids)
+
+    # 2. 拼接文本并进行 Batch Tokenize
+    # 注意：某些模型如 Llama 在拼接时需要注意空格，这里统一处理
+    full_texts = [prompt + " " + c for c in continuations]
+
+    # 必须开启 Padding，且由于是 Causal LM，建议用 Left Padding
+    inputs = tokenizer(
+        full_texts, 
+        return_tensors="pt", 
+        padding=True, 
+        add_special_tokens=False
+    ).to(model.device)
+
+    input_ids = inputs["input_ids"]
+    attention_mask = inputs["attention_mask"]
 
     with torch.no_grad():
         logits = model(input_ids, attention_mask=attention_mask).logits
 
-    max_length = get_max_block_size(model)
-    log_prob = []
-    for i, c in enumerate(continuations):
-        prompt_ids = tokenizer(
-            prompt,
-            add_special_tokens=False,
-            truncation=True,
-            max_length=max_length
-        ).input_ids
+    # 3. 这里的对齐逻辑是关键
+    # shift_logits: 从 prompt 的最后一个 token 开始，预测 continuation 的部分
+    # shift_labels: 真正的 continuation 目标 token
+    # 由于存在 padding，我们需要用 mask 避开 padding 部分
 
-        cont_ids = tokenizer(
-            c,
-            add_special_tokens=False,
-            truncation=True,
-            max_length=max_length
-        ).input_ids
+    shift_logits = logits[:, :-1, :].contiguous()
+    shift_labels = input_ids[:, 1:].contiguous()
 
-        cont_len = len(cont_ids)
+    # 构建 mask：只计算 continuation 部分且不是 padding 的位置
+    # 在 Left Padding 情况下，continuation 永远在最后面
+    loss_mask = torch.zeros_like(shift_labels, dtype=torch.bool)
+    for i in range(len(continuations)):
+        # 找到当前这一行非 padding 的起始位置
+        non_pad_indices = attention_mask[i].nonzero(as_tuple=True)[0]
+        actual_start = non_pad_indices[0] + prompt_len - 1
+        # mask 掉 prompt 部分和 padding 部分
+        loss_mask[i, actual_start:] = True
 
-        # shift
-        shift_logits = logits[i, :-1, :]
-        shift_labels = input_ids[i, 1:]
+    # 4. 计算 Loss
+    loss_fct = torch.nn.CrossEntropyLoss(reduction="none")
+    token_losses = loss_fct(shift_logits.view(-1, shift_logits.size(-1)), shift_labels.view(-1))
+    token_losses = token_losses.view(shift_labels.size())
 
-        # continuation mask
-        mask = torch.zeros_like(shift_labels, dtype=torch.bool)
-        mask[len(prompt_ids) - 1: len(prompt_ids)-1 + cont_len] = True
-        mask[len(prompt_ids) - 1: len(prompt_ids)-1 + cont_len] = True
+    # 5. 只取 continuation 部分的平均负对数似然
+    log_probs = []
+    for i in range(len(continuations)):
+        row_loss = token_losses[i][loss_mask[i]]
+        if row_loss.numel() > 0:
+            log_probs.append(-row_loss.mean().item())
+        else:
+            log_probs.append(-100.0)  # 容错处理
 
-        loss_fct = torch.nn.CrossEntropyLoss(reduction="none")
-        token_losses = loss_fct(shift_logits, shift_labels)
-
-        cont_loss = token_losses[mask].mean()
-        log_prob.append(-cont_loss.item())  # average log-prob
-
-    return log_prob
+    return log_probs
 
 
 def generate_few_shots_texts(examples: list[dict]) -> str:
