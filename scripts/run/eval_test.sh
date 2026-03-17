@@ -12,7 +12,8 @@ EVAL_NAME="commonsense_qa"
 for SCORE_ON in generation options
 do
     echo
-    model_path=$PROJECT_BASE_PATH/output/$MODEL_NAME/ss/smolLM2_135M_sents_shuffled_bs1024_ep1-commonsense_qa/ext_test_ep3-sft_test_ep3
+    echo "============ Evaluating on $SCORE_ON ============"
+    model_path=$PROJECT_BASE_PATH/output/$MODEL_NAME/smolLM2/smolLM2_bs1024_dl0_ep1-commonsense_qa/ext_test_ep3-sft_test_ep3
     uv run python "$PROJECT_BASE_PATH"/src/evaluate.py \
         --model "$model_path" \
         --mode $MODE \
