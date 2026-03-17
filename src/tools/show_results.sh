@@ -42,7 +42,7 @@ print_evaluate() {
     echo "F1 Score for $m_path: $f1"
 }
 
-CONFIG_PATH="$PROJECT_BASE_PATH/output/gpt2/"
+CONFIG_PATH="$PROJECT_BASE_PATH/output/gpt2"
 for MODEL_PATH in \
     $CONFIG_PATH/random/rnd \
     $CONFIG_PATH/HuggingFace/hf \

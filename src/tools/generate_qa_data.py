@@ -513,7 +513,7 @@ for split, dataset in dataset_dict.items():
             dataset, args.format, args.format_with_options, args.probing, args.context_key
         )
     elif args.data_name == "commonsense_qa":
-        # https://github.com/facebookresearch/LAMA?tab=readme-ov-file
+        # https://huggingface.co/datasets/tau/commonsense_qa
         assert isinstance(dataset, Dataset)
         qa_data = generate_qa_data_from_commonsense_qa(
             dataset, args.format, args.format_with_options, args.probing
