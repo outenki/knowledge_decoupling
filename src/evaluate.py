@@ -175,7 +175,7 @@ def f1_score(pred: str, answer: str) -> tuple:
 
 def score_on_options(model, tokenizer, prompt, options, answer) -> dict:
     res = {}
-    scores = score_continuations_batch(model, tokenizer, prompt, options)
+    scores = [score_continuations_batch(model, tokenizer, prompt, [op])[0] for op in options]
     if any(score is None for score in scores):
         return {}
     res["scores"] = scores
