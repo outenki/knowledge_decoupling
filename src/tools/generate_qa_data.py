@@ -23,7 +23,7 @@ def read_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--data-name', '-dn', dest='data_name', type=str, required=True,
-        choices=['ai2_arc', 'boolq', 'qasc', "squad_v2", "mintaka", "cwq", "metaqa", "google_re", "commonsense_qa"],
+        choices=['ai2_arc', 'boolq', 'qasc', "squad_v2", "mintaka", "cwq", "metaqa", "google_re", "commonsense_qa", "clasheval", "nq_swap"],
         help='Name of the dataset to load from Hugging Face'
     )
     parser.add_argument('--local-path', '-lp', dest='local_path', type=str)
@@ -36,6 +36,10 @@ def read_args():
     parser.add_argument('--format', '-f', dest='format', action='store_true')
     parser.add_argument('--format-with-options', '-op', dest='format_with_options', action='store_true')
     parser.add_argument('--probing', '-p', dest='probing', action='store_true')
+    parser.add_argument(
+        '--context-conflict', '-cc', dest='context_conflict', type=str, choices=['ori', 'mod'], default='none',
+        help='For context conflict dataset.'
+    )
     parser.add_argument(
         '--context-key', '-ck', dest='context_key', type=str, required=False, default=None,
         help='Should be one of "snippet" or "considered_sentences". Only used when data_name is google_re.'
@@ -387,6 +391,72 @@ def generate_qa_data_from_commonsense_qa(
     return qa_data
 
 
+def generate_qa_data_from_clasheval(
+    dataset: list, format: bool, format_with_options: bool, probing: bool, context_conflict: str
+) -> list[dict]:
+    """
+    {
+        "question": "Who is the Canadian actor known for playing Peter Rasputin / Colossus in the X-Men film series, whose parents are Sue Bailey and Richard Cudmore?",
+        "answer_ori": "Daniel Cudmore",
+        "answer_mod": "David Cudmore",
+        "context_ori": "Daniel Cudmore (born January 20, 1981) is a Canadian actor and stuntman. He is perhaps best known for his roles as the superhero Peter Rasputin / Colossus in the X-Men film series, and as the Volturi Felix in The Twilight Saga film series.",
+        "context_mod": "David Cudmore (born January 20, 1981) is a Canadian actor and stuntman. He is perhaps best known for his roles as the superhero Peter Rasputin / Colossus in the X-Men film series, and as the Volturi Felix in The Twilight Saga film series."
+    }
+    """
+    qa_data = []
+    for qid, sample in tqdm(enumerate(dataset), total=len(dataset), desc="Generating QA data"):
+        assert isinstance(sample, dict)
+        question = sample["question"]
+        if context_conflict == "ori":
+            answer = sample["answer_ori"]
+            context = sample["context_ori"]
+        elif context_conflict == "mod":
+            answer = sample["answer_mod"]
+            context = sample["context_mod"]
+        else:
+            raise ValueError(f"Unsupported context conflict type: {context_conflict}")
+        options = []
+        qa_data.append(
+            construct_data(str(qid), context, question, options, answer, format, format_with_options, probing)
+        )
+    return qa_data
+
+
+def generate_qa_data_from_nq_swap(
+    dataset: list, format: bool, format_with_options: bool, probing: bool, context_conflict: str
+) -> list[dict]:
+    """
+    {
+        "question": "how many episodes are in chicago fire season 4",
+        "org_context": "<P> The fourth season of Chicago Fire , an American drama television series with executive producer Dick Wolf , and producers Derek Haas , Michael Brandt , and Matt Olmstead , was ordered on February 5 , 2015 , by NBC , and premiered on October 13 , 2015 and concluded on May 17 , 2016 . The season contained 23 episodes . </P>",
+        "org_answer": [23],
+        "sub_context": "<P> The fourth season of Chicago Fire , an American drama television series with executive producer Dick Wolf , and producers Derek Haas , Michael Brandt , and Matt Olmstead , was ordered on February 5 , 2015 , by NBC , and premiered on October 13 , 2015 and concluded on May 17 , 2016 . The season contained 775 episodes . </P>",
+        "sub_answer": ["775]
+    }
+    """
+    qa_data = []
+    for qid, sample in tqdm(enumerate(dataset), total=len(dataset), desc="Generating QA data"):
+        assert isinstance(sample, dict)
+        question = sample["question"]
+        answers = []
+        if not question.endswith("?"):
+            question += "?"
+        if context_conflict == "ori":
+            answers = sample["org_answer"]
+            context = sample["org_context"]
+        elif context_conflict == "mod":
+            answers = sample["sub_answer"]
+            context = sample["sub_context"]
+        else:
+            raise ValueError(f"Unsupported context conflict type: {context_conflict}")
+        answer = answers[0]
+        options = []
+        qa_data.append(
+            construct_data(str(qid), context, question, options, answer, format, format_with_options, probing, {"answers": answers})
+        )
+    return qa_data
+
+
 def load_metaqa(file_path: str) -> dict:
     dataset = {}
     for split in ["train", "dev", "test"]:
@@ -425,6 +495,19 @@ def load_jsonl(file_path: str) -> list[dict]:
     return data
 
 
+def load_json(file_path: str) -> dict:
+    dataset = {}
+    for split in ["train", "dev", "test"]:
+        fn = Path(file_path) / f"{split}.json"
+        if not fn.exists():
+            print(f"File {fn} does not exist, skipping.")
+            continue
+        print(f"Loading data from {fn}")
+        with open(fn, 'r') as f:
+            dataset[split] = json.load(f)
+    return dataset
+
+
 def load_google_re(dir_path: str) -> dict:
     data = []
     for fn in ["date_of_birth", "place_of_birth", "place_of_death"]:
@@ -457,8 +540,14 @@ elif args.data_name == "mintaka":
     dataset_dict = load_mintaka(args.local_path)
 elif args.data_name == "cwq":
     dataset_dict = load_cwq(args.local_path)
+elif args.data_name == "clasheval":
+    dataset_dict = load_json(args.local_path)
 elif args.data_name == "google_re":
     dataset_dict = load_google_re(args.local_path)
+elif args.data_name == "clasheval":
+    dataset_dict = load_dataset("sagnikrayc/clasheval")
+elif args.data_name == "nq_swap":
+    dataset_dict = load_dataset("pminervini/NQ-Swap")
 else:
     dataset_dict = load_dataset(args.data_name, args.subset_name)
 
@@ -517,6 +606,18 @@ for split, dataset in dataset_dict.items():
         assert isinstance(dataset, Dataset)
         qa_data = generate_qa_data_from_commonsense_qa(
             dataset, args.format, args.format_with_options, args.probing
+        )
+    elif args.data_name == "clasheval":
+        # https://huggingface.co/datasets/sagnikrayc/clasheval
+        assert isinstance(dataset, list)
+        qa_data = generate_qa_data_from_clasheval(
+            dataset, args.format, args.format_with_options, args.probing, args.context_conflict
+        )
+    elif args.data_name == "nq_swap":
+        # https://huggingface.co/datasets/pminervini/NQ-Swap
+        assert isinstance(dataset, Dataset)
+        qa_data = generate_qa_data_from_nq_swap(
+            dataset, args.format, args.format_with_options, args.probing, args.context_conflict
         )
     else:
         raise ValueError(f"Unsupported dataset: {args.data_name}")
