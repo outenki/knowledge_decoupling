@@ -1,6 +1,6 @@
 #!/bin/bash
 PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-$HOME/projects/knowledge_decoupling}"
-SCRIPT_PATH="$PROJECT_BASE_PATH"/scripts/run
+SCRIPT_PATH="$PROJECT_BASE_PATH"/scripts/run/eval
 
 EVAL_DATA="qasc"
 SCORE_ON="options"
