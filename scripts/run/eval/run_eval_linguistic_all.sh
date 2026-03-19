@@ -2,9 +2,6 @@
 PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-$HOME/projects/knowledge_decoupling}"
 SCRIPT_PATH="$PROJECT_BASE_PATH"/scripts/run/eval
 
-SCORE_ON="options"
-
-
 for eval_data in \
     verb_agreement \
     fce \
@@ -23,7 +20,6 @@ do
         sh "$SCRIPT_PATH/run_eval_linguistic.sh" \
             --config gpt2 \
             --model-path "$model_path" \
-            --evaluate-data "$eval_data" \
-            --score-on "$SCORE_ON"
+            --evaluate-data "$eval_data"
     done
 done
