@@ -97,43 +97,35 @@ def score_continuations_batch(model, tokenizer, prompt, continuations):
 
     # 必须开启 Padding，且由于是 Causal LM，建议用 Left Padding
     inputs = tokenizer(
-        full_texts, 
-        return_tensors="pt", 
-        padding=True, 
+        full_texts,
+        return_tensors="pt",
+        padding=True,
         add_special_tokens=False
     ).to(model.device)
 
     input_ids = inputs["input_ids"]
     attention_mask = inputs["attention_mask"]
 
-    # 这里的修改非常关键：单独编码 prompt 得到其真实在 batch 中的长度
-    prompt_enc = tokenizer(prompt, add_special_tokens=False, return_tensors="pt")
-    true_prompt_len = prompt_enc.input_ids.size(1)
-
     with torch.no_grad():
         logits = model(input_ids, attention_mask=attention_mask).logits
 
-    # 对齐 shift
+    # 3. 这里的对齐逻辑是关键
+    # shift_logits: 从 prompt 的最后一个 token 开始，预测 continuation 的部分
+    # shift_labels: 真正的 continuation 目标 token
+    # 由于存在 padding，我们需要用 mask 避开 padding 部分
+
     shift_logits = logits[:, :-1, :].contiguous()
     shift_labels = input_ids[:, 1:].contiguous()
 
-    seq_len = shift_labels.size(1)
+    # 构建 mask：只计算 continuation 部分且不是 padding 的位置
+    # 在 Left Padding 情况下，continuation 永远在最后面
     loss_mask = torch.zeros_like(shift_labels, dtype=torch.bool)
-
     for i in range(len(continuations)):
-        # 找到当前行最后一个有效 token 的位置（排除末尾可能的 padding，虽然左填充末尾没 padding）
-        # 找到有效内容的起始位置（左填充的情况下）
-        valid_indices = attention_mask[i].nonzero(as_tuple=True)[0]
-        if len(valid_indices) == 0: continue
-
-        start_idx = valid_indices[0] # 这是整个序列开始的位置
-        # 我们的目标是：从 prompt 结束的地方开始计算 loss
-        # 因为我们做了 shift，所以偏移量需要微调
-        continuation_start = start_idx + true_prompt_len - 1
-
-        # 严格检查边界，防止越界
-        continuation_start = min(continuation_start.item(), seq_len)
-        loss_mask[i, continuation_start:] = True
+        # 找到当前这一行非 padding 的起始位置
+        non_pad_indices = attention_mask[i].nonzero(as_tuple=True)[0]
+        actual_start = non_pad_indices[0] + prompt_len - 1
+        # mask 掉 prompt 部分和 padding 部分
+        loss_mask[i, actual_start:] = True
 
     # 4. 计算 Loss
     loss_fct = torch.nn.CrossEntropyLoss(reduction="none")
@@ -251,6 +243,11 @@ def score_on_generation(model, tokenizer, prompt, answers, mode) -> dict:
 def score_samples(model, tokenizer, samples, score_on, generation_mode, few_shots="") -> list[dict]:
     # Score a list of samples with prompts and two options.
     filtered_samples = []
+    # 获取模型允许的最大长度
+    max_len = get_max_block_size(model) or 1024 
+    # 预留给生成或选项的长度空间（比如预留 100 tokens）
+    safe_threshold = max_len - 128
+
     for sample in tqdm.tqdm(samples, total=len(samples), desc="scoring samples"):
         prompt = few_shots + "\n" + sample["prompt"]
         answer = sample["answer"]
@@ -367,7 +364,7 @@ def main():
     print(f"Saving summary to {out_file}...")
     with open(out_file, "w") as f:
         json.dump(results, f, indent=4)
-    
+
     print(results)
 
 
