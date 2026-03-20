@@ -250,6 +250,11 @@ def score_samples(model, tokenizer, samples, score_on, generation_mode, few_shot
 
     for sample in tqdm.tqdm(samples, total=len(samples), desc="scoring samples"):
         prompt = few_shots + "\n" + sample["prompt"]
+        prompt_ids = tokenizer.encode(prompt, add_special_tokens=False)
+        if len(prompt_ids) > safe_threshold:
+            print(f" SKip: Prompt is too long: {len(prompt_ids)} > {safe_threshold}")
+            continue
+
         answer = sample["answer"]
         answers = sample.get("answers", [answer])
         if not answers:
