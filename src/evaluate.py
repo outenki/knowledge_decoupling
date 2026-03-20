@@ -106,26 +106,34 @@ def score_continuations_batch(model, tokenizer, prompt, continuations):
     input_ids = inputs["input_ids"]
     attention_mask = inputs["attention_mask"]
 
+    # 这里的修改非常关键：单独编码 prompt 得到其真实在 batch 中的长度
+    prompt_enc = tokenizer(prompt, add_special_tokens=False, return_tensors="pt")
+    true_prompt_len = prompt_enc.input_ids.size(1)
+
     with torch.no_grad():
         logits = model(input_ids, attention_mask=attention_mask).logits
 
-    # 3. 这里的对齐逻辑是关键
-    # shift_logits: 从 prompt 的最后一个 token 开始，预测 continuation 的部分
-    # shift_labels: 真正的 continuation 目标 token
-    # 由于存在 padding，我们需要用 mask 避开 padding 部分
-
+    # 对齐 shift
     shift_logits = logits[:, :-1, :].contiguous()
     shift_labels = input_ids[:, 1:].contiguous()
 
-    # 构建 mask：只计算 continuation 部分且不是 padding 的位置
-    # 在 Left Padding 情况下，continuation 永远在最后面
+    seq_len = shift_labels.size(1)
     loss_mask = torch.zeros_like(shift_labels, dtype=torch.bool)
+
     for i in range(len(continuations)):
-        # 找到当前这一行非 padding 的起始位置
-        non_pad_indices = attention_mask[i].nonzero(as_tuple=True)[0]
-        actual_start = non_pad_indices[0] + prompt_len - 1
-        # mask 掉 prompt 部分和 padding 部分
-        loss_mask[i, actual_start:] = True
+        # 找到当前行最后一个有效 token 的位置（排除末尾可能的 padding，虽然左填充末尾没 padding）
+        # 找到有效内容的起始位置（左填充的情况下）
+        valid_indices = attention_mask[i].nonzero(as_tuple=True)[0]
+        if len(valid_indices) == 0: continue
+
+        start_idx = valid_indices[0] # 这是整个序列开始的位置
+        # 我们的目标是：从 prompt 结束的地方开始计算 loss
+        # 因为我们做了 shift，所以偏移量需要微调
+        continuation_start = start_idx + true_prompt_len - 1
+
+        # 严格检查边界，防止越界
+        continuation_start = min(continuation_start.item(), seq_len)
+        loss_mask[i, continuation_start:] = True
 
     # 4. 计算 Loss
     loss_fct = torch.nn.CrossEntropyLoss(reduction="none")
