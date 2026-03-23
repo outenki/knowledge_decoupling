@@ -1,5 +1,6 @@
 #!/bin/bash
 OUTPUT_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling/input/evaluate_data/unformated/
+EXT_TRAINING_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling/data/ext
 # echo ">>> ARC-Easy"
 # uv run python generate_qa_data.py -dn ai2_arc -sn ARC-Easy -p -o $OUTPUT_PATH/arc_easy
 # echo ">>> ARC-Challenge"
@@ -25,5 +26,12 @@ OUTPUT_PATH=/home/pj25000107/ku50001566/projects/knowledge_decoupling/input/eval
 # echo ">>> google_re"
 # uv run python generate_qa_data.py -dn google_re -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/Google_RE -o $OUTPUT_PATH/google_re_long_context -ck snippet
 # uv run python generate_qa_data.py -dn google_re -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/Google_RE -o $OUTPUT_PATH/google_re_short_context -ck considered_sentences
-echo ">>> commonsense_qa"
-uv run python generate_qa_data.py -dn commonsense_qa  -o $OUTPUT_PATH/commonsense_qa
+# echo ">>> commonsense_qa"
+# uv run python generate_qa_data.py -dn commonsense_qa  -o $OUTPUT_PATH/commonsense_qa
+echo ">>> google_re_conflict"
+# conflict as evaluate data
+# uv run python generate_qa_data.py -cc mod -dn google_re -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/Google_RE_conflict -o $OUTPUT_PATH/google_re_long_context -ck snippet
+uv run python generate_qa_data.py -cc mod -dn google_re -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/Google_RE_conflict -o $OUTPUT_PATH/google_re_short_context -ck considered_sentences
+# ori as ext training data 
+# uv run python generate_qa_data.py -cc ori -dn google_re -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/Google_RE_conflict -o $EXT_TRAINING_PATH/google_re_long_context -ck snippet
+# uv run python generate_qa_data.py -cc ori -dn google_re -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/Google_RE_conflict -o $EXT_TRAINING_PATH/google_re_short_context -ck considered_sentences

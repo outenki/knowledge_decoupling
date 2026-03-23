@@ -1,12 +1,11 @@
 #! /bin/bash
 # For extensive pretraining
-INPUT_PATH=$HOME/projects/knowledge_decoupling/input/evaluate_data/unformated/
+INPUT_PATH=$HOME/projects/knowledge_decoupling/data/ext
 
 OUTPUT_PATH=$HOME/projects/knowledge_decoupling/input/tokenized/gpt2/ext
 for dn in \
-    google_re_long_context \
-    google_re_short_context \
-    commonsense_qa
+    google_re_conflict_long_context \
+    google_re_conflict_short_context
 do
     echo
     echo ">>>>>> $dn"
@@ -30,11 +29,11 @@ do
         --output-path $OUTPUT_PATH/"$dn"_que/test
 done
 
+INPUT_PATH=$HOME/projects/knowledge_decoupling/input/evaluate_data/unformated/
 OUTPUT_PATH=$HOME/projects/knowledge_decoupling/input/tokenized/gpt2/sft
 for dn in \
-    google_re_long_context \
-    google_re_short_context \
-    commonsense_qa
+    google_re_conflict_long_context \
+    google_re_conflict_short_context
 do
     echo
     echo ">>>>>> $dn"

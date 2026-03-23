@@ -300,7 +300,7 @@ def generate_qa_data_from_metaqa(
 
 
 def generate_qa_data_from_google_re(
-    dataset: list, format: bool, format_with_options: bool, probing: bool, context_key: str
+    dataset: list, format: bool, format_with_options: bool, probing: bool, context_key: str, conflict: str
 ) -> list[dict]:
     """
     {
@@ -358,8 +358,12 @@ def generate_qa_data_from_google_re(
             question = f"When was {sub} born?"
         else:
             raise ValueError(f"Unsupported target relation: {target_relation}")
-        answer = sample["obj_label"]
-
+        if conflict == "ori":
+            answer = sample["ori_obj_label"]
+        elif conflict == "mod":
+            answer = sample["mod_obj_label"]
+        else:
+            answer = sample["obj_label"]
         options = []
 
         qa_data.append(
@@ -544,6 +548,8 @@ elif args.data_name == "clasheval":
     dataset_dict = load_json(args.local_path)
 elif args.data_name == "google_re":
     dataset_dict = load_google_re(args.local_path)
+elif args.data_name == "google_re_conflict":
+    dataset_dict = load_google_re(args.local_path)
 elif args.data_name == "clasheval":
     dataset_dict = load_dataset("sagnikrayc/clasheval")
 elif args.data_name == "nq_swap":
@@ -599,7 +605,13 @@ for split, dataset in dataset_dict.items():
         # https://github.com/facebookresearch/LAMA?tab=readme-ov-file
         assert isinstance(dataset, list)
         qa_data = generate_qa_data_from_google_re(
-            dataset, args.format, args.format_with_options, args.probing, args.context_key
+            dataset, args.format, args.format_with_options, args.probing, args.context_key, conflict="none"
+        )
+    elif args.data_name == "google_re_conflict":
+        # https://github.com/facebookresearch/LAMA?tab=readme-ov-file
+        assert isinstance(dataset, list)
+        qa_data = generate_qa_data_from_google_re(
+            dataset, args.format, args.format_with_options, args.probing, args.context_key, conflict=args.conflict
         )
     elif args.data_name == "commonsense_qa":
         # https://huggingface.co/datasets/tau/commonsense_qa
