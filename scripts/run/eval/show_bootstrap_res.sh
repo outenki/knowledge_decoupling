@@ -3,7 +3,7 @@ start_time=$(date +"%s")
 echo "start time: $(date -d @"$start_time" +"%D %T")"
 
 PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-$HOME/projects/knowledge_decoupling}"
-SCRIPT_PATH="$PROJECT_BASE_PATH"/src/tools
+SCRIPT_PATH="$PROJECT_BASE_PATH"/scripts/run/eval
 
 # linguistic
 # MODEL_NAME="random/rnd"
