@@ -17,13 +17,15 @@ print(f"Loading baseline results from {baseline_fn}")
 with open(baseline_fn, "r") as f:
     baseline_results = json.load(f)[metric]["values"]
 
-# 执行配对 t 检验
+win_rate = (sum(proposed_results > baseline_results) / len(proposed_results)) * 100
+print(f"Win rate: {win_rate:.2f}%")
 t_stat, p_value = stats.ttest_rel(proposed_results, baseline_results)
 
 print(f"T-statistic: {t_stat:.4f}")
 print(f"P-value: {p_value:.4e}")
 with open(Path(sys.argv[4]) / "t_test_result.json", "w") as f:
     json.dump({
+        "Win rate": win_rate,
         "T-statistic": t_stat,
         "P-value": p_value
     }, f, indent=4)
