@@ -2,6 +2,7 @@ from pathlib import Path
 import sys
 import json
 from scipy import stats
+import numpy as np
 
 
 metric = sys.argv[1]
@@ -12,12 +13,12 @@ output_path.mkdir(parents=True, exist_ok=True)
 
 print(f"Loading proposed results from {proposed_fn}")
 with open(proposed_fn, "r") as f:
-    proposed_results = json.load(f)[metric]["values"]
+    proposed_results = np.array(json.load(f)[metric]["values"])
 print(f"Loading baseline results from {baseline_fn}")
 with open(baseline_fn, "r") as f:
-    baseline_results = json.load(f)[metric]["values"]
+    baseline_results = np.array(json.load(f)[metric]["values"])
 
-win_rate = (sum(int(proposed_results > baseline_results)) / len(proposed_results)) * 100
+win_rate = (sum(proposed_results > baseline_results]) / len(proposed_results)) * 100
 print(f"Win rate: {win_rate:.2f}%")
 t_stat, p_value = stats.ttest_rel(proposed_results, baseline_results)
 
