@@ -10,28 +10,24 @@ SCRIPT_PATH="$PROJECT_BASE_PATH"/src/tools
 MODEL_NAME=$1
 
 EVAL_DATA="verb_agreement"
-SAMPLE_NUM=200
-echo "Bootstrapping on $EVAL_DATA with $SAMPLE_NUM samples..."
+echo "Bootstrap result on $EVAL_DATA"
 EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME/evaluation/options/0_shots/$EVAL_DATA"
-uv run python $SCRIPT_PATH/bootstrap_resampling.py $SAMPLE_NUM "$EVAL_PATH"
+uv run python $SCRIPT_PATH/show_bootstrap_res.py $EVAL_PATH "accuracy"
 
 EVAL_DATA="fce"
-SAMPLE_NUM=150
-echo "Bootstrapping on $EVAL_DATA with $SAMPLE_NUM samples..."
 EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME/evaluation/options/0_shots/$EVAL_DATA"
-uv run python $SCRIPT_PATH/bootstrap_resampling.py $SAMPLE_NUM "$EVAL_PATH"
+echo "Bootstrap result on $EVAL_DATA"
+uv run python $SCRIPT_PATH/show_bootstrap_res.py $EVAL_PATH "accuracy"
 
 EVAL_DATA="fce_3gram"
-SAMPLE_NUM=100
-echo "Bootstrapping on $EVAL_DATA with $SAMPLE_NUM samples..."
 EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME/evaluation/options/0_shots/$EVAL_DATA"
-uv run python $SCRIPT_PATH/bootstrap_resampling.py $SAMPLE_NUM "$EVAL_PATH"
+echo "Bootstrap result on $EVAL_DATA"
+uv run python $SCRIPT_PATH/show_bootstrap_res.py $EVAL_PATH "accuracy"
 
 EVAL_DATA="fce_5gram"
-SAMPLE_NUM=80
-echo "Bootstrapping on $EVAL_DATA with $SAMPLE_NUM samples..."
 EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME/evaluation/options/0_shots/$EVAL_DATA"
-uv run python $SCRIPT_PATH/bootstrap_resampling.py $SAMPLE_NUM "$EVAL_PATH"
+echo "Bootstrap result on $EVAL_DATA"
+uv run python $SCRIPT_PATH/show_bootstrap_res.py $EVAL_PATH "accuracy"
 
 
 SAMPLE_NUM=400
@@ -43,9 +39,9 @@ for EVAL_DATA in \
     qasc \
     commonsense_qa
 do
-    echo "Bootstrapping on $EVAL_DATA with $SAMPLE_NUM samples..."
+    echo "Bootstrap result on $EVAL_DATA"
     EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME-$EVAL_DATA/ext_test_ep3-sft_test_ep3/evaluation/generation/0_shots/$EVAL_DATA"
-    uv run python $SCRIPT_PATH/bootstrap_resampling.py $SAMPLE_NUM "$EVAL_PATH"
+    uv run python $SCRIPT_PATH/show_bootstrap_res.py $EVAL_PATH "f1"
 done
 
 # rag
@@ -54,9 +50,9 @@ for EVAL_DATA in \
     google_re_long_context \
     google_re_short_context
 do
-    echo "Bootstrapping on $EVAL_DATA with $SAMPLE_NUM samples..."
-    EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME-$EVAL_DATA/sft_train_ep3/evaluation/generation/0_shots/$EVAL_DATA"
-    uv run python $SCRIPT_PATH/bootstrap_resampling.py $SAMPLE_NUM "$EVAL_PATH"
+    echo "Bootstrap result on $EVAL_DATA"
+    EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME-$EVAL_DATA/ext_test_ep3-sft_test_ep3/evaluation/generation/0_shots/$EVAL_DATA"
+    uv run python $SCRIPT_PATH/show_bootstrap_res.py $EVAL_PATH "f1"
 done
 
 end_time=$(date +"%s")
