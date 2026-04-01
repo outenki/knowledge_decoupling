@@ -1,6 +1,4 @@
 #!/bin/bash
-start_time=$(date +"%s")
-echo "start time: $(date -d @"$start_time" +"%D %T")"
 
 while [[ $# -gt 0 ]]; do
     case $1 in
@@ -96,11 +94,3 @@ run_evaluate() {
 
 run_evaluate "$MODEL_PATH" "$SCORE_ON" "$SAMPLE_NUM"
 
-
-end_time=$(date +"%s")
-echo "end time: $(date -d @"$end_time" +"%D %T")"
-diff_sec=$(( end_time - start_time ))
-hours=$(( diff_sec / 3600 ))
-minutes=$(( (diff_sec % 3600) / 60 ))
-seconds=$(( diff_sec % 60 ))
-echo "Total time cost: ${hours}:${minutes}:${seconds}"
