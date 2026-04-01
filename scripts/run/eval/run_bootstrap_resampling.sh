@@ -10,13 +10,13 @@ SCRIPT_PATH="$PROJECT_BASE_PATH"/src/tools
 MODEL_NAME=$1
 
 EVAL_DATA="verb_agreement"
-SAMPLE_NUM=200
+SAMPLE_NUM=100
 echo "Bootstrapping on $EVAL_DATA with $SAMPLE_NUM samples..."
 EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME/evaluation/options/0_shots/$EVAL_DATA"
 uv run python $SCRIPT_PATH/bootstrap_resampling.py $SAMPLE_NUM "$EVAL_PATH"
 
 EVAL_DATA="fce"
-SAMPLE_NUM=150
+SAMPLE_NUM=100
 echo "Bootstrapping on $EVAL_DATA with $SAMPLE_NUM samples..."
 EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME/evaluation/options/0_shots/$EVAL_DATA"
 uv run python $SCRIPT_PATH/bootstrap_resampling.py $SAMPLE_NUM "$EVAL_PATH"
@@ -28,13 +28,13 @@ EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME/evaluation/options/0_shots
 uv run python $SCRIPT_PATH/bootstrap_resampling.py $SAMPLE_NUM "$EVAL_PATH"
 
 EVAL_DATA="fce_5gram"
-SAMPLE_NUM=80
+SAMPLE_NUM=100
 echo "Bootstrapping on $EVAL_DATA with $SAMPLE_NUM samples..."
 EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME/evaluation/options/0_shots/$EVAL_DATA"
 uv run python $SCRIPT_PATH/bootstrap_resampling.py $SAMPLE_NUM "$EVAL_PATH"
 
 
-SAMPLE_NUM=400
+SAMPLE_NUM=100
 # qa
 # ext_test-sft_test
 for EVAL_DATA in \

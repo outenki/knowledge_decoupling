@@ -75,7 +75,6 @@ if __name__ == "__main__":
     bootstrap_acc = []
     bootstrap_f1 = []
 
-    # 2. 正确的 Bootstrap 逻辑
     for i in tqdm.tqdm(range(bootstrap_num), desc="Bootstrapping"):
         random.seed(i)
         resampled_data = random.choices(original_samples, k=n_samples)
