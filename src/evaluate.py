@@ -403,8 +403,8 @@ def main():
     bootstrap_number = args.bootstrap_number
     for seed in range(bootstrap_number):
         random.seed(seed)
-        out_path = out_path / f"seed_{seed}"
-        out_path.mkdir(parents=True, exist_ok=True)
+        out_path_seed = out_path / f"seed_{seed}"
+        out_path_seed.mkdir(parents=True, exist_ok=True)
 
         if args.sample_num and len(eval_samples) > args.sample_num:
             eval_samples = random.sample(eval_samples, args.sample_num)
@@ -433,26 +433,26 @@ def main():
         bootstrap_f1.append(results["f1"])
 
         # ========= Save results ========
-        out_file = Path(out_path) / "evaluated_samples.json"
+        out_file = Path(out_path_seed) / "evaluated_samples.json"
         print(f"Saving evaluated samples to {out_file}...")
         with open(out_file, "w") as f:
             json.dump(used_samples, f, indent=4)
 
-        out_file = Path(out_path) / "evaluated_samples.csv"
+        out_file = Path(out_path_seed) / "evaluated_samples.csv"
         print(f"Saving evaluated samples to {out_file}...")
         pd.DataFrame(used_samples).to_csv(out_file, index=False)
 
-        out_file = Path(out_path) / "evaluation_summary.json"
+        out_file = Path(out_path_seed) / "evaluation_summary.json"
         print(f"Saving summary to {out_file}...")
         with open(out_file, "w") as f:
             json.dump(results, f, indent=4)
 
         print(results)
-    
+
     print("--- Bootstrap Analysis ---")
     bootstrap_f1_res = analysis_bootstrap(bootstrap_f1)
     bootstrap_acc_res = analysis_bootstrap(bootstrap_acc)
-    out_file = Path(out_path) / "../bootstrap_analysis.json"
+    out_file = Path(out_path) / "bootstrap_analysis.json"
     print(f"Saving bootstrap analysis to {out_file}...")
     with open(out_file, "w") as f:
         json.dump({
