@@ -40,7 +40,7 @@ while [[ $# -gt 0 ]]; do
                 exit 1
             fi
             ;;
-        -n|--sample-number)
+        -n|--sample-num)
             if [[ -n "$2" && "$2" != -* ]]; then
                 SAMPLE_NUM="$2"
                 shift 2
