@@ -10,22 +10,26 @@ SCRIPT_PATH="$PROJECT_BASE_PATH"/scripts/run/eval
 MODEL_NAME=$1
 
 EVAL_DATA="verb_agreement"
+echo
 echo "Bootstrap result on $EVAL_DATA"
 EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME/evaluation/options/0_shots/$EVAL_DATA"
 uv run python $SCRIPT_PATH/show_bootstrap_res.py $EVAL_PATH "accuracy"
 
 EVAL_DATA="fce"
 EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME/evaluation/options/0_shots/$EVAL_DATA"
+echo
 echo "Bootstrap result on $EVAL_DATA"
 uv run python $SCRIPT_PATH/show_bootstrap_res.py $EVAL_PATH "accuracy"
 
 EVAL_DATA="fce_3gram"
 EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME/evaluation/options/0_shots/$EVAL_DATA"
+echo
 echo "Bootstrap result on $EVAL_DATA"
 uv run python $SCRIPT_PATH/show_bootstrap_res.py $EVAL_PATH "accuracy"
 
 EVAL_DATA="fce_5gram"
 EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME/evaluation/options/0_shots/$EVAL_DATA"
+echo
 echo "Bootstrap result on $EVAL_DATA"
 uv run python $SCRIPT_PATH/show_bootstrap_res.py $EVAL_PATH "accuracy"
 
@@ -38,7 +42,12 @@ for EVAL_DATA in \
     qasc \
     commonsense_qa
 do
-    echo "Bootstrap result on $EVAL_DATA"
+    echo
+    echo "Bootstrap result on $EVAL_DATA(w/o)"
+    EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME-$EVAL_DATA/sft_test_ep3/evaluation/generation/0_shots/$EVAL_DATA"
+    uv run python $SCRIPT_PATH/show_bootstrap_res.py $EVAL_PATH "f1"
+    echo
+    echo "Bootstrap result on $EVAL_DATA(w/)"
     EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME-$EVAL_DATA/ext_test_ep3-sft_test_ep3/evaluation/generation/0_shots/$EVAL_DATA"
     uv run python $SCRIPT_PATH/show_bootstrap_res.py $EVAL_PATH "f1"
 done
@@ -49,6 +58,7 @@ for EVAL_DATA in \
     google_re_long_context \
     google_re_short_context
 do
+    echo
     echo "Bootstrap result on $EVAL_DATA"
     EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME-$EVAL_DATA/sft_train_ep3/evaluation/generation/0_shots/$EVAL_DATA"
     uv run python $SCRIPT_PATH/show_bootstrap_res.py $EVAL_PATH "f1"
