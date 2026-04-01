@@ -1,6 +1,6 @@
 #!/bin/bash
 PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-$HOME/projects/knowledge_decoupling}"
-SCRIPT_PATH="$PROJECT_BASE_PATH"/scripts/tools
+SCRIPT_PATH="$PROJECT_BASE_PATH"/src/tools
 
 # linguistic
 # MODEL_NAME="random/rnd"
