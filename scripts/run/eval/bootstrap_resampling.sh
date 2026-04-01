@@ -87,7 +87,7 @@ run_evaluate() {
         --tokenizer "$CONFIG_NAME" \
         --test-data "$PROJECT_BASE_PATH/input/evaluate_data/unformated/$EVALUATE_DATA/test.json" \
         --score-on "$score_on" \
-        --bootstrap 5 \
+        --bootstrap 100 \
         --sample-num $sample_num \
         -o "$save_dir"
 }
