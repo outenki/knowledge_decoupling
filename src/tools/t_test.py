@@ -10,8 +10,10 @@ baseline_fn = Path(sys.argv[3]) / "bootstrap_analysis.json"
 output_path = Path(sys.argv[4])
 output_path.mkdir(parents=True, exist_ok=True)
 
+print(f"Loading proposed results from {proposed_fn}")
 with open(proposed_fn, "r") as f:
     proposed_results = json.load(f)[metric]["values"]
+print(f"Loading baseline results from {baseline_fn}")
 with open(baseline_fn, "r") as f:
     baseline_results = json.load(f)[metric]["values"]
 
