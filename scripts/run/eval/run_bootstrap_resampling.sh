@@ -9,29 +9,29 @@ SCRIPT_PATH="$PROJECT_BASE_PATH"/src/tools
 # MODEL_NAME="random/rnd"
 MODEL_NAME=$1
 
-EVAL_DATA="verb_agreement"
-SAMPLE_NUM=200
-echo "Bootstrapping on $EVAL_DATA with $SAMPLE_NUM samples..."
-EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME/evaluation/options/0_shots/$EVAL_DATA"
-uv run python $SCRIPT_PATH/bootstrap_resampling.py $SAMPLE_NUM "$EVAL_PATH"
+# EVAL_DATA="verb_agreement"
+# SAMPLE_NUM=200
+# echo "Bootstrapping on $EVAL_DATA with $SAMPLE_NUM samples..."
+# EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME/evaluation/options/0_shots/$EVAL_DATA"
+# uv run python $SCRIPT_PATH/bootstrap_resampling.py $SAMPLE_NUM "$EVAL_PATH"
 
-EVAL_DATA="fce"
-SAMPLE_NUM=150
-echo "Bootstrapping on $EVAL_DATA with $SAMPLE_NUM samples..."
-EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME/evaluation/options/0_shots/$EVAL_DATA"
-uv run python $SCRIPT_PATH/bootstrap_resampling.py $SAMPLE_NUM "$EVAL_PATH"
+# EVAL_DATA="fce"
+# SAMPLE_NUM=150
+# echo "Bootstrapping on $EVAL_DATA with $SAMPLE_NUM samples..."
+# EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME/evaluation/options/0_shots/$EVAL_DATA"
+# uv run python $SCRIPT_PATH/bootstrap_resampling.py $SAMPLE_NUM "$EVAL_PATH"
 
-EVAL_DATA="fce_3gram"
-SAMPLE_NUM=100
-echo "Bootstrapping on $EVAL_DATA with $SAMPLE_NUM samples..."
-EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME/evaluation/options/0_shots/$EVAL_DATA"
-uv run python $SCRIPT_PATH/bootstrap_resampling.py $SAMPLE_NUM "$EVAL_PATH"
+# EVAL_DATA="fce_3gram"
+# SAMPLE_NUM=100
+# echo "Bootstrapping on $EVAL_DATA with $SAMPLE_NUM samples..."
+# EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME/evaluation/options/0_shots/$EVAL_DATA"
+# uv run python $SCRIPT_PATH/bootstrap_resampling.py $SAMPLE_NUM "$EVAL_PATH"
 
-EVAL_DATA="fce_5gram"
-SAMPLE_NUM=80
-echo "Bootstrapping on $EVAL_DATA with $SAMPLE_NUM samples..."
-EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME/evaluation/options/0_shots/$EVAL_DATA"
-uv run python $SCRIPT_PATH/bootstrap_resampling.py $SAMPLE_NUM "$EVAL_PATH"
+# EVAL_DATA="fce_5gram"
+# SAMPLE_NUM=80
+# echo "Bootstrapping on $EVAL_DATA with $SAMPLE_NUM samples..."
+# EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME/evaluation/options/0_shots/$EVAL_DATA"
+# uv run python $SCRIPT_PATH/bootstrap_resampling.py $SAMPLE_NUM "$EVAL_PATH"
 
 
 SAMPLE_NUM=400
@@ -45,6 +45,9 @@ for EVAL_DATA in \
 do
     echo "Bootstrapping on $EVAL_DATA with $SAMPLE_NUM samples..."
     EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME-$EVAL_DATA/ext_test_ep3-sft_test_ep3/evaluation/generation/0_shots/$EVAL_DATA"
+    uv run python $SCRIPT_PATH/bootstrap_resampling.py $SAMPLE_NUM "$EVAL_PATH"
+    echo "Bootstrapping on $EVAL_DATA with $SAMPLE_NUM samples..."
+    EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME-$EVAL_DATA/sft_test_ep3/evaluation/generation/0_shots/$EVAL_DATA"
     uv run python $SCRIPT_PATH/bootstrap_resampling.py $SAMPLE_NUM "$EVAL_PATH"
 done
 
