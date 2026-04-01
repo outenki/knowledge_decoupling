@@ -71,7 +71,7 @@ EPOCHS=3
 run_evaluate() {
     local m_path="$1"
     local score_on="$2"
-    local save_dir="$m_path/evaluation/$score_on/0_shots/seed_$seed/$EVALUATE_DATA"
+    local save_dir="$m_path/evaluation/$score_on/0_shots/$EVALUATE_DATA"
 
     echo ">>> [Evaluating] Model: $m_path"
     uv run python "$SCRIPT_PATH/evaluate.py" \

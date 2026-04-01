@@ -29,7 +29,7 @@ for EVAL_DATA in \
     qasc \
     commonsense_qa
 do
-    MODEL_NAME_EXT_SFT=$MODEL_NAME-$EVAL_DATA/ext_test-sft_test
+    MODEL_NAME_EXT_SFT=$MODEL_NAME-$EVAL_DATA/ext_test_ep3-sft_test_ep3
     echo "Evaluating on $EVAL_DATA..."
     model_path="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME_EXT_SFT"
     sh "$SCRIPT_PATH/bootstrap_resampling.sh" \
@@ -45,7 +45,7 @@ for EVAL_DATA in \
     google_re_long \
     google_re_short
 do
-    MODEL_NAME_SFT=$MODEL_NAME-$EVAL_DATA/sft_test
+    MODEL_NAME_SFT=$MODEL_NAME-$EVAL_DATA/sft_test_ep3
     echo "Evaluating on $EVAL_DATA..."
     model_path="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME_SFT"
     sh "$SCRIPT_PATH/bootstrap_resampling.sh" \
