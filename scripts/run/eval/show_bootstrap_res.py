@@ -13,4 +13,4 @@ with open(fn, "r") as f:
     mean = data["Mean"] * 100
     ci_b, ci_t = data["ci_bootstrap"]
     std = data["Std Dev"] * 100
-    print(f"{mean:.2f}" + "\interval{" + f"\pm {std:.2f}" "}")
+    print(f"{mean:.2f}" + "\interval{" + f"\pm {std:.2f}" + "}")
