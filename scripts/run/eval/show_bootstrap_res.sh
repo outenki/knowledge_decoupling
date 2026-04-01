@@ -1,7 +1,4 @@
 #!/bin/bash
-start_time=$(date +"%s")
-echo "start time: $(date -d @"$start_time" +"%D %T")"
-
 PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-$HOME/projects/knowledge_decoupling}"
 SCRIPT_PATH="$PROJECT_BASE_PATH"/scripts/run/eval
 
@@ -61,11 +58,3 @@ do
     EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME-$EVAL_DATA/sft_train_ep3/evaluation/generation/0_shots/$EVAL_DATA"
     uv run python $SCRIPT_PATH/show_bootstrap_res.py $EVAL_PATH "f1"
 done
-
-end_time=$(date +"%s")
-echo "end time: $(date -d @"$end_time" +"%D %T")"
-diff_sec=$(( end_time - start_time ))
-hours=$(( diff_sec / 3600 ))
-minutes=$(( (diff_sec % 3600) / 60 ))
-seconds=$(( diff_sec % 60 ))
-echo "Total time cost: ${hours}:${minutes}:${seconds}"
