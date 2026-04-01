@@ -65,21 +65,26 @@ def read_json(path):
         return json.load(f)
 
 
-if  __name__ == "__main__":
+if __name__ == "__main__":
     bootstrap_num = int(sys.argv[1])
     target_path = Path(sys.argv[2])
 
-    results_list = read_json(target_path / "evaluated_samples.json")
-    sample_num = len(results_list) // 2
+    original_samples = read_json(target_path / "evaluated_samples.json")
+    n_samples = len(original_samples)
 
     bootstrap_acc = []
     bootstrap_f1 = []
-    for i in tqdm.tqdm(range(bootstrap_num), desc="Bootstrapping", total=bootstrap_num):
+
+    # 2. 正确的 Bootstrap 逻辑
+    for i in tqdm.tqdm(range(bootstrap_num), desc="Bootstrapping"):
         random.seed(i)
-        results_list = random.choices(results_list, k=sample_num*bootstrap_num)
-        f1_i = [r.get("f1", 0) for r in results_list]
+        resampled_data = random.choices(original_samples, k=n_samples)
+
+        # 计算这一批次的指标
+        f1_i = [r.get("f1", 0) for r in resampled_data]
+        acc_i = [1 if r.get("is_correct", False) else 0 for r in resampled_data]
+
         bootstrap_f1.append(np.mean(f1_i))
-        acc_i = [1 if r["is_correct"] else 0 for r in results_list]
         bootstrap_acc.append(np.mean(acc_i))
 
     print("--- Bootstrap Analysis on f1---")
