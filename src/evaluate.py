@@ -12,6 +12,8 @@ import tqdm
 import random
 
 import torch
+import numpy as np
+from scipy import stats
 from transformers import AutoTokenizer
 from transformers import AutoModelForCausalLM
 
@@ -19,7 +21,6 @@ import pandas as pd
 from lib.utils import get_device, print_args
 
 
-random.seed(42)
 
 
 def read_args():
@@ -38,6 +39,14 @@ def read_args():
     parser.add_argument(
         '--sample-num', '-sn', dest='sample_num', type=int, required=False,
         help='Max number of samples to use.'
+    )
+    parser.add_argument(
+        '--seed', '-sd', dest='seed', type=int, required=False, default=42,
+        help='random seed.'
+    )
+    parser.add_argument(
+        '--bootstrap', '-bs', dest='bootstrap_number', type=int, required=False, default=1,
+        help='random seed.'
     )
     parser.add_argument(
         '--score-on', '-so', dest='score_on', type=str, required=True, choices={"options", "generation"},
@@ -296,6 +305,51 @@ def analyze_results(samples) -> dict:
     avg_precision = precision / total if total > 0 else 0
     return {"correct": correct, "total": total, "accuracy": accuracy, "f1": avg_f1, "precision": avg_precision, "recall": avg_recall}
 
+def analysis_bootstrap(results_list, confidence=0.95):
+    data = np.array(results_list)
+    n = len(data)
+
+    mean = np.mean(data)
+    median = np.median(data)
+
+    std_dev = np.std(data, ddof=1)
+    se = stats.sem(data)
+
+    # Confidence Interval
+    ci_t = stats.t.interval(confidence, n-1, loc=mean, scale=se)
+
+    # 4. Bootstrap 置信区间 (更稳健，非参数方法)
+    # 模拟 10,000 次重采样
+    boot_means = [np.mean(np.random.choice(data, size=n, replace=True)) for _ in range(10000)]
+    ci_bootstrap = np.percentile(boot_means, [(1-confidence)/2 * 100, (1+confidence)/2 * 100])
+
+    # p_value
+    _, p_value = stats.shapiro(data)
+
+    analysis = {
+        "Count": n,
+        "Mean": mean,
+        "Median": median,
+        "Std Dev": std_dev,
+        "Std Error": se,
+        f"{int(confidence*100)}% CI (T-dist)": ci_t,
+        "ci_bootstrap": ci_bootstrap,
+        "Shapiro-Wilk p-value": p_value,
+        "Max": np.max(data),
+        "Min": np.min(data)
+    }
+
+    # 打印格式化结果
+    print(f"--- analysis of bootstrap (n={n}) ---")
+    for key, value in analysis.items():
+        if isinstance(value, (list, np.ndarray, tuple)):
+            print(f"{key}: [{value[0]:.4f}, {value[1]:.4f}]")
+        else:
+            print(f"{key}: {value:.4f}")
+    print(f"--- ----------------------------- ---")
+            
+    return analysis
+
 
 def main():
     args = read_args()
@@ -304,8 +358,8 @@ def main():
     # ======== Check arguments ========
     model_path = args.model
     eval_data_path = args.data_path
-    out_path = args.out_path
-    Path(out_path).mkdir(parents=True, exist_ok=True)
+    out_path = Path(args.out_path)
+    out_path.mkdir(parents=True, exist_ok=True)
 
     # ======== Set device ========
     device = get_device()
@@ -332,45 +386,68 @@ def main():
         eval_samples = json.load(f)
         assert isinstance(eval_samples, list)
 
-    if args.sample_num and len(eval_samples) > args.sample_num:
-        eval_samples = random.sample(eval_samples, args.sample_num)
-    total_count = len(eval_samples)
-    print(f"Total evaluation samples: {total_count}")
+    bootstrap_acc = []
+    bootstrap_f1 = []
+    random.seed(args.seed)
+    bootstrap_number = args.bootstrap_number
+    for seed in range(bootstrap_number):
+        random.seed(seed)
+        out_path = out_path / f"seed_{seed}"
+        out_path.mkdir(parents=True, exist_ok=True)
 
-    # ========= Load few shots examples ========
-    few_shots = ""
-    if args.example_data:
-        examples = []
-        print(f"Loading examples from {args.example_data}...")
-        with open(args.example_data, "r") as f:
-            examples = json.load(f)
-        few_shots = generate_few_shots_texts(examples)
-    if few_shots:
-        print(f"Generated few_shots: \n{few_shots}")
+        if args.sample_num and len(eval_samples) > args.sample_num:
+            eval_samples = random.sample(eval_samples, args.sample_num)
+        total_count = len(eval_samples)
+        print(f"Total evaluation samples: {total_count} with seed {seed}")
 
-    # ========= Score samples ========
-    used_samples = score_samples(model, tokenizer, eval_samples, args.score_on, args.mode, few_shots)
-    used_count = len(used_samples)
-    print(f"Evaluated on {used_count} samples")
-    results = analyze_results(used_samples)
-    results["num_params"] = num_params
+        # ========= Load few shots examples ========
+        few_shots = ""
+        if args.example_data:
+            examples = []
+            print(f"Loading examples from {args.example_data}...")
+            with open(args.example_data, "r") as f:
+                examples = json.load(f)
+            few_shots = generate_few_shots_texts(examples)
+        if few_shots:
+            print(f"Generated few_shots: \n{few_shots}")
 
-    # ========= Save results ========
-    out_file = Path(out_path) / "evaluated_samples.json"
-    print(f"Saving evaluated samples to {out_file}...")
+        # ========= Score samples ========
+        used_samples = score_samples(model, tokenizer, eval_samples, args.score_on, args.mode, few_shots)
+        used_count = len(used_samples)
+        print(f"Evaluated on {used_count} samples")
+        results = analyze_results(used_samples)
+        results["num_params"] = num_params
+
+        bootstrap_acc.append(results["accuracy"])
+        bootstrap_f1.append(results["f1"])
+
+        # ========= Save results ========
+        out_file = Path(out_path) / "evaluated_samples.json"
+        print(f"Saving evaluated samples to {out_file}...")
+        with open(out_file, "w") as f:
+            json.dump(used_samples, f, indent=4)
+
+        out_file = Path(out_path) / "evaluated_samples.csv"
+        print(f"Saving evaluated samples to {out_file}...")
+        pd.DataFrame(used_samples).to_csv(out_file, index=False)
+
+        out_file = Path(out_path) / "evaluation_summary.json"
+        print(f"Saving summary to {out_file}...")
+        with open(out_file, "w") as f:
+            json.dump(results, f, indent=4)
+
+        print(results)
+    
+    print("--- Bootstrap Analysis ---")
+    bootstrap_f1_res = analysis_bootstrap(bootstrap_f1)
+    bootstrap_acc_res = analysis_bootstrap(bootstrap_acc)
+    out_file = Path(out_path) / "../bootstrap_analysis.json"
+    print(f"Saving bootstrap analysis to {out_file}...")
     with open(out_file, "w") as f:
-        json.dump(used_samples, f, indent=4)
-
-    out_file = Path(out_path) / "evaluated_samples.csv"
-    print(f"Saving evaluated samples to {out_file}...")
-    pd.DataFrame(used_samples).to_csv(out_file, index=False)
-
-    out_file = Path(out_path) / "evaluation_summary.json"
-    print(f"Saving summary to {out_file}...")
-    with open(out_file, "w") as f:
-        json.dump(results, f, indent=4)
-
-    print(results)
+        json.dump({
+            "f1": bootstrap_f1_res,
+            "accuracy": bootstrap_acc_res
+        }, f, indent=4)
 
 
 if __name__ == "__main__":

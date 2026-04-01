@@ -144,7 +144,7 @@ do
 done
 
 # with extended training
-for ext_train_split in train test
+for ext_train_split in test train
 do
     echo
     echo
