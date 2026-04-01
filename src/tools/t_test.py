@@ -8,6 +8,7 @@ metric = sys.argv[1]
 proposed_fn = Path(sys.argv[2]) / "bootstrap_analysis.json"
 baseline_fn = Path(sys.argv[3]) / "bootstrap_analysis.json"
 output_path = Path(sys.argv[4])
+output_path.mkdir(parents=True, exist_ok=True)
 
 with open(proposed_fn, "r") as f:
     proposed_results = json.load(f)[metric]["values"]
