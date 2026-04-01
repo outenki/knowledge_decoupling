@@ -40,7 +40,6 @@ do
     uv run python "$SCRIPT_PATH"/t_test.py "accuracy" "$EVAL_PATH" "$SML_PATH" "$EVAL_PATH/t_test/sml"
 done
 
-echo "(w/o) arc_easy arc_challenge qasc commonsense_qa"
 for EVAL_DATA in \
     arc_easy \
     arc_challenge \
@@ -57,12 +56,11 @@ done
 
 # rag
 # sft_train
-echo "google_re_long_context google_re_short_context"
 for EVAL_DATA in \
     google_re_long_context \
     google_re_short_context
 do
-    echo "Running t-test on $EVAL_DATA (w/)"
+    echo "Running t-test on $EVAL_DATA"
     EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME-$EVAL_DATA/sft_train_ep3/evaluation/generation/0_shots/$EVAL_DATA"
     HF_PATH="$PROJECT_BASE_PATH/output/gpt2/$HF_MODEL-$EVAL_DATA/sft_train_ep3/evaluation/generation/0_shots/$EVAL_DATA"
     SML_PATH="$PROJECT_BASE_PATH/output/gpt2/$SML_MODEL-$EVAL_DATA/sft_train_ep3/evaluation/generation/0_shots/$EVAL_DATA"
