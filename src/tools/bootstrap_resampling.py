@@ -4,6 +4,7 @@ import sys
 import json
 import random
 from pathlib import Path
+import tqdm
 
 def convert_to_serializable(obj):
     if isinstance(obj, np.ndarray):
@@ -73,7 +74,7 @@ if  __name__ == "__main__":
 
     bootstrap_acc = []
     bootstrap_f1 = []
-    for i in range(bootstrap_num):
+    for i in tqdm.tqdm(range(bootstrap_num), desc="Bootstrapping", total=bootstrap_num):
         random.seed(i)
         results_list = random.choices(results_list, k=sample_num*bootstrap_num)
         f1_i = [r.get("f1", 0) for r in results_list]
