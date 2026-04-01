@@ -28,8 +28,7 @@ def analysis_bootstrap(results_list, confidence=0.95):
     # Confidence Interval
     ci_t = stats.t.interval(confidence, n-1, loc=mean, scale=se)
 
-    # 4. Bootstrap 置信区间 (更稳健，非参数方法)
-    # 模拟 10,000 次重采样
+    # 4. Bootstrap ci
     boot_means = [np.mean(np.random.choice(data, size=n, replace=True)) for _ in range(10000)]
     ci_bootstrap = np.percentile(boot_means, [(1-confidence)/2 * 100, (1+confidence)/2 * 100])
 
@@ -37,6 +36,7 @@ def analysis_bootstrap(results_list, confidence=0.95):
     _, p_value = stats.shapiro(data)
 
     analysis = {
+        "values": data.tolist(),
         "Count": n,
         "Mean": mean,
         "Median": median,
