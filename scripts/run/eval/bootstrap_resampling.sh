@@ -74,8 +74,7 @@ run_evaluate() {
     local save_dir="$m_path/evaluation/$score_on/0_shots/seed_$seed/$EVALUATE_DATA"
 
     echo ">>> [Evaluating] Model: $m_path"
-    # uv run python "$SCRIPT_PATH/evaluate.py" \
-    python "$SCRIPT_PATH/evaluate.py" \
+    uv run python "$SCRIPT_PATH/evaluate.py" \
         --model "$m_path" \
         --mode full \
         --tokenizer "$CONFIG_NAME" \
