@@ -12,6 +12,5 @@ with open(fn, "r") as f:
         data = data["accuracy"]
     mean = data["Mean"] * 100
     ci_b, ci_t = data["ci_bootstrap"]
-    ci_b = ci_b * 100
-    ci_t = ci_t * 100
-    print(f"{mean:.2f}({ci_b:.2f}-{ci_t:.2f})")
+    std = data["Std Dev"] * 100
+    print(f"{mean:.2f}" + "\interval{" + f"\pm{std:.2f}" "}")
