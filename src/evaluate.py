@@ -305,6 +305,17 @@ def analyze_results(samples) -> dict:
     avg_precision = precision / total if total > 0 else 0
     return {"correct": correct, "total": total, "accuracy": accuracy, "f1": avg_f1, "precision": avg_precision, "recall": avg_recall}
 
+
+def convert_to_serializable(obj):
+    if isinstance(obj, np.ndarray):
+        return obj.tolist()
+    if isinstance(obj, (np.float32, np.float64)):
+        return float(obj)
+    if isinstance(obj, (np.int32, np.int64)):
+        return int(obj)
+    return obj
+
+
 def analysis_bootstrap(results_list, confidence=0.95):
     data = np.array(results_list)
     n = len(data)
@@ -347,8 +358,8 @@ def analysis_bootstrap(results_list, confidence=0.95):
         else:
             print(f"{key}: {value:.4f}")
     print(f"--- ----------------------------- ---")
-            
-    return analysis
+
+    return {k: convert_to_serializable(v) for k, v in analysis.items()}
 
 
 def main():
