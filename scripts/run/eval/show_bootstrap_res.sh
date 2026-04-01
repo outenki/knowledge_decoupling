@@ -50,7 +50,7 @@ for EVAL_DATA in \
     google_re_short_context
 do
     echo "Bootstrap result on $EVAL_DATA"
-    EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME-$EVAL_DATA/sft_test_ep3/evaluation/generation/0_shots/$EVAL_DATA"
+    EVAL_PATH="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME-$EVAL_DATA/sft_train_ep3/evaluation/generation/0_shots/$EVAL_DATA"
     uv run python $SCRIPT_PATH/show_bootstrap_res.py $EVAL_PATH "f1"
 done
 
