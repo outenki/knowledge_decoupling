@@ -4,12 +4,12 @@ from pathlib import Path
 
 fn = Path(sys.argv[1])/"bootstrap_analysis.json"
 col_name = sys.argv[2]
-with open(sys.argv[1], "r") as f:
+with open(fn, "r") as f:
     data = json.load(f)
     if col_name == "f1":
         data = data["f1"] * 100
     else:
-        data = data["accuracy"] 
+        data = data["accuracy"]
     mean = data["Mean"]
     ci_b, ci_t = data["ci_bootstrap"]
     ci_b = ci_b * 100
