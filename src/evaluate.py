@@ -392,10 +392,10 @@ def main():
 
     # ======== Load evaluation data ========
     print(f"Loading evaluation data from {eval_data_path}...")
-    eval_samples = []
+    eval_samples_full = []
     with open(eval_data_path, "r") as f:
-        eval_samples = json.load(f)
-        assert isinstance(eval_samples, list)
+        eval_samples_full = json.load(f)
+        assert isinstance(eval_samples_full, list)
 
     bootstrap_acc = []
     bootstrap_f1 = []
@@ -406,9 +406,11 @@ def main():
         out_path_seed = out_path / f"seed_{seed}"
         out_path_seed.mkdir(parents=True, exist_ok=True)
 
-        if args.sample_num and len(eval_samples) > args.sample_num:
-            eval_samples = random.sample(eval_samples, args.sample_num)
-        total_count = len(eval_samples)
+        if args.sample_num and len(eval_samples_full) > args.sample_num:
+            eval_samples = random.sample(eval_samples_full, args.sample_num)
+        else:
+            eval_samples = eval_samples_full[:]
+        total_count = len(eval_samples_full)
         print(f"Total evaluation samples: {total_count} with seed {seed}")
 
         # ========= Load few shots examples ========

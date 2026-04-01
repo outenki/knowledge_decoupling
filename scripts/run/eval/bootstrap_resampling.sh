@@ -40,6 +40,15 @@ while [[ $# -gt 0 ]]; do
                 exit 1
             fi
             ;;
+        -n|--sample-number)
+            if [[ -n "$2" && "$2" != -* ]]; then
+                SAMPLE_NUM="$2"
+                shift 2
+            else
+                echo "err: -s | --score-on need a value"
+                exit 1
+            fi
+            ;;
         *)
         echo "未知参数: $1"
         exit 1
@@ -65,12 +74,12 @@ if [[ ! -d "$PROJECT_BASE_PATH" ]]; then
 fi
 
 SCRIPT_PATH=$PROJECT_BASE_PATH/src
-EPOCHS=3
 
 
 run_evaluate() {
     local m_path="$1"
     local score_on="$2"
+    local sample_num="$3"
     local save_dir="$m_path/evaluation/$score_on/0_shots/$EVALUATE_DATA"
 
     echo ">>> [Evaluating] Model: $m_path"
@@ -81,11 +90,11 @@ run_evaluate() {
         --test-data "$PROJECT_BASE_PATH/input/evaluate_data/unformated/$EVALUATE_DATA/test.json" \
         --score-on "$score_on" \
         --bootstrap 5 \
-        --sample-num 400 \
+        --sample-num $sample_num \
         -o "$save_dir"
 }
 
-run_evaluate "$MODEL_PATH" "$SCORE_ON"
+run_evaluate "$MODEL_PATH" "$SCORE_ON" "$SAMPLE_NUM"
 
 
 end_time=$(date +"%s")

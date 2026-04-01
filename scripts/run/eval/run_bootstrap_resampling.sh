@@ -5,22 +5,53 @@ SCRIPT_PATH="$PROJECT_BASE_PATH"/scripts/run/eval
 # linguistic
 # MODEL_NAME="random/rnd"
 MODEL_NAME=$1
-for EVAL_DATA in \
-    verb_agreement \
-    fce \
-    fce_3gram \
-    fce_5gram
-do
-    echo "Evaluating on $EVAL_DATA..."
-    model_path="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME"
-    sh "$SCRIPT_PATH/bootstrap_resampling.sh" \
-        --config gpt2 \
-        --score-on options \
-        --model-path "$model_path" \
-        --evaluate-data "$EVAL_DATA"
-done
+
+EVAL_DATA="verb_agreement"
+SAMPLE_NUM=400
+echo "Evaluating on $EVAL_DATA..."
+model_path="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME"
+sh "$SCRIPT_PATH/bootstrap_resampling.sh" \
+    --config gpt2 \
+    --score-on options \
+    --model-path "$model_path" \
+    --sample-num "$SAMPLE_NUM" \
+    --evaluate-data "$EVAL_DATA"
+
+EVAL_DATA="fce"
+SAMPLE_NUM=300
+echo "Evaluating on $EVAL_DATA..."
+model_path="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME"
+sh "$SCRIPT_PATH/bootstrap_resampling.sh" \
+    --config gpt2 \
+    --score-on options \
+    --model-path "$model_path" \
+    --sample-num "$SAMPLE_NUM" \
+    --evaluate-data "$EVAL_DATA"
+
+EVAL_DATA="fce_3gram"
+SAMPLE_NUM=200
+echo "Evaluating on $EVAL_DATA..."
+model_path="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME"
+sh "$SCRIPT_PATH/bootstrap_resampling.sh" \
+    --config gpt2 \
+    --score-on options \
+    --model-path "$model_path" \
+    --sample-num "$SAMPLE_NUM" \
+    --evaluate-data "$EVAL_DATA"
+
+EVAL_DATA="fce_5"
+SAMPLE_NUM=100
+echo "Evaluating on $EVAL_DATA..."
+model_path="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME"
+sh "$SCRIPT_PATH/bootstrap_resampling.sh" \
+    --config gpt2 \
+    --score-on options \
+    --model-path "$model_path" \
+    --sample-num "$SAMPLE_NUM" \
+    --evaluate-data "$EVAL_DATA"
 
 
+SAMPLE_NUM=400
 # qa
 # ext_test-sft_test
 for EVAL_DATA in \
@@ -36,6 +67,7 @@ do
         --config gpt2 \
         --score-on generation \
         --model-path "$model_path" \
+        --sample-num "$SAMPLE_NUM" \
         --evaluate-data "$EVAL_DATA"
 done
 
@@ -45,12 +77,13 @@ for EVAL_DATA in \
     google_re_long \
     google_re_short
 do
-    MODEL_NAME_SFT=$MODEL_NAME-$EVAL_DATA/sft_test_ep3
+    MODEL_NAME_SFT=$MODEL_NAME-$EVAL_DATA/sft_train_ep3
     echo "Evaluating on $EVAL_DATA..."
     model_path="$PROJECT_BASE_PATH/output/gpt2/$MODEL_NAME_SFT"
     sh "$SCRIPT_PATH/bootstrap_resampling.sh" \
         --config gpt2 \
         --score-on generation \
         --model-path "$model_path" \
+        --sample-num "$SAMPLE_NUM" \
         --evaluate-data "$EVAL_DATA"
 done
