@@ -3,13 +3,13 @@ import json
 import re
 from tqdm import tqdm
 from pathlib import Path
-from config import GPT_API_KEY
-from openai import OpenAI
+# from config import GPT_API_KEY
+# from openai import OpenAI
 import random
 
 from datasets import load_dataset, Dataset
 
-client = OpenAI(api_key=GPT_API_KEY)
+# client = OpenAI(api_key=GPT_API_KEY)
 
 
 def print_args(args: dict):
