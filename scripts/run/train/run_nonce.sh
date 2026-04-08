@@ -1,6 +1,6 @@
 #!/bin/bash
 PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-$HOME/projects/knowledge_decoupling}"
-SCRIPT_PATH="$PROJECT_BASE_PATH"/scripts/run
+SCRIPT_PATH="$PROJECT_BASE_PATH"/scripts/run/train
 
 EVAL_DATA_NAME=$1
 CONFIG_NAME="gpt2"

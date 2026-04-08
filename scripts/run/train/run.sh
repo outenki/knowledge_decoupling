@@ -127,9 +127,9 @@ echo
 echo ">>>>>> model config: $CONFIG_NAME"
 echo ">>>>>> model path: $MODEL_PATH"
 echo ">>> evaluating "
-run_evaluate "$MODEL_PATH"
+# run_evaluate "$MODEL_PATH"
 
-for sft_split in train test
+for sft_split in test train
 do
     echo
     echo
@@ -157,7 +157,7 @@ do
     echo ">>> evaluating "
     run_evaluate "$EXT_MODEL_PATH"
 
-    for sft_split in train test
+    for sft_split in test train
     do
         echo
         echo

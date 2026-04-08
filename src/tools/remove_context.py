@@ -28,7 +28,7 @@ with open(input_fn, "r") as f:
 
 prepared_data = []
 for item in tqdm.tqdm(data, desc="Processing data"):
-    item_prompt = item["prompt"].lstrip(item["ori_context"])
+    item_prompt = item["ori_question"]
     item["prompt"] = item_prompt
     item["text"] = item_prompt + " " + item["answer"]
     prepared_data.append(item)

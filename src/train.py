@@ -4,7 +4,7 @@ import random
 import json
 from dataclasses import asdict, is_dataclass
 
-
+import wandb
 import torch
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import LambdaLR
@@ -21,6 +21,12 @@ from lib.utils import print_args
 
 
 DECAY_RATE = 0.9  # for WSD
+WANDB_RUN = wandb.init(
+    # Set the wandb entity where your project will be logged (generally your team name).
+    entity="tianqi-wang-a2-tohoku-university",
+    # Set the wandb project where this run will be logged.
+    project="Knowledge Decoupling",
+)
 
 
 def training_args_to_dict(args) -> dict:
@@ -53,12 +59,14 @@ class LossLoggerCallback(TrainerCallback):
         if "loss" in logs:
             self.train_log.write(f"{state.global_step}\t{logs['loss']}\n")
             self.train_log.flush()
+            WANDB_RUN.log({"train_loss": logs["loss"]}, step=state.global_step)
 
     def on_evaluate(self, args, state, control, metrics=None, **kwargs):
         if metrics and "eval_loss" in metrics:
             # 评估日志使用 state.global_step，确保与训练步骤对齐
             self.eval_log.write(f"{state.global_step}\t{metrics['eval_loss']}\n")
             self.eval_log.flush()
+            WANDB_RUN.log({"eval_loss": metrics["eval_loss"]}, step=state.global_step)  
 
     def on_train_end(self, args, state, control, **kwargs):
         self.train_log.close()
@@ -109,7 +117,10 @@ def read_args():
 
 
 def model_config(model_name: str):
-    return AutoConfig.from_pretrained(model_name)
+    config = AutoConfig.from_pretrained(model_name)
+    if hasattr(config, "loss_type"):
+        config.loss_type = "ForCausalLMLoss"
+    return config
 
 
 def load_model_from_config(config_name: str) -> AutoModelForCausalLM:
@@ -170,6 +181,7 @@ def main():
 
     args = read_args()
     print_args(vars(args))
+    WANDB_RUN.name = args.out_path.split("output/", maxsplit=1)[1]
     Path(args.out_path).mkdir(parents=True, exist_ok=True)
 
     # === save arguments as json
@@ -245,7 +257,7 @@ def main():
     elif "validation" in data_dict:
         eval_dataset = data_dict["validation"]
     else:
-        data_dict = train_dataset .train_test_split(test_size=0.01, shuffle=True, seed=42)
+        data_dict = train_dataset .train_test_split(test_size=0.05, shuffle=True, seed=42)
         train_dataset = data_dict["train"]
         eval_dataset = data_dict["test"]
 
@@ -267,17 +279,25 @@ def main():
 
     effective_batch_size = per_device_train_batch_size * gradient_accumulation_steps * world_size
 
-    total_steps = train_dataset_size // effective_batch_size
+    # 计算总步数
+    total_steps = (train_dataset_size // effective_batch_size) * args.epochs
 
+    # 计算 Warmup Steps
+    warmup_steps = total_steps // 20 
+
+    # 计算保存和评估间隔
     target_total_checkpoints = args.save_checkpoints
-    save_steps = max(1, total_steps // target_total_checkpoints)
+    save_steps = max(1, total_steps // (target_total_checkpoints * args.epochs))
 
     print(f">>> Total training steps: {total_steps}")
     print(f">>> Targeting {target_total_checkpoints} checkpoints.")
     print(f">>> Computed save/eval steps: {save_steps}")
 
+    optimizer = AdamW(model.parameters(), lr=5e-4)
+
     training_args = TrainingArguments(
         output_dir=args.out_path,
+        warmup_steps=warmup_steps,
         save_safetensors=True,
         dataloader_pin_memory=True,
         dataloader_num_workers=4,
@@ -311,10 +331,9 @@ def main():
         callbacks=[LossLoggerCallback(f"{args.out_path}/logs")],
     )
 
+
+
     # WSD settings
-    total_steps = len(trainer.get_train_dataloader()) * training_args.num_train_epochs
-    warmup_steps = training_args.warmup_steps or (total_steps // 20)
-    optimizer = AdamW(model.parameters(), lr=5e-4)
 
     def ws_decay(step):
         # WSD
@@ -333,6 +352,14 @@ def main():
     scheduler_ws = LambdaLR(optimizer, lr_lambda=ws_decay)
     trainer.optimizer = optimizer
     trainer.lr_scheduler = scheduler_ws
+    WANDB_RUN.config.update(training_args_to_dict(trainer.args))
+    WANDB_RUN.config.update({
+        "total_steps": total_steps,
+        "warmup_steps": warmup_steps,
+        "effective_batch_size": effective_batch_size,
+        "save_steps": save_steps,
+        "batch_size": per_device_train_batch_size,
+    })
 
     with open(Path(args.out_path) / "trainer.json", "w") as f:
         json.dump(training_args_to_dict(trainer.args), f, indent=4)
@@ -349,6 +376,7 @@ def main():
     trainer.train(resume_from_checkpoint=checkpoint)
     print(f">>> Save model to: {args.out_path}")
     model.save_pretrained(Path(args.out_path))
+    WANDB_RUN.finish()
 
 
 if __name__ == "__main__":
