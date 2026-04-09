@@ -1,8 +1,10 @@
 import argparse
+import math
 from pathlib import Path
 import random
 import json
 from dataclasses import asdict, is_dataclass
+from datetime import datetime
 
 import wandb
 import torch
@@ -21,12 +23,6 @@ from lib.utils import print_args
 
 
 DECAY_RATE = 0.9  # for WSD
-WANDB_RUN = wandb.init(
-    # Set the wandb entity where your project will be logged (generally your team name).
-    entity="tianqi-wang-a2-tohoku-university",
-    # Set the wandb project where this run will be logged.
-    project="Knowledge Decoupling",
-)
 
 
 def training_args_to_dict(args) -> dict:
@@ -59,14 +55,12 @@ class LossLoggerCallback(TrainerCallback):
         if "loss" in logs:
             self.train_log.write(f"{state.global_step}\t{logs['loss']}\n")
             self.train_log.flush()
-            WANDB_RUN.log({"train_loss": logs["loss"]}, step=state.global_step)
 
     def on_evaluate(self, args, state, control, metrics=None, **kwargs):
         if metrics and "eval_loss" in metrics:
             # 评估日志使用 state.global_step，确保与训练步骤对齐
             self.eval_log.write(f"{state.global_step}\t{metrics['eval_loss']}\n")
             self.eval_log.flush()
-            WANDB_RUN.log({"eval_loss": metrics["eval_loss"]}, step=state.global_step)  
 
     def on_train_end(self, args, state, control, **kwargs):
         self.train_log.close()
@@ -124,7 +118,30 @@ def model_config(model_name: str):
 
 
 def load_model_from_config(config_name: str) -> AutoModelForCausalLM:
-    return AutoModelForCausalLM.from_config(model_config(config_name))
+    if args.speedup:
+        # print("- speed up with xformers")
+        # torch.backends.cuda.enable_flash_sdp(True)
+        # torch.backends.cuda.enable_mem_efficient_sdp(True)
+        # torch.backends.cuda.enable_math_sdp(True)
+
+        # print("- speed up with flash attention 3")
+
+        # speed up with torch 2.0 compile
+        # model = torch.compile(model)
+        print(">>> Applying speedup options...")
+        print("- speed up with flash attention 3")
+        return AutoModelForCausalLM.from_pretrained(
+            config_name,
+            torch_dtype=torch.bfloat16,
+            trust_remote_code=True,
+            attn_implementation="flash_attention_3"
+        )
+    else:
+        return AutoModelForCausalLM.from_pretrained(
+            config_name,
+            torch_dtype=torch.bfloat16,
+            trust_remote_code=True
+        )
 
 
 def random_sample(dataset, number: int) -> Dataset:
@@ -181,6 +198,14 @@ def main():
 
     args = read_args()
     print_args(vars(args))
+
+    WANDB_RUN = wandb.init(
+        # Set the wandb entity where your project will be logged (generally your team name).
+        entity="tianqi-wang-a2-tohoku-university",
+        group=args.config_name + datetime.now().strftime("-%Y%m%d"),
+        # Set the wandb project where this run will be logged.
+        project="Knowledge Decoupling",
+    )
     WANDB_RUN.name = args.out_path.split("output/", maxsplit=1)[1]
     Path(args.out_path).mkdir(parents=True, exist_ok=True)
 
@@ -194,17 +219,17 @@ def main():
     # === Load model
     model = None
     print(">>> Loading model from config:", args.config_name)
-    model = load_model_from_config(args.config_name)
     if args.init_model:
         print(">>> Loading init model from:", args.init_model)
         model = AutoModelForCausalLM.from_pretrained(
             args.init_model,
             quantization_config=None,
-            device_map="auto",
         )
-
-    assert model is not None
-    model.save_pretrained(Path(args.out_path) / "init_model")
+    else:
+        model = load_model_from_config(
+            args.config_name,
+            args.speedup
+        )
 
     if args.custom_pad:
         print(">>> Adding custom PAD token to the tokenizer and model.")
@@ -213,19 +238,8 @@ def main():
         tokenizer.add_special_tokens({'pad_token': '[PAD]'})
         model.resize_token_embeddings(len(tokenizer))
 
-    if args.speedup:
-        print(">>> Applying speedup options...")
-        # print("- speed up with xformers")
-        # torch.backends.cuda.enable_flash_sdp(True)
-        # torch.backends.cuda.enable_mem_efficient_sdp(True)
-        # torch.backends.cuda.enable_math_sdp(True)
-
-        # print("- speed up with flash attention 3")
-        model.config.attn_implementation = "flash_attention_3"
-
-        # speed up with torch 2.0 compile
-        # model = torch.compile(model)
-
+    assert model is not None
+    model.save_pretrained(Path(args.out_path) / "init_model")
 
     # === load data
     data_list = []
@@ -273,14 +287,15 @@ def main():
     Path(log_path).mkdir(parents=True, exist_ok=True)
 
     train_dataset_size = len(train_dataset)
-    per_device_train_batch_size = 16
+    per_device_train_batch_size = 4
     gradient_accumulation_steps = 16
     world_size = max(1, torch.cuda.device_count())
 
     effective_batch_size = per_device_train_batch_size * gradient_accumulation_steps * world_size
 
     # 计算总步数
-    total_steps = (train_dataset_size // effective_batch_size) * args.epochs
+    steps_per_epoch = train_dataset_size // effective_batch_size
+    total_steps = steps_per_epoch * args.epochs
 
     # 计算 Warmup Steps
     warmup_steps = total_steps // 20 
@@ -298,7 +313,9 @@ def main():
     training_args = TrainingArguments(
         output_dir=args.out_path,
         warmup_steps=warmup_steps,
-        save_safetensors=True,
+        # save_safetensors=True,
+        bf16=True,
+        fp16=False,  # use bf16 instead of fp16
         dataloader_pin_memory=True,
         dataloader_num_workers=4,
         per_device_train_batch_size=per_device_train_batch_size,
@@ -312,8 +329,8 @@ def main():
         logging_strategy="steps",
         save_strategy="steps",
         eval_strategy="steps",
-        report_to="none",
-        fp16=torch.cuda.is_available(),
+        report_to="wandb",
+        # fp16=torch.cuda.is_available(),
         save_total_limit=2,
         # speed up with fused AdamW optimizer
         optim="adamw_torch_fused",
@@ -321,37 +338,26 @@ def main():
 
     with open(Path(args.out_path) / "training_args.json", "w") as f:
         json.dump(training_args.to_dict(), f, indent=4)
-
     print(">>> eval_dataset:", eval_dataset)
+
+    # WSD settings
+    def ws_decay(step):
+        if step < warmup_steps:
+            return step / warmup_steps
+        progress = (step - warmup_steps) / (total_steps - warmup_steps)
+        cosine = 0.5 * (1 + math.cos(math.pi * progress))
+        wsd = DECAY_RATE ** ((step - warmup_steps) / steps_per_epoch)
+        return cosine * wsd
+    scheduler_ws = LambdaLR(optimizer, lr_lambda=ws_decay)
     trainer = Trainer(
         model=model,
         args=training_args,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
         callbacks=[LossLoggerCallback(f"{args.out_path}/logs")],
+        optimizers=(optimizer, scheduler_ws)
     )
 
-
-
-    # WSD settings
-
-    def ws_decay(step):
-        # WSD
-        if step < warmup_steps:
-            # linear Warmup
-            return step / warmup_steps
-
-        # Cosine as the baseline
-        cosine_ratio = max(0.0, 0.5 * (1.0 + torch.cos(torch.tensor(3.1415926535 * (step - warmup_steps) / (total_steps - warmup_steps)))))
-
-        epoch_step = len(trainer.get_train_dataloader())
-        wsd_factor = DECAY_RATE ** ((step - warmup_steps) / epoch_step)
-
-        return cosine_ratio * wsd_factor
-
-    scheduler_ws = LambdaLR(optimizer, lr_lambda=ws_decay)
-    trainer.optimizer = optimizer
-    trainer.lr_scheduler = scheduler_ws
     WANDB_RUN.config.update(training_args_to_dict(trainer.args))
     WANDB_RUN.config.update({
         "total_steps": total_steps,

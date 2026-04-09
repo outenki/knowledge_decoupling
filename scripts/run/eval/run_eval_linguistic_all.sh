@@ -17,7 +17,7 @@ do
         nonce/smolLM2_nonce_mn3_bs1024_dl0_ep1
     do
         model_path="$PROJECT_BASE_PATH/output/gpt2/$model"
-        sh "$SCRIPT_PATH/run_eval_linguistic.sh" \
+        sh "$SCRIPT_PATH/eval_linguistic.sh" \
             --config gpt2 \
             --model-path "$model_path" \
             --evaluate-data "$eval_data"

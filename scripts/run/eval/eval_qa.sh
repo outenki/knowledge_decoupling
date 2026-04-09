@@ -2,6 +2,7 @@
 start_time=$(date +"%s")
 echo "start time: $(date -d @"$start_time" +"%D %T")"
 
+module load cuda/13.2.0
 while [[ $# -gt 0 ]]; do
     case $1 in
         -c|--config)
@@ -92,7 +93,7 @@ echo ">>>>>> evaluation data: $EVALUATE_DATA"
 echo
 echo
 echo ">>> evaluating "
-# run_evaluate "$MODEL_PATH" "$SCORE_ON"
+run_evaluate "$MODEL_PATH" "$SCORE_ON"
 
 for sft_split in train test
 do
@@ -104,23 +105,23 @@ do
 done
 
 # with extended training
-# for ext_train_split in train test
-# do
-#     echo
-#     echo
-#     EXT_MODEL_PATH="$MODEL_PATH-$EVALUATE_DATA/ext_${ext_train_split}_ep${EPOCHS}"
-#     echo ">>> evaluating "
-#     run_evaluate "$EXT_MODEL_PATH" "$SCORE_ON"
+for ext_train_split in train test
+do
+    echo
+    echo
+    EXT_MODEL_PATH="$MODEL_PATH-$EVALUATE_DATA/ext_${ext_train_split}_ep${EPOCHS}"
+    echo ">>> evaluating "
+    run_evaluate "$EXT_MODEL_PATH" "$SCORE_ON"
 
-#     for sft_split in train test
-#     do
-#         echo
-#         echo
-#         EXT_SFT_MODEL_PATH="$EXT_MODEL_PATH-sft_${sft_split}_ep${EPOCHS}"
-#         echo ">>> evaluating "
-#         run_evaluate "$EXT_SFT_MODEL_PATH" "$SCORE_ON"
-#     done
-# done
+    for sft_split in train test
+    do
+        echo
+        echo
+        EXT_SFT_MODEL_PATH="$EXT_MODEL_PATH-sft_${sft_split}_ep${EPOCHS}"
+        echo ">>> evaluating "
+        run_evaluate "$EXT_SFT_MODEL_PATH" "$SCORE_ON"
+    done
+done
 
 
 end_time=$(date +"%s")

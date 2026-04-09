@@ -4,7 +4,7 @@ import argparse
 
 from pathlib import Path
 from datasets import DatasetDict, Dataset
-from transformers import GPT2Tokenizer
+from transformers import AutoTokenizer
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -14,7 +14,7 @@ parser.add_argument(
 parser.add_argument('--output-path', '-output', dest='output_path', type=str,)
 parser.add_argument(
     '--tokenizer', '-tk', dest='tokenizer', type=str,
-    choices={"gpt2", "Qwen/Qwen3-0.6B-Base", "HuggingFaceTB/SmolLM2-135M", "HuggingFaceTB/SmolLM2-1.7B"}
+    choices={"gpt2", "Qwen/Qwen3.5-0.8B-Base", "HuggingFaceTB/SmolLM2-135M", "HuggingFaceTB/SmolLM2-1.7B"}
 )
 parser.add_argument(
     '--skip-answer', '-sa', dest='skip_answer', action='store_true',
@@ -28,7 +28,7 @@ args = parser.parse_args()
 
 
 print(f"Using tokenizer: {args.tokenizer}")
-TOKENIZER = GPT2Tokenizer.from_pretrained(args.tokenizer)
+TOKENIZER = AutoTokenizer.from_pretrained(args.tokenizer)
 TOKENIZER.padding_side = "left"
 if TOKENIZER.pad_token_id is None:
     TOKENIZER.pad_token = TOKENIZER.eos_token

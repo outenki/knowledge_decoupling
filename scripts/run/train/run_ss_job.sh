@@ -8,7 +8,7 @@
 
 
 source $HOME/.zshrc
-cd /lustre1/work/c30897/wtq/projects/knowledge_decoupling/scripts/run/train
+cd $PROJECT_BASE_PATH/scripts/run/train
 
 mkdir -p log
 

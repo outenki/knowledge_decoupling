@@ -1,10 +1,10 @@
 #!/bin/bash
-#PJM -L "rscgrp=c-batch"
+#PJM -L "rscgrp=b-batch"
 #PJM -L "elapse=24:00:00"
 #PJM -L "gpu=4"
-#PJM -e logs/run_hf.out
-#PJM -o logs/run_hf.err
-#PJM -N "run_hf"
+#PJM -e logs/run_hf_1.out
+#PJM -o logs/run_hf_1.err
+#PJM -N "run_hf_1"
 
 
 source $HOME/.zshrc
@@ -13,6 +13,3 @@ cd $PROJECT_BASE_PATH/scripts/run/train
 mkdir -p logs
 
 sh run_hf.sh commonsense_qa
-sh run_hf.sh arc_easy
-sh run_hf.sh arc_challenge
-sh run_hf.sh qasc

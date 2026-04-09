@@ -7,7 +7,7 @@
 #PBS -o log/sft_gpt2_sml.log
 
 source $HOME/.zshrc
-cd /lustre1/work/c30897/wtq/projects/knowledge_decoupling/scripts/train/sft/gpt2
+cd $PROJECT_BASE_PATH/scripts/train/sft/gpt2
 
 mkdir -p log
 

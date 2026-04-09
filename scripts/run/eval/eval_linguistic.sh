@@ -2,6 +2,7 @@
 start_time=$(date +"%s")
 echo "start time: $(date -d @"$start_time" +"%D %T")"
 
+module load cuda/13.2.0
 while [[ $# -gt 0 ]]; do
     case $1 in
         -c|--config)
@@ -31,15 +32,6 @@ while [[ $# -gt 0 ]]; do
                 exit 1
             fi
             ;;
-        -s|--score-on)
-            if [[ -n "$2" && "$2" != -* ]]; then
-                SCORE_ON="$2"
-                shift 2
-            else
-                echo "err: -s | --score-on need a value"
-                exit 1
-            fi
-            ;;
         *)
         echo "未知参数: $1"
         exit 1
@@ -51,7 +43,6 @@ missing_args=()
 [[ -z "$CONFIG_NAME" ]] && missing_args+=("--config")
 [[ -z "$MODEL_PATH" ]] && missing_args+=("--model-path")
 [[ -z "$EVALUATE_DATA" ]] && missing_args+=("--evaluate-data")
-[[ -z "$SCORE_ON" ]] && missing_args+=("--score-on")
 
 if [ ${#missing_args[@]} -ne 0 ]; then
     echo "Error: Missing required arguments: ${missing_args[*]}"
@@ -65,7 +56,6 @@ if [[ ! -d "$PROJECT_BASE_PATH" ]]; then
 fi
 
 SCRIPT_PATH=$PROJECT_BASE_PATH/src
-EPOCHS=3
 
 
 run_evaluate() {
@@ -78,7 +68,7 @@ run_evaluate() {
         --model "$m_path" \
         --mode full \
         --tokenizer "$CONFIG_NAME" \
-        --test-data "$PROJECT_BASE_PATH/input/evaluate_data/unformated/$EVALUATE_DATA/test.json" \
+        --test-data "$PROJECT_BASE_PATH/input/evaluate_data/linguistic/$EVALUATE_DATA/test.json" \
         --score-on "$score_on" \
         --sample-num 1000 \
         -o "$save_dir"
@@ -92,35 +82,7 @@ echo ">>>>>> evaluation data: $EVALUATE_DATA"
 echo
 echo
 echo ">>> evaluating "
-# run_evaluate "$MODEL_PATH" "$SCORE_ON"
-
-for sft_split in train test
-do
-    echo
-    echo
-    SFT_MODEL_PATH="$MODEL_PATH-$EVALUATE_DATA/sft_${sft_split}_ep${EPOCHS}"
-    echo ">>> evaluating "
-    run_evaluate "$SFT_MODEL_PATH" "$SCORE_ON"
-done
-
-# with extended training
-# for ext_train_split in train test
-# do
-#     echo
-#     echo
-#     EXT_MODEL_PATH="$MODEL_PATH-$EVALUATE_DATA/ext_${ext_train_split}_ep${EPOCHS}"
-#     echo ">>> evaluating "
-#     run_evaluate "$EXT_MODEL_PATH" "$SCORE_ON"
-
-#     for sft_split in train test
-#     do
-#         echo
-#         echo
-#         EXT_SFT_MODEL_PATH="$EXT_MODEL_PATH-sft_${sft_split}_ep${EPOCHS}"
-#         echo ">>> evaluating "
-#         run_evaluate "$EXT_SFT_MODEL_PATH" "$SCORE_ON"
-#     done
-# done
+run_evaluate "$MODEL_PATH" options
 
 
 end_time=$(date +"%s")

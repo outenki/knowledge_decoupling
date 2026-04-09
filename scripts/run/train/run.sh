@@ -2,6 +2,7 @@
 start_time=$(date +"%s")
 echo "start time: $(date -d @"$start_time" +"%D %T")"
 
+module load cuda/13.2.0
 while [[ $# -gt 0 ]]; do
     case $1 in
         -c|--config)
@@ -122,12 +123,10 @@ echo ">>>>>> SFT data: $SFT_DATA"
 echo ">>>>>> evaluation data: $EVALUATE_DATA"
 
 # w/o extended training
-echo
-echo
 echo ">>>>>> model config: $CONFIG_NAME"
 echo ">>>>>> model path: $MODEL_PATH"
 echo ">>> evaluating "
-# run_evaluate "$MODEL_PATH"
+run_evaluate "$MODEL_PATH"
 
 for sft_split in test train
 do

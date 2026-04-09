@@ -16,3 +16,4 @@ src/tools/config.py
 scripts/run/log/
 scripts/train/sft/gpt2/log/
 scripts/run/train/wandb/
+scripts/run/train/.d*
