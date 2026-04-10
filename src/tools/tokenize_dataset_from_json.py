@@ -42,6 +42,7 @@ PAD_ID = TOKENIZER.pad_token_id
 
 def preprocess(example):
     prompt = example["prompt"]
+    prompt = prompt.strip() + " "
     response = example["answer"]
 
     p_out = TOKENIZER(prompt, add_special_tokens=False)

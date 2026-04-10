@@ -93,7 +93,7 @@ def score_continuations_batch(model, tokenizer, prompt, continuations):
 
     # 2. 拼接文本并进行 Batch Tokenize
     # 注意：某些模型如 Llama 在拼接时需要注意空格，这里统一处理
-    full_texts = [prompt + " " + c for c in continuations]
+    full_texts = [prompt + c for c in continuations]
 
     # 必须开启 Padding，且由于是 Causal LM，建议用 Left Padding
     inputs = tokenizer(
@@ -123,7 +123,7 @@ def score_continuations_batch(model, tokenizer, prompt, continuations):
     for i in range(len(continuations)):
         # 找到当前这一行非 padding 的起始位置
         non_pad_indices = attention_mask[i].nonzero(as_tuple=True)[0]
-        actual_start = non_pad_indices[0] + prompt_len - 1
+        actual_start = non_pad_indices[0] + prompt_len - 2
         # mask 掉 prompt 部分和 padding 部分
         loss_mask[i, actual_start:] = True
 
@@ -136,10 +136,13 @@ def score_continuations_batch(model, tokenizer, prompt, continuations):
     log_probs = []
     for i in range(len(continuations)):
         row_loss = token_losses[i][loss_mask[i]]
-        if row_loss.numel() > 0:
-            log_probs.append(-row_loss.mean().item())
-        else:
-            log_probs.append(-100.0)  # 容错处理
+        log_probs.append(-row_loss.mean().item())
+        if row_loss.numel() == 0:
+            print("⚠️ EMPTY ROW")
+            print("continuation:", continuations[i])
+            print("mask sum:", loss_mask[i].sum().item())
+            print("input_ids len:", input_ids.shape[1])
+            print("actual_start:", actual_start)
 
     return log_probs
 
@@ -240,7 +243,7 @@ def score_on_generation(model, tokenizer, prompt, answers, mode) -> dict:
     return res
 
 
-def score_samples(model, tokenizer, samples, score_on, generation_mode, few_shots="") -> list[dict]:
+def score_samples(model, tokenizer, samples, score_on, generation_mode, few_shots="", sep_token="") -> list[dict]:
     # Score a list of samples with prompts and two options.
     filtered_samples = []
     # 获取模型允许的最大长度
@@ -250,6 +253,7 @@ def score_samples(model, tokenizer, samples, score_on, generation_mode, few_shot
 
     for sample in tqdm.tqdm(samples, total=len(samples), desc="scoring samples"):
         prompt = few_shots + "\n" + sample["prompt"]
+        prompt = prompt.strip() + " "
         prompt_ids = tokenizer.encode(prompt, add_special_tokens=False)
         if len(prompt_ids) > safe_threshold:
             print(f" SKip: Prompt is too long: {len(prompt_ids)} > {safe_threshold}")
