@@ -1,5 +1,0 @@
-sh run_bootstrap_resampling.sh random/rnd
-sh run_bootstrap_resampling.sh HuggingFace/hf
-sh run_bootstrap_resampling.sh smolLM2/smolLM2_bs1024_dl0_ep1
-sh run_bootstrap_resampling.sh ss/smolLM2_135M_sents_shuffled_bs1024_ep1
-sh run_bootstrap_resampling.sh nonce/smolLM2_nonce_mn3_bs1024_dl0_ep1
