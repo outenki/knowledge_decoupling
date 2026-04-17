@@ -12,7 +12,7 @@ SFT_DATA="$PROJECT_BASE_PATH"/input/tokenized/$CONFIG_NAME/sft/"$EVAL_DATA_NAME"
 
 
 echo ">>> Running tasks on $CONFIG_NAME-hf"
-uv run bash "$SCRIPT_PATH"/run.sh \
+uv run bash "$SCRIPT_PATH"/run_ep1.sh \
     --config "$CONFIG_NAME" \
     --model-path "$MODEL_PATH" \
     --ext-train-data "$EXT_TRAIN_DATA" \

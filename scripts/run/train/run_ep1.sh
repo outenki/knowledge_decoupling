@@ -76,7 +76,7 @@ if [[ ! -d "$PROJECT_BASE_PATH" ]]; then
 fi
 
 SCRIPT_PATH=$PROJECT_BASE_PATH/src
-EPOCHS=3
+EPOCHS=1
 
 
 run_evaluate() {

@@ -2,8 +2,8 @@
 #PJM -L "rscgrp=c-batch"
 #PJM -L "elapse=24:00:00"
 #PJM -L "gpu=4"
-#PJM -e logs/run_hf.out
-#PJM -o logs/run_hf.err
+#PJM -e logs/run_hf.err
+#PJM -o logs/run_hf.out
 #PJM -N "run_hf"
 
 

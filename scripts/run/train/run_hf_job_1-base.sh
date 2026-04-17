@@ -12,4 +12,4 @@ cd $PROJECT_BASE_PATH/scripts/run/train
 
 mkdir -p logs
 
-sh run_hf_ep1.sh commonsense_qa
+sh run_hf_ep1-base.sh commonsense_qa

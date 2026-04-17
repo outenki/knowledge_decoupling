@@ -17,3 +17,4 @@ scripts/run/log/
 scripts/train/sft/gpt2/log/
 scripts/run/train/wandb/
 scripts/run/train/.d*
+scripts/run/mcq_linear_ft/wandb

@@ -32,12 +32,12 @@ while [[ $# -gt 0 ]]; do
                 exit 1
             fi
             ;;
-        -s|--sft-data)
+        -s|--ft-data)
             if [[ -n "$2" && "$2" != -* ]]; then
-                SFT_DATA="$2"
+                FT_DATA="$2"
                 shift 2
             else
-                echo "err: -s | --sft-data need a value"
+                echo "err: -s | --ft-data need a value"
                 exit 1
             fi
             ;;
@@ -61,7 +61,7 @@ missing_args=()
 [[ -z "$CONFIG_NAME" ]] && missing_args+=("--model")
 [[ -z "$MODEL_PATH" ]] && missing_args+=("--model-path")
 [[ -z "$EVALUATE_DATA" ]] && missing_args+=("--evaluate-data")
-[[ -z "$SFT_DATA" ]] && missing_args+=("--sft-data")
+[[ -z "$FT_DATA" ]] && missing_args+=("--sft-data")
 [[ -z "$EXT_TRAIN_DATA" ]] && missing_args+=("--ext-train-data")
 
 if [ ${#missing_args[@]} -ne 0 ]; then
@@ -108,7 +108,7 @@ run_train() {
     local out_model="$3"
 
     echo ">>> [Training] Input: $in_model -> Output: $out_model"
-    uv run python "$SCRIPT_PATH/train.py" \
+    uv run python "$SCRIPT_PATH/mcq_finetune.py" \
         --speedup \
         -pad \
         -cn "$CONFIG_NAME" \
@@ -127,7 +127,7 @@ run_train() {
 echo ">>>>>> model config: $CONFIG_NAME"
 echo ">>>>>> model path: $MODEL_PATH"
 echo ">>>>>> extended training data: $EXT_TRAIN_DATA"
-echo ">>>>>> SFT data: $SFT_DATA"
+echo ">>>>>> SFT data: $FT_DATA"
 echo ">>>>>> evaluation data: $EVALUATE_DATA"
 
 # w/o extended training
@@ -136,49 +136,19 @@ echo ">>>>>> model path: $MODEL_PATH"
 echo ">>> evaluating "
 run_evaluate "$MODEL_PATH"
 
-for sft_split in test train
+for ft_split in test train
 do
     echo
     echo
     echo ">>>>>> model config: $CONFIG_NAME"
     echo ">>>>>> model path: $MODEL_PATH"
-    echo ">>>>>> SFT data: $SFT_DATA/$sft_split"
+    echo ">>>>>> SFT data: $FT_DATA/$ft_split"
     echo ">>> SFT training"
-    SFT_MODEL_PATH="$MODEL_PATH-$EVALUATE_DATA/sft_${sft_split}_ep${EPOCHS}"
-    run_train "$MODEL_PATH" "$SFT_DATA/$sft_split" "$SFT_MODEL_PATH"
+    SFT_MODEL_PATH="$MODEL_PATH-$EVALUATE_DATA/ft_${ft_split}_ep${EPOCHS}"
+    run_train "$MODEL_PATH" "$FT_DATA/$ft_split" "$SFT_MODEL_PATH"
     echo ">>> evaluating "
     run_evaluate "$SFT_MODEL_PATH"
 done
-
-# with extended training
-for ext_train_split in test train
-do
-    echo
-    echo
-    echo ">>>>>> model config: $CONFIG_NAME"
-    echo ">>>>>> model path: $MODEL_PATH"
-    echo ">>>>>> extended training data: $EXT_TRAIN_DATA/$ext_train_split"
-    echo ">>> extended training"
-    EXT_MODEL_PATH="$MODEL_PATH-$EVALUATE_DATA/ext_${ext_train_split}_ep${EPOCHS}"
-    run_train "$MODEL_PATH" "$EXT_TRAIN_DATA/$ext_train_split" "$EXT_MODEL_PATH"
-    echo ">>> evaluating "
-    run_evaluate "$EXT_MODEL_PATH"
-
-    for sft_split in test train
-    do
-        echo
-        echo
-        echo ">>>>>> model config: $CONFIG_NAME"
-        echo ">>>>>> model path: $MODEL_PATH"
-        echo ">>>>>> SFT data: $SFT_DATA/$sft_split"
-        echo ">>> SFT training"
-        EXT_SFT_MODEL_PATH="$EXT_MODEL_PATH-sft_${sft_split}_ep${EPOCHS}"
-        run_train "$EXT_MODEL_PATH" "$SFT_DATA/$sft_split" "$EXT_SFT_MODEL_PATH"
-        echo ">>> evaluating "
-        run_evaluate "$EXT_SFT_MODEL_PATH"
-    done
-done
-
 
 end_time=$(date +"%s")
 echo "end time: $(date -d @"$end_time" +"%D %T")"

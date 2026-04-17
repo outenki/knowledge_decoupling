@@ -57,7 +57,7 @@ print_evaluate() {
     fi
 }
 
-CONFIG_PATH="$PROJECT_BASE_PATH/output/gpt2"
+CONFIG_PATH="$PROJECT_BASE_PATH/output/Qwen/Qwen3.5-0.8B"
 for MODEL_PATH in \
     $CONFIG_PATH/random/rnd \
     $CONFIG_PATH/HuggingFace/hf \

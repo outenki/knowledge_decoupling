@@ -29,7 +29,7 @@ def read_args():
         help='Model path to load from. (pt or safetensors)'
     )
     parser.add_argument(
-        '--tokenizer', '-t', dest='tokenizer', type=str, required=False
+        '--tokenizer', '-t', dest='tokenizer', type=str, required=False, default="gpt2"
     )
     parser.add_argument(
         '--test-data', '-vd', dest='data_path', type=str, required=True,

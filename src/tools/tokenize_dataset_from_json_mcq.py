@@ -48,6 +48,12 @@ print(f"Using tokenizer: {args.tokenizer}")
 print(f"EOS ID: {TOKENIZER.eos_token_id}")
 print("Loading dataset from:", args.input_path)
 dataset = load_dataset("json", data_files=args.input_path)["train"]
+if "options" not in dataset.column_names and "ori_options" not in dataset.column_names:
+    raise ValueError("Dataset must contain 'options' or 'ori_options' field")
+K = len(dataset[0]["options"]) if "options" in dataset.column_names else len(dataset[0]["ori_options"])
+dataset = dataset.filter(
+    lambda x: len(x["options"]) == K
+)
 
 print("Dataset loaded. Sample:", dataset[0])
 Path(args.output_path).parent.mkdir(parents=True, exist_ok=True)
