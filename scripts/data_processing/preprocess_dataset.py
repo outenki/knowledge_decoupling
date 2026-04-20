@@ -11,9 +11,9 @@ from pathlib import Path
 from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
 
-from lib.dataset import load_custom_dataset, skip_dataset_by_column
-from lib.text import clean_text, split_texts_to_sentences
-from lib.utils import print_args
+from src.lib.dataset import load_custom_dataset, skip_dataset_by_column
+from src.lib.text import clean_text, split_texts_to_sentences
+from src.lib.utils import print_args
 
 
 def read_args():

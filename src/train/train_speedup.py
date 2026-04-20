@@ -16,8 +16,8 @@ from transformers.training_args import TrainingArguments
 from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
 
-from lib.dataset import load_custom_dataset, slice_dataset
-from lib.utils import print_args
+from src.lib.dataset import load_custom_dataset, slice_dataset
+from src.lib.utils import print_args
 
 
 import warnings

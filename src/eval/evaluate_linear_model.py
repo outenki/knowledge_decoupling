@@ -16,8 +16,8 @@ from transformers import AutoTokenizer
 from transformers import AutoModel
 
 import pandas as pd
-from lib.utils import get_device, print_args
-from lib.linear_model import MCQModel
+from src.lib.utils import get_device, print_args
+from src.lib.linear_model import MCQModel
 
 
 random.seed(42)

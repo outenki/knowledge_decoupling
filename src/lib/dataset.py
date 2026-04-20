@@ -5,7 +5,7 @@ from functools import partial
 from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
 from datasets.load import load_dataset, load_from_disk
-from lib.text import split_text_to_sentences
+from src.lib.text import split_text_to_sentences
 
 
 def load_custom_dataset(data_name: str, data_type: str | None, load_from: str) -> Dataset | DatasetDict | Any:
@@ -99,3 +99,52 @@ def simple_split_to_sents(dataset: Dataset, column, num_proc=1, batch_size=1000)
     )
     print(f"Output size of splitting: {len(dataset)}")
     return dataset
+
+
+def format_qa_prompt(example):
+    prompt = "Question: " + example["prompt"]
+    prompt = prompt.strip() + "\n"
+    if "options" in example:
+        options = "\n".join(example["options"])
+        prompt += "\n"
+        prompt += "Options:\n" + options + "\n\n"
+    prompt += "Answer:\n"
+    response = example["answer"]
+    return prompt, response
+
+
+def generate_qa_message(example):
+    q = example["prompt"]
+    if "options" in example:
+        options = example["options"]
+    else:
+        options = []
+    answer = example["answer"]
+    options_text = "\n".join(options)
+
+    if options:
+        return [
+            {
+                "role": "user",
+                "content": (
+                    f"Question:\n{q}\n\n"
+                    f"Options:\n{options_text}\n\n"
+                    "Answer using the exact text from the options."
+                )
+            },
+            {
+                "role": "assistant",
+                "content": answer
+            }
+        ]
+    else:
+        return [
+            {
+                "role": "user",
+                "content": q
+            },
+            {
+                "role": "assistant",
+                "content": answer
+            }
+        ]

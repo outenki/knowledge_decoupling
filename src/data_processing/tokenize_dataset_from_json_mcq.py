@@ -34,26 +34,33 @@ def preprocess_mcq(example):
         raise ValueError("No options field found in example")
     answer = example["answer"]
 
-    texts = [question + " " + opt for opt in options]
+    prefix = question + " "
+    prefix_ids = TOKENIZER(prefix, add_special_tokens=False)["input_ids"]
+    texts = [prefix + opt for opt in options]
     tokenized = [TOKENIZER(t)["input_ids"] for t in texts]
+    option_start_ids = [len(prefix_ids)] * len(options)
 
     label = options.index(answer)
 
     return {
         "input_ids": tokenized,
-        "labels": label
+        "labels": label,
+        "option_start_ids": option_start_ids,
     }
 
 print(f"Using tokenizer: {args.tokenizer}")
 print(f"EOS ID: {TOKENIZER.eos_token_id}")
 print("Loading dataset from:", args.input_path)
 dataset = load_dataset("json", data_files=args.input_path)["train"]
-if "options" not in dataset.column_names and "ori_options" not in dataset.column_names:
-    raise ValueError("Dataset must contain 'options' or 'ori_options' field")
-K = len(dataset[0]["options"]) if "options" in dataset.column_names else len(dataset[0]["ori_options"])
-dataset = dataset.filter(
-    lambda x: len(x["options"]) == K
-)
+assert dataset is not None, "Failed to load dataset"
+K = 0
+if "options" in dataset[0]:
+    K = len(dataset[0]["options"])
+    dataset = dataset.filter(
+        lambda x: len(x["options"]) == K
+    )
+else:
+    raise ValueError("No options field found in dataset")
 
 print("Dataset loaded. Sample:", dataset[0])
 Path(args.output_path).parent.mkdir(parents=True, exist_ok=True)
@@ -61,7 +68,7 @@ print("Preprocessing dataset...")
 dataset = dataset.map(
     preprocess_mcq,
     remove_columns=dataset.column_names,
-    num_proc=4  # 多进程加速
+    num_proc=4
 )
 
 print(f"Output path: {args.output_path}")

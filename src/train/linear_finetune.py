@@ -16,9 +16,9 @@ from transformers import Trainer, TrainingArguments
 from datasets import load_dataset
 from datasets import concatenate_datasets
 
-from lib.dataset import load_custom_dataset
-from lib.utils import get_device, print_args
-from lib.linear_model import MCQModel, MCQCollator
+from src.lib.dataset import load_custom_dataset
+from src.lib.utils import get_device, print_args
+from src.lib.linear_model import MCQModel, MCQCollator
 
 
 def training_args_to_dict(args) -> dict:

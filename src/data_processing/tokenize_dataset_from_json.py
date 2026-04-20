@@ -1,10 +1,11 @@
-import sys
 import json
 import argparse
 
 from pathlib import Path
 from datasets import DatasetDict, Dataset
-from transformers import GPT2Tokenizer
+from transformers import AutoTokenizer
+
+from src.lib.dataset import generate_qa_message, format_qa_prompt
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -14,11 +15,15 @@ parser.add_argument(
 parser.add_argument('--output-path', '-output', dest='output_path', type=str,)
 parser.add_argument(
     '--tokenizer', '-tk', dest='tokenizer', type=str,
-    choices={"gpt2", "Qwen/Qwen3-0.6B-Base", "HuggingFaceTB/SmolLM2-135M", "HuggingFaceTB/SmolLM2-1.7B"}
+    choices={"gpt2", "Qwen/Qwen3.5-0.8B-Base", "HuggingFaceTB/SmolLM2-135M", "HuggingFaceTB/SmolLM2-1.7B"}
+)
+parser.add_argument(
+    '--apply-chat-template', '-ct', dest='chat_template', action='store_true',
+    help='Apply chat template for tokenization'
 )
 parser.add_argument(
     '--skip-answer', '-sa', dest='skip_answer', action='store_true',
-    help='Skip answer field (for unsupervised pretraining or nonce model training)'
+    help='Skip answer field (for unsupervised pretraining or nonce model training).\n Only applies when --apply-chat-template is not set.'
 )
 parser.add_argument(
     '--mask-prompt', '-mp', dest='mask_prompt', action='store_true',
@@ -28,7 +33,7 @@ args = parser.parse_args()
 
 
 print(f"Using tokenizer: {args.tokenizer}")
-TOKENIZER = GPT2Tokenizer.from_pretrained(args.tokenizer)
+TOKENIZER = AutoTokenizer.from_pretrained(args.tokenizer)
 TOKENIZER.padding_side = "left"
 if TOKENIZER.pad_token_id is None:
     TOKENIZER.pad_token = TOKENIZER.eos_token
@@ -40,10 +45,41 @@ print(f"PAD ID: {TOKENIZER.pad_token_id}")
 PAD_ID = TOKENIZER.pad_token_id
 
 
-def preprocess(example):
-    prompt = example["prompt"]
-    prompt = prompt.strip() + " "
-    response = example["answer"]
+def preprocess_chat_template(example):
+    messages = generate_qa_message(example)
+    # Encoding prompt
+    prompt_messages = messages[:-1]
+    prompt_ids = TOKENIZER.apply_chat_template(
+        prompt_messages, 
+        tokenize=True, 
+        add_generation_prompt=True # 这一步很关键，它会加上 <|im_start|>assistant\n
+    )
+    prompt_len = len(prompt_ids)
+
+    # Encoding full input (prompt + response)
+    full_ids = TOKENIZER.apply_chat_template(
+        messages, 
+        tokenize=True, 
+        add_generation_prompt=False
+    )
+
+    # Generate labels
+    if args.mask_prompt:
+        # for SFT, we only calculate loss on the response part, so we set prompt part to -100
+        labels = [-100] * len(full_ids)
+        labels[prompt_len:] = full_ids[prompt_len:]
+    else:
+        labels = full_ids
+
+    return {
+        "input_ids": full_ids,
+        "attention_mask": [1] * len(full_ids),
+        "labels": labels,
+    }
+
+
+def preprocess_concat(example):
+    prompt, response = format_qa_prompt(example)
 
     p_out = TOKENIZER(prompt, add_special_tokens=False)
     r_out = TOKENIZER(response + TOKENIZER.eos_token, add_special_tokens=False)
@@ -56,6 +92,7 @@ def preprocess(example):
     input_ids = prompt_ids + response_ids
 
     if args.mask_prompt:
+        # for SFT, we only calculate loss on the response part, so we set prompt part to -100
         labels = [-100] * len(prompt_ids) + response_ids
     else:
         labels = input_ids
@@ -79,6 +116,13 @@ def preprocess(example):
     }
 
 
+def preprocess(example):
+    if args.chat_template:
+        return preprocess_chat_template(example)
+    else:
+        return preprocess_concat(example)
+
+
 input_path = Path(args.input_path)
 output_path = args.output_path
 Path(output_path).mkdir(exist_ok=True, parents=True)
@@ -96,6 +140,14 @@ else:
 
 # --- load data ---
 train_ds = Dataset.from_list(train_js)
+example = train_ds[0]
+if args.chat_template:
+    print("Chat Template:")
+    print(generate_qa_message(example))
+else:
+    prompt, response = format_qa_prompt(example)
+    print("Concat Template:")
+    print(prompt + response)
 
 print("Processing train data...")
 tokenized_train = train_ds.map(

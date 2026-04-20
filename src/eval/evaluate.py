@@ -16,7 +16,8 @@ from transformers import AutoTokenizer
 from transformers import AutoModelForCausalLM
 
 import pandas as pd
-from lib.utils import get_device, print_args
+from src.lib.utils import get_device, print_args
+from src.lib.dataset import generate_qa_message, format_qa_prompt
 
 
 random.seed(42)
@@ -30,6 +31,10 @@ def read_args():
     )
     parser.add_argument(
         '--tokenizer', '-t', dest='tokenizer', type=str, required=False, default="gpt2"
+    )
+    parser.add_argument(
+        '--data-format', '-ft', dest='data_format', type=str, required=True, choices={"chat_template", "concat"},
+        help='The pred will be truncated if "simple" is set.'
     )
     parser.add_argument(
         '--test-data', '-vd', dest='data_path', type=str, required=True,
@@ -65,20 +70,20 @@ def get_max_block_size(model):
     return block_size
 
 
-def get_input_ids(model, tokenizer, texts):
-    enc = tokenizer(
-        texts, return_tensors="pt", padding=True, truncation=True, add_special_tokens=False
-    )
-    input_ids = enc["input_ids"]
-    attention_mask = enc["attention_mask"]
+# def get_input_ids(model, tokenizer, texts):
+#     enc = tokenizer(
+#         texts, return_tensors="pt", padding=True, truncation=True, add_special_tokens=False
+#     )
+#     input_ids = enc["input_ids"]
+#     attention_mask = enc["attention_mask"]
 
-    # control the max length
-    block_size = get_max_block_size(model)
-    if block_size is not None and input_ids.size(1) > block_size:
-        input_ids = input_ids[:, -block_size:]
-        attention_mask = attention_mask[:, -block_size:]
+#     # control the max length
+#     block_size = get_max_block_size(model)
+#     if block_size is not None and input_ids.size(1) > block_size:
+#         input_ids = input_ids[:, -block_size:]
+#         attention_mask = attention_mask[:, -block_size:]
 
-    return input_ids.to(model.device), attention_mask.to(model.device)
+#     return input_ids.to(model.device), attention_mask.to(model.device)
 
 
 def score_continuations_batch(model, tokenizer, prompt, continuations):
@@ -123,7 +128,7 @@ def score_continuations_batch(model, tokenizer, prompt, continuations):
     for i in range(len(continuations)):
         # 找到当前这一行非 padding 的起始位置
         non_pad_indices = attention_mask[i].nonzero(as_tuple=True)[0]
-        actual_start = non_pad_indices[0] + prompt_len - 2
+        actual_start = non_pad_indices[0] + prompt_len - 1
         # mask 掉 prompt 部分和 padding 部分
         loss_mask[i, actual_start:] = True
 
@@ -243,7 +248,7 @@ def score_on_generation(model, tokenizer, prompt, answers, mode) -> dict:
     return res
 
 
-def score_samples(model, tokenizer, samples, score_on, generation_mode, few_shots="", sep_token="") -> list[dict]:
+def score_samples(model, tokenizer, samples, score_on, generation_mode, format) -> list[dict]:
     # Score a list of samples with prompts and two options.
     filtered_samples = []
     # 获取模型允许的最大长度
@@ -252,8 +257,11 @@ def score_samples(model, tokenizer, samples, score_on, generation_mode, few_shot
     safe_threshold = max_len - 128
 
     for sample in tqdm.tqdm(samples, total=len(samples), desc="scoring samples"):
-        prompt = few_shots + "\n" + sample["prompt"]
-        prompt = prompt.strip() + " "
+        if format == "chat_template":
+            prompt = generate_qa_message(sample)
+            prompt = tokenizer.apply_chat_template(prompt, tokenize=False, add_generation_prompt=True)
+        else:
+            prompt, _ = format_qa_prompt(sample)
         prompt_ids = tokenizer.encode(prompt, add_special_tokens=False)
         if len(prompt_ids) > safe_threshold:
             print(f" SKip: Prompt is too long: {len(prompt_ids)} > {safe_threshold}")
@@ -288,7 +296,7 @@ def analyze_results(samples) -> dict:
     recall = 0
     precision = 0
     for sample in samples:
-        is_correct = (sample["pred"] == sample["answer"])
+        is_correct = sample.get("is_correct", sample["pred"] == sample["answer"])
         correct += int(is_correct)
         total += 1
         f1 += sample.get("f1", 0)
@@ -353,7 +361,7 @@ def main():
         print(f"Generated few_shots: \n{few_shots}")
 
     # ========= Score samples ========
-    used_samples = score_samples(model, tokenizer, eval_samples, args.score_on, args.mode, few_shots)
+    used_samples = score_samples(model, tokenizer, eval_samples, args.score_on, args.mode, args.data_format)
     used_count = len(used_samples)
     print(f"Evaluated on {used_count} samples")
     results = analyze_results(used_samples)

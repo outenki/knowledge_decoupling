@@ -1,26 +1,27 @@
 import argparse
-import math
-from pathlib import Path
-import random
 import json
+import math
+import random
 from dataclasses import asdict, is_dataclass
 from datetime import datetime
+from pathlib import Path
+from typing import Any
 
-import wandb
 import torch
+import wandb
+from datasets import concatenate_datasets
+from datasets.arrow_dataset import Dataset
+from datasets.dataset_dict import DatasetDict
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import LambdaLR
-from transformers import AutoModelForCausalLM, AutoConfig
+from transformers import AutoModelForCausalLM, AutoTokenizer
 from transformers.trainer import Trainer
 from transformers.trainer_callback import TrainerCallback
 from transformers.training_args import TrainingArguments
-from datasets.arrow_dataset import Dataset
-from datasets.dataset_dict import DatasetDict
-from datasets import concatenate_datasets
-from transformers import AutoTokenizer
 
-from lib.dataset import load_custom_dataset
-from lib.utils import print_args
+
+from src.lib.dataset import load_custom_dataset
+from src.lib.utils import print_args
 
 
 DECAY_RATE = 0.9  # for WSD
@@ -33,6 +34,7 @@ class MCQDataCollator:
     def __call__(self, features):
         input_ids = [f["input_ids"] for f in features]
         labels = torch.tensor([f["labels"] for f in features])
+        option_start_ids = [f.get("option_start_ids") for f in features]
 
         max_len = max(len(choice) for f in input_ids for choice in f)
 
@@ -44,21 +46,30 @@ class MCQDataCollator:
                 choices.append(choice + [self.pad_token_id] * pad_len)
             padded.append(choices)
 
-        return {
+        batch = {
             "input_ids": torch.tensor(padded),  # (B, C, T)
             "labels": labels
         }
+        if all(starts is not None for starts in option_start_ids):
+            batch["option_start_ids"] = torch.tensor(option_start_ids)
+        return batch
 
 
 class MCQTrainer(Trainer):
     def compute_loss(self, model, inputs, num_items_in_batch=None,return_outputs=False):
         input_ids = inputs["input_ids"]  # (B, C, T)
         labels = inputs["labels"]
+        option_start_ids = inputs.get("option_start_ids")
 
         B, C, T = input_ids.shape
-        pad_id = model.config.pad_token_id
+        model_config = getattr(model, "config", None)
+        if model_config is None and hasattr(model, "module"):
+            model_config = getattr(model.module, "config", None)
+        pad_id = model_config.pad_token_id
 
         input_ids = input_ids.view(B * C, T)
+        if option_start_ids is not None:
+            option_start_ids = option_start_ids.view(B * C)
 
         outputs = model(input_ids=input_ids)
         logits = outputs.logits
@@ -73,10 +84,16 @@ class MCQTrainer(Trainer):
             shift_labels.reshape(-1)
         ).view(B * C, -1)
 
-        # mask padding
+        # By default, score all non-padding tokens. If option boundaries are
+        # available, only score tokens belonging to the option span.
         mask = (shift_labels != pad_id).float()
+        if option_start_ids is not None:
+            target_positions = torch.arange(1, T, device=input_ids.device).unsqueeze(0)
+            option_mask = target_positions >= option_start_ids.unsqueeze(1)
+            mask = mask * option_mask.float()
 
-        seq_loss = (token_loss * mask).sum(dim=1) / mask.sum(dim=1)
+        valid_tokens = mask.sum(dim=1).clamp_min(1.0)
+        seq_loss = (token_loss * mask).sum(dim=1) / valid_tokens
 
         seq_loss = seq_loss.view(B, C)
 
@@ -89,7 +106,7 @@ class MCQTrainer(Trainer):
         return loss
 
 
-def training_args_to_dict(args) -> dict:
+def training_args_to_dict(args: TrainingArguments) -> dict:
     serializable_args = {}
     args_dict = asdict(args) if is_dataclass(args) else vars(args)
     for k, v in args_dict.items():
@@ -153,7 +170,13 @@ def read_args():
         '--epochs', '-e', dest='epochs', type=int, required=False, default=3,
     )
     parser.add_argument(
-        '--save-checkpoints', '-sc', dest='save_checkpoints', type=int, required=False, default=50,
+        '--learning-rate', '-lr', dest='lr', type=float, required=False, default=5e-5,
+    )
+    parser.add_argument(
+        '--epoch-checkpoints-num', '-ckn', dest='epoch_checkpoints_num', type=int, required=False, default=50,
+    )
+    parser.add_argument(
+        '--save-checkpoints-num', '-sckn', dest='save_checkpoints_num', type=int, required=False, default=2,
     )
     parser.add_argument(
         '--data-limit', '-dl', dest='data_limit', type=int, action='append',
@@ -164,33 +187,18 @@ def read_args():
         help='Enable speedup options.'
     )
     parser.add_argument(
-        '--custom-pad', '-pad', dest='custom_pad', action='store_true',
-        help='Add custom PAD token'
-    )
-    parser.add_argument(
         '--out-path', '-o', dest='out_path', type=str,
         help='Path to save the dataset with nonce sentences.'
     )
     return parser.parse_args()
 
 
-def model_config(model_name: str):
-    config = AutoConfig.from_pretrained(model_name)
-    if hasattr(config, "loss_type"):
-        config.loss_type = "ForCausalLMLoss"
-    return config
-
-
-def load_model_from_config(config_name: str) -> AutoModelForCausalLM:
-    if args.speedup:
-        # print("- speed up with xformers")
+def load_model_from_config(config_name: str, speedup: bool) -> Any:
+    if speedup:
         # torch.backends.cuda.enable_flash_sdp(True)
         # torch.backends.cuda.enable_mem_efficient_sdp(True)
         # torch.backends.cuda.enable_math_sdp(True)
-
-        # print("- speed up with flash attention 3")
-
-        # speed up with torch 2.0 compile
+        # print(">>> speed up with torch 2.0 compile...")
         # model = torch.compile(model)
         print(">>> Applying speedup options...")
         print("- speed up with flash attention 3")
@@ -222,35 +230,34 @@ def limit_dataset_dict(data_dict: DatasetDict, data_limit: int) -> DatasetDict:
         if k == "train":
             data_dict[k] = random_sample(dt, data_limit)
         else:
-            data_limit = data_limit // 10
-            data_dict[k] = random_sample(dt, data_limit)
+            # For validation and test sets, use a smaller limit
+            _data_limit = data_limit // 10
+            data_dict[k] = random_sample(dt, _data_limit)
     return data_dict
 
 
 def load_dataset_dict(data_path: str) -> DatasetDict:
     dataset = load_custom_dataset(data_path, None, "local")
     if isinstance(dataset, Dataset):
-        # total_len = len(dataset)
-        # test_size = min(max(20, total_len // 20), total_len // 2)
-        # if total_len < 2:
-        #     raise ValueError(f"Dataset at {data_path} is too small to split.")
-        # data_dict = dataset.train_test_split(test_size=test_size, shuffle=True, seed=42)
-        data_dict = DatasetDict({
-            "train": dataset,
-        })
+        data_dict = DatasetDict({"train": dataset})
     elif isinstance(dataset, DatasetDict):
         data_dict = dataset
     else:
         raise TypeError(f"Invalid data type {type(dataset)}")
     return data_dict
 
-
-def normalize_dataset(ds):
-    def fix(x):
-        if "attention_mask" not in x or x["attention_mask"] is None:
-            x["attention_mask"] = [1] * len(x["input_ids"])
-        return x
-    return ds.map(fix)
+def load_and_limit_dataset_dict(data_path: str, data_limit: int) -> DatasetDict:
+    """
+    Load data and limit the number of samples for training.
+    For validation and test sets, use a smaller limit (data_limit // 10).
+    """
+    print(f">>> Loading dataset from {data_path}")
+    _data_dict = load_dataset_dict(data_path)
+    print(_data_dict)
+    print(">>> data loaded")
+    if data_limit > 0:
+        _data_dict = limit_dataset_dict(_data_dict, data_limit)
+    return _data_dict
 
 
 def main():
@@ -261,7 +268,14 @@ def main():
         print(f">>> GPU {i}: {torch.cuda.get_device_name(i)}")
 
     args = read_args()
+    Path(args.out_path).mkdir(parents=True, exist_ok=True)
     print_args(vars(args))
+    try:
+        with open(Path(args.out_path)/"arguments.json", "w") as f:
+            json.dump(vars(args), f, indent=4)
+    except Exception as e:
+        print(f"‼️Failed to dump arguments!")
+        print(e)
 
     WANDB_RUN = wandb.init(
         # Set the wandb entity where your project will be logged (generally your team name).
@@ -271,18 +285,10 @@ def main():
         project="Knowledge Decoupling",
     )
     WANDB_RUN.name = args.out_path.split("output/", maxsplit=1)[1]
-    Path(args.out_path).mkdir(parents=True, exist_ok=True)
 
-    # === save arguments as json
-    try:
-        with open(Path(args.out_path)/"arguments.json", "w") as f:
-            json.dump(vars(args), f, indent=4)
-    except Exception:
-        print(f"‼️Failed to dumpt arguments!")
 
     # === Load model
     model = None
-    print(">>> Loading model from config:", args.config_name)
     if args.init_model:
         print(">>> Loading init model from:", args.init_model)
         model = AutoModelForCausalLM.from_pretrained(
@@ -290,6 +296,7 @@ def main():
             quantization_config=None,
         )
     else:
+        print(">>> Loading model from config:", args.config_name)
         model = load_model_from_config(
             args.config_name,
             args.speedup
@@ -297,13 +304,8 @@ def main():
 
 
     tokenizer = AutoTokenizer.from_pretrained(args.config_name)
-    if args.custom_pad:
-        print(">>> Adding custom PAD token to the tokenizer and model.")
-        tokenizer.add_special_tokens({'pad_token': '[PAD]'})
-        model.resize_token_embeddings(len(tokenizer))
-    else:
-        if tokenizer.pad_token is None:
-            tokenizer.pad_token = tokenizer.eos_token  # 👈 先设！
+    if tokenizer.pad_token is None:
+        tokenizer.pad_token = tokenizer.eos_token  # 👈 先设！
     model.config.pad_token_id = tokenizer.pad_token_id
 
     assert model is not None
@@ -314,21 +316,13 @@ def main():
     if args.data_limit is None:
         args.data_limit = [0] * len(args.data_path)
     assert len(args.data_path) == len(args.data_limit), "data_path and data_limit should have the same length."
-    for data_path, data_limit in zip(args.data_path, args.data_limit):
-        print(f">>> Loading dataset from {data_path}")
-        _data_dict = load_dataset_dict(data_path)
-        print(_data_dict)
-        print(">>> data loaded")
-        if data_limit > 0:
-            _data_dict = limit_dataset_dict(_data_dict, data_limit)
-        # for k in _data_dict.keys():
-        #     _data_dict[k] = normalize_dataset(_data_dict[k])
+    for dp, dl in zip(args.data_path, args.data_limit):
+        _data_dict = load_and_limit_dataset_dict(dp, dl)
         data_list.append(_data_dict)
     data_dict = DatasetDict({
         split: concatenate_datasets([dd[split] for dd in data_list])
         for split in data_list[0].keys()
     })
-
     print(">>> Dataset:", data_dict)
 
     train_dataset: Dataset | None = None
@@ -345,6 +339,8 @@ def main():
 
     print(">>> dataset features:", train_dataset.features)
 
+    # train_dataset.set_format("torch")
+    # eval_dataset.set_format("torch")
     print(f">>> Training data size: {len(train_dataset)}")
     print(f">>> Eval data size: {len(eval_dataset)}")
 
@@ -366,21 +362,19 @@ def main():
     warmup_steps = total_steps // 20 
 
     # 计算保存和评估间隔
-    target_total_checkpoints = args.save_checkpoints
-    save_steps = max(1, total_steps // (target_total_checkpoints * args.epochs))
+    epoch_total_checkpoints = args.epoch_checkpoints_num
+    save_steps = max(1, total_steps // (epoch_total_checkpoints * args.epochs))
 
     print(f">>> Total training steps: {total_steps}")
-    print(f">>> Targeting {target_total_checkpoints} checkpoints.")
+    print(f">>> Targeting {epoch_total_checkpoints} checkpoints.")
     print(f">>> Computed save/eval steps: {save_steps}")
 
-    optimizer = AdamW(model.parameters(), lr=5e-5, weight_decay=0.01)
-
+    optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=0.01)
     training_args = TrainingArguments(
         output_dir=args.out_path,
         warmup_steps=warmup_steps,
-        # save_safetensors=True,
         bf16=True,
-        fp16=False,  # use bf16 instead of fp16
+        fp16=False,
         dataloader_pin_memory=True,
         dataloader_num_workers=4,
         per_device_train_batch_size=per_device_train_batch_size,
@@ -395,12 +389,12 @@ def main():
         save_strategy="steps",
         eval_strategy="steps",
         report_to="wandb",
-        # fp16=torch.cuda.is_available(),
         save_total_limit=2,
         # speed up with fused AdamW optimizer
-        optim="adamw_torch_fused",
+        # optim="adamw_torch_fused",
     )
 
+    # Save training arguments to JSON for later reference
     with open(Path(args.out_path) / "training_args.json", "w") as f:
         json.dump(training_args.to_dict(), f, indent=4)
     print(">>> eval_dataset:", eval_dataset)
@@ -442,7 +436,7 @@ def main():
         print(f">>> Staring from model: {args.init_model}")
     elif not checkpoint or not Path(checkpoint).exists() or not Path(checkpoint).is_dir():
         checkpoint = None
-        print(">>> Starting from random model")
+        print(">>> Starting from hf model")
     else:
         print(f">>> Resuming from checkpoint: {checkpoint}")
     trainer.train(resume_from_checkpoint=checkpoint)

@@ -17,11 +17,11 @@ import tqdm
 import spacy
 from spacy.tokens import Token
 
-from lib.dataset import load_custom_dataset, load_texts_from_dataset_batch
-from lib.dataset import slice_dataset, skip_dataset_by_column, simple_split_to_sents
-from lib.parser import extract_token_morph_features, is_content_word, is_vowel
-from lib.text import simple_split_text
-from lib.utils import print_args
+from src.lib.dataset import load_custom_dataset, load_texts_from_dataset_batch
+from src.lib.dataset import slice_dataset, skip_dataset_by_column, simple_split_to_sents
+from src.lib.parser import extract_token_morph_features, is_content_word, is_vowel
+from src.lib.text import simple_split_text
+from src.lib.utils import print_args
 
 # if spacy.prefer_gpu():
 #     print("Using GPU")

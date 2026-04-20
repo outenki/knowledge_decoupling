@@ -5,7 +5,7 @@ from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
 from datasets import concatenate_datasets, load_from_disk
 
-from lib.utils import print_args
+from src.lib.utils import print_args
 
 
 def read_args():

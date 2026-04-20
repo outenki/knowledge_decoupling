@@ -5,7 +5,7 @@ from itertools import chain
 
 from transformers import AutoTokenizer
 
-from lib.dataset import load_custom_dataset, slice_dataset
+from src.lib.dataset import load_custom_dataset, slice_dataset
 
 
 def read_args():

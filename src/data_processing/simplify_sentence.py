@@ -13,11 +13,11 @@ from datasets.arrow_dataset import Dataset
 from nltk.corpus import wordnet as wn
 from lemminflect import getInflection
 
-from lib.basic_words.basic_words_850 import BASIC_WORDS_850
-from lib.basic_words.oxford_3000 import OXFORD_3000
-from lib.dataset import load_custom_dataset, slice_dataset, skip_dataset_by_column
-from lib.text import simple_split_text
-from lib.utils import print_args
+from src.lib.basic_words.basic_words_850 import BASIC_WORDS_850
+from src.lib.basic_words.oxford_3000 import OXFORD_3000
+from src.lib.dataset import load_custom_dataset, slice_dataset, skip_dataset_by_column
+from src.lib.text import simple_split_text
+from src.lib.utils import print_args
 
 
 try:
