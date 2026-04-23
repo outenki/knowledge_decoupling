@@ -49,19 +49,24 @@ def preprocess_chat_template(example):
     messages = generate_qa_message(example)
     # Encoding prompt
     prompt_messages = messages[:-1]
-    prompt_ids = TOKENIZER.apply_chat_template(
+    prompt_out = TOKENIZER.apply_chat_template(
         prompt_messages, 
         tokenize=True, 
-        add_generation_prompt=True # 这一步很关键，它会加上 <|im_start|>assistant\n
+        add_generation_prompt=True,
+        return_dict=True,  # Some tokenizers return a BatchEncoding-like mapping here.
     )
+    prompt_ids = prompt_out["input_ids"]
     prompt_len = len(prompt_ids)
 
     # Encoding full input (prompt + response)
-    full_ids = TOKENIZER.apply_chat_template(
+    full_out = TOKENIZER.apply_chat_template(
         messages, 
         tokenize=True, 
-        add_generation_prompt=False
+        add_generation_prompt=False,
+        return_dict=True,
     )
+    full_ids = full_out["input_ids"]
+    attention_mask = full_out["attention_mask"]
 
     # Generate labels
     if args.mask_prompt:
@@ -73,7 +78,7 @@ def preprocess_chat_template(example):
 
     return {
         "input_ids": full_ids,
-        "attention_mask": [1] * len(full_ids),
+        "attention_mask": attention_mask,
         "labels": labels,
     }
 

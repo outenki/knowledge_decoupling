@@ -25,6 +25,55 @@ from src.lib.utils import print_args
 DECAY_RATE = 0.9
 
 
+class CausalLMDataCollator:
+    def __init__(self, pad_token_id: int):
+        self.pad_token_id = pad_token_id
+
+    @staticmethod
+    def _unwrap_input_ids(feature: dict[str, Any]) -> dict[str, Any]:
+        input_ids = feature.get("input_ids")
+        if isinstance(input_ids, dict):
+            feature = dict(feature)
+            nested_input_ids = input_ids.get("input_ids")
+            nested_attention_mask = input_ids.get("attention_mask")
+            if nested_input_ids is not None:
+                feature["input_ids"] = nested_input_ids
+            if feature.get("attention_mask") is None and nested_attention_mask is not None:
+                feature["attention_mask"] = nested_attention_mask
+        return feature
+
+    def __call__(self, features: list[dict[str, Any]]) -> dict[str, torch.Tensor]:
+        features = [self._unwrap_input_ids(feature) for feature in features]
+
+        input_ids = [feature["input_ids"] for feature in features]
+        attention_mask = [feature.get("attention_mask") for feature in features]
+        labels = [feature.get("labels") for feature in features]
+
+        max_len = max(len(ids) for ids in input_ids)
+        batch_input_ids = []
+        batch_attention_mask = []
+        batch_labels = []
+
+        for ids, mask, label in zip(input_ids, attention_mask, labels):
+            seq_len = len(ids)
+            pad_len = max_len - seq_len
+
+            if mask is None:
+                mask = [1] * seq_len
+            if label is None:
+                label = list(ids)
+
+            batch_input_ids.append(ids + [self.pad_token_id] * pad_len)
+            batch_attention_mask.append(mask + [0] * pad_len)
+            batch_labels.append(label + [-100] * pad_len)
+
+        return {
+            "input_ids": torch.tensor(batch_input_ids, dtype=torch.long),
+            "attention_mask": torch.tensor(batch_attention_mask, dtype=torch.long),
+            "labels": torch.tensor(batch_labels, dtype=torch.long),
+        }
+
+
 def training_args_to_dict(args: TrainingArguments) -> dict:
     serializable_args = {}
     args_dict = asdict(args) if is_dataclass(args) else vars(args)
@@ -198,6 +247,42 @@ def load_and_limit_dataset_dict(data_path: str, data_limit: int) -> DatasetDict:
     return _data_dict
 
 
+def normalize_training_dataset(dataset: Dataset) -> Dataset:
+    keep_columns = [col for col in ["input_ids", "attention_mask", "labels"] if col in dataset.column_names]
+    remove_columns = [col for col in dataset.column_names if col not in keep_columns]
+    if remove_columns:
+        print(f">>> Removing unused columns: {remove_columns}")
+        dataset = dataset.remove_columns(remove_columns)
+
+    if "input_ids" not in dataset.column_names:
+        raise ValueError("Dataset must contain 'input_ids'.")
+
+    sample = dataset[0]
+    if isinstance(sample.get("input_ids"), dict):
+        print(">>> Flattening nested 'input_ids' field from legacy chat-template dataset.")
+
+        def flatten_legacy_feature(example: dict[str, Any]) -> dict[str, Any]:
+            nested = example["input_ids"]
+            input_ids = nested["input_ids"]
+            attention_mask = example.get("attention_mask")
+            if attention_mask is None:
+                attention_mask = nested.get("attention_mask")
+            labels = example.get("labels", input_ids)
+            return {
+                "input_ids": input_ids,
+                "attention_mask": attention_mask,
+                "labels": labels,
+            }
+
+        dataset = dataset.map(
+            flatten_legacy_feature,
+            remove_columns=dataset.column_names,
+            desc="Flattening legacy tokenized dataset",
+        )
+
+    return dataset
+
+
 def main():
     print(">>> CUDA available:", torch.cuda.is_available())
     print(">>> GPU count:", torch.cuda.device_count())
@@ -228,11 +313,7 @@ def main():
     model = None
     if args.init_model:
         print(">>> Loading init model from:", args.init_model)
-        model = AutoModelForCausalLM.from_pretrained(
-            args.init_model,
-            quantization_config=None,
-            attn_implementation="flash_attention_3"
-        )
+        model = load_model_from_disk(args.init_model, args.speedup)
         print(">>> Init model loaded. Config:", model.config)
     else:
         print(">>> Loading model from config:", args.config_name)
@@ -271,10 +352,12 @@ def main():
         train_dataset = data_dict["train"]
         eval_dataset = data_dict["test"]
 
+    # TODO: remove normalization after fixing the legacy dataset issue
+    train_dataset = normalize_training_dataset(train_dataset)
+    eval_dataset = normalize_training_dataset(eval_dataset)
     print(">>> dataset features:", train_dataset.features)
 
-    train_dataset.set_format("torch")
-    eval_dataset.set_format("torch")
+
     print(f">>> Training data size: {len(train_dataset)}")
     print(f">>> Eval data size: {len(eval_dataset)}")
 
@@ -308,6 +391,7 @@ def main():
     training_args = TrainingArguments(
         output_dir=args.out_path,
         warmup_steps=warmup_steps,
+        # bf16=torch.cuda.is_available(),
         bf16=True,
         fp16=False,
         dataloader_pin_memory=True,
@@ -348,6 +432,7 @@ def main():
         args=training_args,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
+        data_collator=CausalLMDataCollator(tokenizer.pad_token_id),
         callbacks=[LossLoggerCallback(f"{args.out_path}/logs")],
         optimizers=(optimizer, scheduler_ws)
     )

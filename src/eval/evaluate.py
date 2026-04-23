@@ -70,22 +70,6 @@ def get_max_block_size(model):
     return block_size
 
 
-# def get_input_ids(model, tokenizer, texts):
-#     enc = tokenizer(
-#         texts, return_tensors="pt", padding=True, truncation=True, add_special_tokens=False
-#     )
-#     input_ids = enc["input_ids"]
-#     attention_mask = enc["attention_mask"]
-
-#     # control the max length
-#     block_size = get_max_block_size(model)
-#     if block_size is not None and input_ids.size(1) > block_size:
-#         input_ids = input_ids[:, -block_size:]
-#         attention_mask = attention_mask[:, -block_size:]
-
-#     return input_ids.to(model.device), attention_mask.to(model.device)
-
-
 def score_continuations_batch(model, tokenizer, prompt, continuations):
     """
     1. 处理 BPE 拼接一致性
@@ -223,7 +207,7 @@ def generate_answer(model, tokenizer, prompt, mode, max_new_tokens=50):
             use_cache=True
         )
 
-    gen_text = tokenizer.decode(gen_ids[0][input_ids.shape[1]:], skip_special_tokens=True).strip()
+    gen_text = tokenizer.decode(gen_ids[0][input_ids.shape[1]:], skip_special_tokens=True).strip().split("\n")[0]
     if mode == "simple":
         gen_text = gen_text.split(". ")[0]
     return gen_text
@@ -281,6 +265,7 @@ def score_samples(model, tokenizer, samples, score_on, generation_mode, format) 
         elif score_on == "generation":
             res = score_on_generation(model, tokenizer, prompt, answers, generation_mode)
         sample.update(res)
+        sample["evaluate_prompt"] = prompt
         filtered_samples.append(sample)
     return filtered_samples
 
