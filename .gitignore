@@ -8,9 +8,8 @@ input/
 .DS_Store
 logs/
 sub_jobs/.*
-jobs/**/.*
-jobs/
-scripts/speed_up/
+wandb/
+.d*
 scripts/speed_up/
 src/tools/config.py
 scripts/run/log/
