@@ -29,6 +29,10 @@ parser.add_argument(
     '--mask-prompt', '-mp', dest='mask_prompt', action='store_true',
     help='Mask prompt for SFT'
 )
+parser.add_argument(
+    '--max-length', dest='max_length', type=int, default=1024,
+    help='Maximum sequence length after tokenization'
+)
 args = parser.parse_args()
 
 
@@ -43,6 +47,24 @@ if TOKENIZER.pad_token_id is None:
 print(f"EOS ID: {TOKENIZER.eos_token_id}")
 print(f"PAD ID: {TOKENIZER.pad_token_id}")
 PAD_ID = TOKENIZER.pad_token_id
+
+
+def truncate_and_pad(input_ids, attention_mask, labels):
+    max_length = args.max_length
+
+    if len(input_ids) >= max_length:
+        print(f"Data is too long, truncating to max_length: {max_length}")
+    input_ids = input_ids[:max_length]
+    attention_mask = attention_mask[:max_length]
+    labels = labels[:max_length]
+
+    pad_len = max_length - len(input_ids)
+    if pad_len > 0:
+        input_ids = input_ids + [PAD_ID] * pad_len
+        attention_mask = attention_mask + [0] * pad_len
+        labels = labels + [-100] * pad_len
+
+    return input_ids, attention_mask, labels
 
 
 def preprocess_chat_template(example):
@@ -64,6 +86,8 @@ def preprocess_chat_template(example):
         tokenize=True, 
         add_generation_prompt=False,
         return_dict=True,
+        truncation=True,
+        max_length=args.max_length,
     )
     full_ids = full_out["input_ids"]
     attention_mask = full_out["attention_mask"]
@@ -74,7 +98,9 @@ def preprocess_chat_template(example):
         labels = [-100] * len(full_ids)
         labels[prompt_len:] = full_ids[prompt_len:]
     else:
-        labels = full_ids
+        labels = list(full_ids)
+
+    full_ids, attention_mask, labels = truncate_and_pad(full_ids, attention_mask, labels)
 
     return {
         "input_ids": full_ids,
@@ -102,17 +128,8 @@ def preprocess_concat(example):
     else:
         labels = input_ids
 
-    max_length = 1024
-    input_ids = input_ids[:max_length]
-    labels = labels[:max_length]
-
-    pad_len = max_length - len(input_ids)
-
-    if pad_len > 0:
-        input_ids = input_ids + [PAD_ID] * pad_len
-        labels = labels + [-100] * pad_len
-
-    attention_mask = [1 if i < (max_length - pad_len) else 0 for i in range(max_length)]
+    attention_mask = [1] * len(input_ids)
+    input_ids, attention_mask, labels = truncate_and_pad(input_ids, attention_mask, labels)
 
     return {
         "input_ids": input_ids,
