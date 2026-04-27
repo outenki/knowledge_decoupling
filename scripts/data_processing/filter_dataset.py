@@ -13,6 +13,7 @@ from tqdm.auto import tqdm
 
 from src.lib.dataset import drop_skipped_sources
 from src.lib.text import inflect_candidate
+from src.lib.dataset import slice_dataset
 
 
 DEFAULT_MODEL_NAME = "en_core_web_sm"
@@ -32,6 +33,8 @@ def parse_args() -> argparse.Namespace:
     parser.add_argument("--keep-oov", action="store_true")
     parser.add_argument("--model-name", default=DEFAULT_MODEL_NAME, type=str)
     parser.add_argument("--dataset-name", required=True, type=str)
+    parser.add_argument("--start-from", required=True, type=int)
+    parser.add_argument("--data-limit", type=int, default=0)
     parser.add_argument("--kept-indices-path", required=True, type=str)
     parser.add_argument("--dataset-split", default="train")
     parser.add_argument("--text-column", default=DEFAULT_TEXT_COLUMN)
@@ -186,28 +189,6 @@ def filter_dataset(
     return Dataset.from_generator(iter_filtered_examples)
 
 
-# def iter_kept_indices(
-#     ds,
-#     text_column: str,
-#     allowed_token_keys: set[str],
-#     all_tokens_keys: dict,
-#     batch_size: int,
-#     model_name: str,
-#     num_proc: int,
-#     keep_oov: bool,
-#     replace: bool,
-# ):
-#     nlp = load_nlp(model_name)
-#     total_examples = len(ds)
-#     texts = (preprocess_text(example[text_column]) for example in ds)
-#     docs = nlp.pipe(texts, batch_size=batch_size, n_process=num_proc)
-
-#     for index, doc in enumerate(
-#         tqdm(docs, total=total_examples, desc="Filtering dataset based on token frequencies")
-#     ):
-#         yield keep_example(doc, allowed_token_keys, all_tokens_keys):
-
-
 def main() -> None:
     args = parse_args()
     output_path = Path(args.output_path)
@@ -240,6 +221,10 @@ def main() -> None:
     if len(kept_indices) < len(ds):
         print(f"Dropping {len(ds) - len(kept_indices)} examples from skipped sources: {SKIP_SOURCES}")
         ds = ds.select(kept_indices)
+
+    # Apply data limit if specified
+    if args.data_limit > 0:
+        ds = slice_dataset(ds, args.start_from, args.data_limit)
 
     print(f"Total examples in the dataset: {len(ds)}")
     if args.text_column not in ds.column_names:
