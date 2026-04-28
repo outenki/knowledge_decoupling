@@ -14,10 +14,11 @@ from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
 from torch.optim import AdamW
 from torch.optim.lr_scheduler import LambdaLR
-from transformers import AutoModelForCausalLM, AutoTokenizer
+from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 from transformers.trainer import Trainer
 from transformers.trainer_callback import TrainerCallback
 from transformers.training_args import TrainingArguments
+from bitsandbytes.optim import AdamW8bit
 
 from src.lib.dataset import load_custom_dataset
 from src.lib.utils import print_args
@@ -82,6 +83,14 @@ def read_args():
         help='Path to pre-trained model'
     )
     parser.add_argument(
+        '--skip-eval', '-se', dest='skip_eval', action='store_true',
+        help='Skip evaluation during training.'
+    )
+    parser.add_argument(
+        '--random-init', '-ri', dest='random_init', action='store_true',
+        help='Initialize model from random weights using config_name instead of pretrained weights.'
+    )
+    parser.add_argument(
         '--checkpoint', '-cp', dest='checkpoint', type=str, required=False, default=None,
         help='Path to checkpoint'
     )
@@ -120,7 +129,8 @@ def load_model_from_disk(model_path: str, speedup: bool) -> Any:
             model = AutoModelForCausalLM.from_pretrained(
                 model_path,
                 quantization_config=None,
-                attn_implementation="flash_attention_3"
+                # attn_implementation="flash_attention_3"
+                attn_implementation="sdpa"
             )
         else:
             model = AutoModelForCausalLM.from_pretrained(
@@ -131,7 +141,7 @@ def load_model_from_disk(model_path: str, speedup: bool) -> Any:
         return model
 
 
-def load_model_from_config(config_name: str, speedup: bool) -> Any:
+def load_model_from_pretrained(config_name: str, speedup: bool) -> Any:
     if speedup:
         # torch.backends.cuda.enable_flash_sdp(True)
         # torch.backends.cuda.enable_mem_efficient_sdp(True)
@@ -139,19 +149,69 @@ def load_model_from_config(config_name: str, speedup: bool) -> Any:
         # print(">>> speed up with torch 2.0 compile...")
         # model = torch.compile(model)
         print(">>> Applying speedup options...")
-        print("- speed up with flash attention 3")
-        return AutoModelForCausalLM.from_pretrained(
+        # print("- speed up with flash attention 3")
+        print("- speed up with sdpa")
+        model = AutoModelForCausalLM.from_pretrained(
             config_name,
             torch_dtype=torch.bfloat16,
             trust_remote_code=True,
-            attn_implementation="flash_attention_3"
+            # attn_implementation="flash_attention_3"
+            attn_implementation="sdpa"
         )
     else:
-        return AutoModelForCausalLM.from_pretrained(
+        model = AutoModelForCausalLM.from_pretrained(
             config_name,
             torch_dtype=torch.bfloat16,
             trust_remote_code=True
         )
+    model.tie_weights()
+    model.gradient_checkpointing_enable()
+    model.config.use_cache = False
+    return model
+
+
+def load_model_from_config_random(config_name: str, speedup: bool) -> Any:
+    print(">>> Initializing model from random weights using config:", config_name)
+    config = AutoConfig.from_pretrained(config_name, trust_remote_code=True)
+    if hasattr(config, "text_config"):
+        config = config.text_config
+
+    if hasattr(config, "use_linear_attn"):
+        config.use_linear_attn = False
+    if hasattr(config, "attn_type"):
+        config.attn_type = "sdpa"
+    if hasattr(config, "_attn_implementation"):
+        config._attn_implementation = "sdpa"
+    if speedup:
+        print(">>> Applying speedup options...")
+        # print("- speed up with flash attention 3")
+        print("- speed up with sdpa")
+        model = AutoModelForCausalLM.from_config(
+            config,
+            # torch_dtype=torch.bfloat16,
+            trust_remote_code=True,
+            # attn_implementation="flash_attention_3"
+            attn_implementation="sdpa"
+        )
+    else:
+        model = AutoModelForCausalLM.from_config(
+            config,
+            # torch_dtype=torch.bfloat16,
+            trust_remote_code=True
+        )
+    for name, module in model.named_modules():
+        if hasattr(module, "use_linear_attn"):
+            module.use_linear_attn = False
+    model.tie_weights()
+    model.gradient_checkpointing_enable()
+    model.config.use_cache = False
+    print(">>> Checking random model parameters...")
+    for name, p in model.named_parameters():
+        if p.requires_grad and p.dim() > 1:
+            print(name, p.mean().item(), p.std().item())
+            break
+    return model.to(torch.bfloat16)
+    
 
 
 def random_sample(dataset, number: int) -> Dataset:
@@ -226,15 +286,20 @@ def main():
 
     # === Load model
     model = None
-    if args.init_model:
+    if args.random_init:
+        assert args.config_name is not None, "--config-name is required when using --random-init"
+        model = load_model_from_config_random(args.config_name, args.speedup)
+        print(">>> Randomly initialized model. Config:", model.config)
+    elif args.init_model:
         print(">>> Loading init model from:", args.init_model)
         model = load_model_from_disk(args.init_model, args.speedup)
         print(">>> Init model loaded. Config:", model.config)
     else:
+        assert args.config_name is not None, "--config-name is required when no init model is provided"
         print(">>> Loading model from config:", args.config_name)
-        model = load_model_from_config(args.config_name, args.speedup)
+        model = load_model_from_pretrained(args.config_name, args.speedup)
 
-    tokenizer = AutoTokenizer.from_pretrained(args.config_name)
+    tokenizer = AutoTokenizer.from_pretrained(args.config_name if args.config_name is not None else args.init_model)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token  # 👈 先设！
     model.config.pad_token_id = tokenizer.pad_token_id
@@ -277,7 +342,7 @@ def main():
 
     train_dataset_size = len(train_dataset)
     per_device_train_batch_size = 4
-    gradient_accumulation_steps = 16
+    gradient_accumulation_steps = max(1, 16 // per_device_train_batch_size)
     world_size = max(1, torch.cuda.device_count())
 
     effective_batch_size = per_device_train_batch_size * gradient_accumulation_steps * world_size
@@ -297,11 +362,13 @@ def main():
     print(f">>> Targeting {epoch_total_checkpoints} checkpoints per epoch.")
     print(f">>> Computed save/eval steps: {save_steps}")
 
-    optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=0.01)
+    # optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=0.01)
+    optimizer = AdamW8bit(model.parameters(), lr=args.lr, weight_decay=0.01)
 
     training_args = TrainingArguments(
         output_dir=args.out_path,
         warmup_steps=warmup_steps,
+        ddp_find_unused_parameters=False,
         # bf16=torch.cuda.is_available(),
         bf16=True,
         fp16=False,
@@ -317,7 +384,7 @@ def main():
         save_steps=save_steps,
         logging_strategy="steps",
         save_strategy="steps",
-        eval_strategy="steps",
+        eval_strategy="no" if args.skip_eval else "steps",
         report_to="wandb",
         save_total_limit=args.save_checkpoints_num,
         # speed up with fused AdamW optimizer

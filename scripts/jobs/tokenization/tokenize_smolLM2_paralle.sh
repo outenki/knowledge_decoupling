@@ -5,12 +5,11 @@ DATA_NAME="SmolLM2-20B"
 DATA_PATH=$PROJECT_BASE_PATH/data/$DATA_NAME/
 OUTPUT_PATH=$PROJECT_BASE_PATH/data/$DATA_NAME/tokenized/$TOKENIZER
 ITER_NUM=1
-# SIZE=2000000
-SIZE=0
+SIZE=2000000
+# SIZE=0
 START=$(($2 * $SIZE * $ITER_NUM))
 END=$(($(($2 + 1)) * $SIZE * $ITER_NUM -1))
-# 128*1024 as recommended context length by Qwen3.5-0.8B
-BLOCK_SIZE=131072
+BLOCK_SIZE=4096
 
 start_time=$(date +"%s")
 echo "start time: $(date -d @$start_time +"%D %T")"
@@ -19,7 +18,7 @@ for i in $(seq $START $SIZE $END)
 do
     part=$(($i / $SIZE))
     echo
-    echo "====== tokenizing part$part $i ======"
+    echo "====== tokenizing part$part (from $i) ======"
     uv run python $PROJECT_BASE_PATH/src/data_processing/tokenize_and_slice_data.py \
         --tokenizer $TOKENIZER \
         -dn $DATA_NAME \

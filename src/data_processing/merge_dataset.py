@@ -34,7 +34,7 @@ def main():
     assert len(args.part_range) == 2
     from_part, end_part  = args.part_range
     for part in range(from_part, end_part + 1):
-        data_path = Path(args.data_dir) / f"part{part}"
+        data_path = Path(args.data_dir) / f"part_{part}"
         print(f"Loading dataset from {data_path}...")
         if not data_path.is_dir():
             continue
@@ -44,15 +44,6 @@ def main():
             datasets.append(dataset)
         except Exception as e:
             print(f"Failed to load dataset from {data_path}: {e}")
-    # for data_path in Path(args.data_dir).iterdir():
-    #     if not data_path.is_dir():
-    #         continue
-    #     try:
-    #         dataset = load_from_disk(str(data_path))
-    #         print(f"Loaded dataset from {data_path}(size: {len(dataset)})")
-    #         datasets.append(dataset)
-    #     except Exception as e:
-    #         print(f"Failed to load dataset from {data_path}: {e}")
 
     merged = {}
     if isinstance(datasets[0], Dataset):
