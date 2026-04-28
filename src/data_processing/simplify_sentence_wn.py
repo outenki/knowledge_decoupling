@@ -11,12 +11,11 @@ from functools import lru_cache
 from datasets.dataset_dict import DatasetDict
 from datasets.arrow_dataset import Dataset
 from nltk.corpus import wordnet as wn
-from lemminflect import getInflection
 
 from src.lib.basic_words.basic_words_850 import BASIC_WORDS_850
 from src.lib.basic_words.oxford_3000 import OXFORD_3000
 from src.lib.dataset import load_custom_dataset, slice_dataset, skip_dataset_by_column
-from src.lib.text import simple_split_text
+from src.lib.text import simple_split_text, inflect_candidate
 from src.lib.utils import print_args
 
 
@@ -119,21 +118,6 @@ def get_simple_candidate(token):
         # best_cand = sorted(candidates, key=lambda x: (len(x.split()), len(x)))[0]
         best_cand = candidates[0]
     return best_cand
-
-
-def inflect_candidate(lemma, target_tag):
-    if lemma is None:
-        return None
-    valid_tags = set([
-        "VB", "VBD", "VBG", "VBN", "VBP", "VBZ", "NN", "NNS",
-        "NNP", "NNPS", "JJ", "JJR", "JJS", "RB", "RBR", "RBS"
-    ])
-    if target_tag not in valid_tags:
-        return lemma
-    infl = getInflection(lemma, tag=target_tag)
-    if infl:
-        return infl[0]
-    return lemma
 
 
 def safe_texts(texts, max_len):

@@ -10,4 +10,4 @@
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/jobs/sft
 
-sh run_hf.sh commonsense_qa chat_template
+sh run_hf.sh commonsense_qa concat

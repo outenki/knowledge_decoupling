@@ -1,5 +1,5 @@
 #!/bin/bash
-#PJM -L "rscgrp=c-batch"
+#PJM -L "rscgrp=b-batch"
 #PJM -L "elapse=24:00:00"
 #PJM -L "gpu=4"
 #PJM -e logs/run_hf_gpt2_job_arc_challenge.err

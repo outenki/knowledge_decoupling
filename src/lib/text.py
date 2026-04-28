@@ -2,8 +2,8 @@ from spacy.lang.en import English
 from spacy.tokens import Doc
 import re
 
-import nltk
 from nltk.tokenize import sent_tokenize
+from lemminflect import getInflection
 
 
 NLP = English()
@@ -83,3 +83,18 @@ def simple_split_texts(texts: list) -> list[str]:
     for text in texts:
         res.extend(simple_split_text(text))
     return res
+
+
+def inflect_candidate(lemma, target_tag):
+    if lemma is None:
+        return None
+    valid_tags = set([
+        "VB", "VBD", "VBG", "VBN", "VBP", "VBZ", "NN", "NNS",
+        "NNP", "NNPS", "JJ", "JJR", "JJS", "RB", "RBR", "RBS"
+    ])
+    if target_tag not in valid_tags:
+        return None
+    infl = getInflection(lemma, tag=target_tag)
+    if infl:
+        return infl[0]
+    return None

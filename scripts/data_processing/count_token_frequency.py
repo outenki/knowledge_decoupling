@@ -12,6 +12,7 @@ import spacy
 from tqdm import tqdm
 
 DISABLED_PIPES = ["parser", "textcat"]
+NLP = None
 
 
 def parse_args() -> argparse.Namespace:
@@ -28,11 +29,15 @@ def parse_args() -> argparse.Namespace:
 
 
 def load_nlp(model_name: str):
-    try:
-        return spacy.load(model_name, disable=DISABLED_PIPES)
-    except OSError:
-        spacy.cli.download(model_name)
-        return spacy.load(model_name, disable=DISABLED_PIPES)
+    global NLP
+    if NLP is None:
+        try:
+            NLP = spacy.load(model_name, disable=DISABLED_PIPES)
+        except OSError:
+            spacy.cli.download(model_name)
+            NLP = spacy.load(model_name, disable=DISABLED_PIPES)
+        NLP.add_pipe('sentencizer')
+    return NLP
 
 
 def preprocess_text(text: str) -> str:
@@ -40,12 +45,15 @@ def preprocess_text(text: str) -> str:
 
 
 def count_doc_tokens(doc) -> Counter:
+    nlp = load_nlp("en_core_web_sm")
     token_count: Counter = Counter()
-    for token in doc:
-        if token.is_stop or token.is_punct or token.like_num:
-            continue
-        token_key = f"{token.lemma_.lower()}|{token.pos_}|{token.ent_type_}"
-        token_count[token_key] += 1
+    for sent in doc.sents:
+        doc = nlp(sent.text)
+        for token in doc:
+            if token.is_stop or token.is_punct or token.like_num or token.is_space or token.pos_ not in {"NOUN", "VERB", "ADJ", "ADV", "PROPN"}:
+                continue
+            token_key = f"{token.lemma_.lower()}|{token.pos_}|{token.ent_type_}"
+            token_count[token_key] += 1
     return token_count
 
 

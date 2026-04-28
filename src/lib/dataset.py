@@ -1,10 +1,12 @@
 from typing import Any
 from pathlib import Path
 from functools import partial
+from tqdm import tqdm
 
 from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
 from datasets.load import load_dataset, load_from_disk
+
 from src.lib.text import split_text_to_sentences
 
 
@@ -32,8 +34,10 @@ def load_custom_dataset(data_name: str, data_type: str | None, load_from: str) -
             return load_dataset("wikitext", "wikitext-103-v1")
         if data_name.lower() == "wikitext-2":
             return load_dataset("wikitext", "wikitext-2-v1")
-        if data_name.lower() == "smollm2":
+        if data_name.lower() == "smollm2-10B".lower():
             return load_dataset("EleutherAI/SmolLM2-135M-10B")
+        if data_name.lower() == "smollm2-20B".lower():
+            return load_dataset("EleutherAI/SmolLM2-135M-20B")
         else:
             return load_dataset(data_name)
     else:
@@ -71,7 +75,8 @@ def skip_dataset_by_column(dataset: Dataset, column_name, column_values):
 
 
 def slice_dataset(dataset: Dataset, start: int, limit: int) -> Dataset:
-    assert start <= len(dataset)
+    print(f"**** Slicing dataset from index {start} with limit {limit} ...")
+    assert start <= len(dataset), f"start index {start} is out of bounds for dataset of size {len(dataset)}"
     end = start + limit
     if end <= start or end >= len(dataset):
         end = len(dataset)
@@ -99,6 +104,18 @@ def simple_split_to_sents(dataset: Dataset, column, num_proc=1, batch_size=1000)
     )
     print(f"Output size of splitting: {len(dataset)}")
     return dataset
+
+
+def drop_skipped_sources(ds: Dataset, skip_sources):
+    if "source" not in ds.column_names:
+        return ds
+    sources = ds["source"]
+    kept_indices = [
+        index for index, source in tqdm(enumerate(sources), desc="Dropping skipped sources", total=len(sources)) if source not in skip_sources
+    ]
+    if len(kept_indices) == len(ds):
+        return ds
+    return kept_indices
 
 
 def format_qa_prompt(example):

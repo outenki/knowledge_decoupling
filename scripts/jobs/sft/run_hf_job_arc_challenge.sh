@@ -10,4 +10,4 @@
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/jobs/sft
 
-sh run_hf.sh arc_challenge chat_template
+sh run_hf.sh arc_challenge concat
