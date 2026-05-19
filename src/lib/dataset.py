@@ -119,49 +119,54 @@ def drop_skipped_sources(ds: Dataset, skip_sources):
 
 
 def format_qa_prompt(example):
-    prompt = "Question: " + example["prompt"]
-    prompt = prompt.strip() + "\n"
+    prompt = ""
+    context = example.get("context", "").strip()
+    if context:
+        prompt += "Context:\n" + context + "\n\n" 
+
+    question = example["question"]
+    prompt += "Question: " + question + "\n\n"
+
+    options = ""
     if "options" in example:
-        options = "\n".join(example["options"])
-        prompt += "\n"
+        options = "\n".join(example["options"]).strip()
+    if options:
         prompt += "Options:\n" + options + "\n\n"
+
     prompt += "Answer:\n"
     response = example["answer"]
     return prompt, response
 
 
 def generate_qa_message(example):
-    q = example["prompt"]
+    question = example["question"]
+    context = example.get("context", "").strip()
+    options = ""
     if "options" in example:
-        options = example["options"]
-    else:
-        options = []
+        options = "\n".join(example["options"]).strip()
     answer = example["answer"]
-    options_text = "\n".join(options)
 
-    if options:
-        return [
-            {
-                "role": "user",
-                "content": (
-                    f"Question:\n{q}\n\n"
-                    f"Options:\n{options_text}\n\n"
-                    "Answer using the exact text from the options."
-                )
-            },
-            {
-                "role": "assistant",
-                "content": answer
-            }
-        ]
-    else:
-        return [
-            {
-                "role": "user",
-                "content": q
-            },
-            {
-                "role": "assistant",
-                "content": answer
-            }
-        ]
+    content = f"Question:\n{q}\n\n"
+    if context:
+        content += f"Context:\n{context}\n\n"
+    if options and options:
+        content += f"Options:\n{options_text}\n\n"
+    if context and not options:
+        content += "Answer the question based on the context."
+    if not context and options:
+        content += "Answer the question using the exact text from the options."
+    if context and options:
+        content += "Answer the question using the exact text from the options based on the context."
+    if not context and not options:
+        content += "Answer the question."
+
+    return [
+        {
+            "role": "user",
+            "content": q
+        },
+        {
+            "role": "assistant",
+            "content": answer
+        }
+    ]

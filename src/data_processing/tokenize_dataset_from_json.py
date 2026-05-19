@@ -164,14 +164,15 @@ else:
 train_ds = Dataset.from_list(train_js)
 example = train_ds[0]
 if args.chat_template:
-    print("Chat Template:")
+    print("\n*****Chat Template:*****")
     print(generate_qa_message(example))
+    print("************************\n")
 else:
     prompt, response = format_qa_prompt(example)
-    print("Concat Template:")
+    print("\n*****Concat Template:*****")
     print(prompt + response)
+    print("**************************\n")
 
-print("Processing train data...")
 tokenized_train = train_ds.map(
     preprocess,
     remove_columns=train_ds.column_names,

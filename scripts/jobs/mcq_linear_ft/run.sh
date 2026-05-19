@@ -76,7 +76,7 @@ run_evaluate() {
     echo ">>> [Evaluating] Model: $m_path"
     uv run python "$SCRIPT_PATH/evaluate_linear.py" \
         --model-path "$m_path" \
-        --test-data "$PROJECT_BASE_PATH/input/evaluate_data/unformated/$EVALUATE_DATA/test.json" \
+        --test-data "$PROJECT_BASE_PATH/input/evaluate_data/$EVALUATE_DATA/test.json" \
         --sample-num 1000 \
         -o "$save_dir"
 }

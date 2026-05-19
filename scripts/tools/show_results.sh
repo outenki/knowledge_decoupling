@@ -11,6 +11,15 @@ while [[ $# -gt 0 ]]; do
                 exit 1
             fi
             ;;
+         -b|--base-model)
+            if [[ -n "$2" && "$2" != -* ]]; then
+                BASE_MODEL="$2"
+                shift 2
+            else
+                echo "err: -b | --base-model need a value"
+                exit 1
+            fi
+            ;;
         -d|--evaluate-data)
             if [[ -n "$2" && "$2" != -* ]]; then
                 EVALUATE_DATA="$2"
@@ -66,6 +75,7 @@ done
 missing_args=()
 [[ -z "$EVALUATE_DATA" ]] && missing_args+=("--evaluate-data")
 [[ -z "$EVALUATE_ON" ]] && missing_args+=("--evaluate-on")
+[[ -z "$BASE_MODEL" ]] && missing_args+=("--base-model")
 [[ -z "$CONFIG_NAME" ]] && missing_args+=("--config-name")
 [[ -z "$EVALUATE_DATA_FORMAT" ]] && missing_args+=("--evaluate-data-format")
 [[ -z "$LEARNING_RATE" ]] && missing_args+=("--learning-rate")
@@ -95,13 +105,15 @@ print_evaluate() {
     fi
 }
 
-CONFIG_PATH="$PROJECT_BASE_PATH/output/$CONFIG_NAME"
-for MODEL_PATH in \
     $CONFIG_PATH/random/rnd \
     $CONFIG_PATH/HuggingFace/hf \
     $CONFIG_PATH/smolLM2/smolLM2_bs1024_dl0_ep1 \
     $CONFIG_PATH/ss/smolLM2_135M_sents_shuffled_bs1024_ep1 \
     $CONFIG_PATH/nonce/smolLM2_nonce_mn3_bs1024_dl0_ep1
+CONFIG_PATH="$PROJECT_BASE_PATH/output/$CONFIG_NAME"
+for MODEL_PATH in \
+    $CONFIG_PATH/SmolLM2-135M-20B-bs4096/$BASE_MODEL \
+    $CONFIG_PATH/SmolLM2-135M-20B-bk_th2-bs4096/$BASE_MODEL
 do
     print_evaluate "$MODEL_PATH"
     for sft_split in test train

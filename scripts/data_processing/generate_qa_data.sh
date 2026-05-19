@@ -1,5 +1,5 @@
 #!/bin/bash
-OUTPUT_PATH=$PROJECT_BASE_PATH/input/evaluate_data/unformated/
+OUTPUT_PATH=$PROJECT_BASE_PATH/input/evaluate_data/
 EXT_TRAINING_PATH=$PROJECT_BASE_PATH/data/ext
 # echo ">>> ARC-Easy"
 # uv run python generate_qa_data.py -dn ai2_arc -sn ARC-Easy -p -o $OUTPUT_PATH/arc_easy

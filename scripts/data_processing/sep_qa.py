@@ -25,10 +25,10 @@ output_path.mkdir(exist_ok=True, parents=True)
 
 
 def sep_prompt_response(example, sep_token):
-    prompt = example["prompt"]
+    prompt = example["question"]
     prompt = prompt + " " + sep_token
     prompt = prompt.strip() + " "
-    example["prompt"] = prompt
+    example["question"] = prompt
     return example
 
 for split_name in ["train", "dev", "test"]:

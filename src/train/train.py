@@ -24,6 +24,7 @@ from src.lib.dataset import load_custom_dataset
 from src.lib.utils import print_args
 
 DECAY_RATE = 0.9
+random.seed(42)
 
 
 def training_args_to_dict(args: TrainingArguments) -> dict:
@@ -165,7 +166,7 @@ def load_model_from_pretrained(config_name: str, speedup: bool) -> Any:
             trust_remote_code=True
         )
     model.tie_weights()
-    model.gradient_checkpointing_enable()
+    # model.gradient_checkpointing_enable()
     model.config.use_cache = False
     return model
 
@@ -203,7 +204,7 @@ def load_model_from_config_random(config_name: str, speedup: bool) -> Any:
         if hasattr(module, "use_linear_attn"):
             module.use_linear_attn = False
     model.tie_weights()
-    model.gradient_checkpointing_enable()
+    # model.gradient_checkpointing_enable()
     model.config.use_cache = False
     print(">>> Checking random model parameters...")
     for name, p in model.named_parameters():
@@ -273,6 +274,13 @@ def main():
             json.dump(vars(args), f, indent=4)
     except Exception:
         print(f"‼️Failed to dumpt arguments!")
+    
+    run_id_path = Path(args.out_path) / "wandb_id.txt"
+    if run_id_path.exists():
+        run_id = run_id_path.read_text().strip()
+    else:
+        run_id = wandb.util.generate_id()
+        run_id_path.write_text(run_id)
 
     WANDB_RUN = wandb.init(
         # Set the wandb entity where your project will be logged (generally your team name).
@@ -341,7 +349,7 @@ def main():
     Path(log_path).mkdir(parents=True, exist_ok=True)
 
     train_dataset_size = len(train_dataset)
-    per_device_train_batch_size = 4
+    per_device_train_batch_size = 2
     gradient_accumulation_steps = max(1, 16 // per_device_train_batch_size)
     world_size = max(1, torch.cuda.device_count())
 

@@ -9,17 +9,18 @@ SCRIPT_PATH="$PROJECT_BASE_PATH"/src/train
 
 CONFIG_NAME=Qwen/Qwen3.5-0.8B-Base
 EPOCHS=1
-DATA_NAME=SmolLM2-135M-20B-bs4096
+DATA_NAME=SmolLM2-135M-20B-bk_th2-bs4096
 LR="2e-4"
 DATA_PATH="$PROJECT_BASE_PATH"/input/tokenized/$CONFIG_NAME/train/"$DATA_NAME"
+
 OUTPUT_PATH="$PROJECT_BASE_PATH"/output/$CONFIG_NAME/"$DATA_NAME"/base-ep$EPOCHS
 
 
 uv run python "$SCRIPT_PATH/train.py" \
     --speedup \
     -cn "$CONFIG_NAME" \
-    -cp "/home/pj24001974/ku50001571/projects/knowledge_decoupling/output/Qwen/Qwen3.5-0.8B-Base/SmolLM2-135M-20B-bs4096/base-ep1/checkpoint" \
     --random-init \
+    -cp "/home/pj24001974/ku50001571/projects/knowledge_decoupling/output/Qwen/Qwen3.5-0.8B-Base/SmolLM2-135M-20B-bk_th2-bs4096/base-ep1/checkpoint" \
     -dp "$DATA_PATH" \
     -dl 0 \
     --skip-eval \

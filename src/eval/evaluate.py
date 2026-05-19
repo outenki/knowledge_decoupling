@@ -140,7 +140,7 @@ def generate_few_shots_texts(examples: list[dict]) -> str:
     random.shuffle(examples)
     text = ""
     for _e in examples:
-        _t = _e["prompt"] + ' ' + _e["answer"] + "\n"
+        _t = _e["question"] + ' ' + _e["answer"] + "\n"
         text += _t
     return text.strip()
 
@@ -242,7 +242,7 @@ def score_samples(model, tokenizer, samples, score_on, generation_mode, format) 
 
     for sample in tqdm.tqdm(samples, total=len(samples), desc="scoring samples"):
         if format == "chat_template":
-            prompt = generate_qa_message(sample)
+            prompt = generate_qa_message(sample)[:-1]   # only messages with question and context, without answer
             prompt = tokenizer.apply_chat_template(prompt, tokenize=False, add_generation_prompt=True)
         else:
             prompt, _ = format_qa_prompt(sample)

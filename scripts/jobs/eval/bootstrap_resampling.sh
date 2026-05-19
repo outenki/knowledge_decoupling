@@ -85,7 +85,7 @@ run_evaluate() {
         --model "$m_path" \
         --mode full \
         --tokenizer "$CONFIG_NAME" \
-        --test-data "$PROJECT_BASE_PATH/input/evaluate_data/unformated/$EVALUATE_DATA/test.json" \
+        --test-data "$PROJECT_BASE_PATH/input/evaluate_data/$EVALUATE_DATA/test.json" \
         --score-on "$score_on" \
         --bootstrap 100 \
         --sample-num $sample_num \

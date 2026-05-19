@@ -113,11 +113,10 @@ def construct_data(
 
     result = {
         "id": qid,
-        "ori_context": ori_context,
-        "ori_question": ori_question,
-        "ori_options": ori_options,
+        "context": ori_context,
+        "question": ori_question,
+        "options": ori_options,
         "ori_answer": ori_answer,
-        "prompt": prompt,
         "answer": answer,
         "text": text
     }

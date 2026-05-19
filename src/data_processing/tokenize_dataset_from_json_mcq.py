@@ -25,11 +25,9 @@ if TOKENIZER.pad_token_id is None:
     TOKENIZER.pad_token = TOKENIZER.eos_token
 
 def preprocess_mcq(example):
-    question = example["prompt"]
+    question = example["question"]
     if "options" in example:
         options = example["options"]
-    elif "ori_options" in example:
-        options = example["ori_options"]
     else:
         raise ValueError("No options field found in example")
     answer = example["answer"]

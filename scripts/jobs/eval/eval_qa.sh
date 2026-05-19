@@ -79,7 +79,7 @@ run_evaluate() {
         --model "$m_path" \
         --mode full \
         --tokenizer "$CONFIG_NAME" \
-        --test-data "$PROJECT_BASE_PATH/input/evaluate_data/unformated/$EVALUATE_DATA/test.json" \
+        --test-data "$PROJECT_BASE_PATH/input/evaluate_data/$EVALUATE_DATA/test.json" \
         --score-on "$score_on" \
         --sample-num 1000 \
         -o "$save_dir"

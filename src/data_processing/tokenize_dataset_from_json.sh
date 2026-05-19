@@ -9,15 +9,20 @@ for dn in \
     commonsense_qa \
     arc_challenge \
     arc_easy \
+    google_re_long\
+    squad_v2_answerable \
     qasc
 do
     echo
-    echo ">>>>>> $dn"
+    echo ">>>>>> $dn sft concat train"
     uv run python ./tokenize_dataset_from_json.py \
         -mp \
         --tokenizer $TOKENIZER \
         --input-path $INPUT_PATH/$dn/train.json \
         --output-path $OUTPUT_PATH/$dn/train
+
+    echo
+    echo ">>>>>> $dn ext concat test"
     uv run python ./tokenize_dataset_from_json.py \
         -mp \
         --tokenizer $TOKENIZER \
@@ -31,16 +36,22 @@ for dn in \
     commonsense_qa \
     arc_challenge \
     arc_easy \
+    google_re_long \
+    google_re_short \
+    squad_v2_answerable \
     qasc
 do
     echo
-    echo ">>>>>> $dn"
+    echo ">>>>>> $dn sft chat_template train"
     uv run python ./tokenize_dataset_from_json.py \
         -ct \
         -mp \
         --tokenizer $TOKENIZER \
         --input-path $INPUT_PATH/$dn/train.json \
         --output-path $OUTPUT_PATH/$dn/train
+
+    echo
+    echo ">>>>>> $dn sft chat_template test"
     uv run python ./tokenize_dataset_from_json.py \
         -ct \
         -mp \
@@ -56,14 +67,20 @@ for dn in \
     commonsense_qa \
     arc_challenge \
     arc_easy \
+    google_re_long \
+    google_re_short \
+    squad_v2_answerable \
     qasc
 do
     echo
-    echo ">>>>>> $dn"
+    echo ">>>>>> $dn ext concat train"
     uv run python ./tokenize_dataset_from_json.py \
         --tokenizer $TOKENIZER \
         --input-path $INPUT_PATH/$dn/train.json \
         --output-path $OUTPUT_PATH/$dn/train
+    
+    echo
+    echo ">>>>>> $dn ext concat test"
     uv run python ./tokenize_dataset_from_json.py \
         --tokenizer $TOKENIZER \
         --input-path $INPUT_PATH/$dn/test.json \
@@ -76,15 +93,20 @@ for dn in \
     commonsense_qa \
     arc_challenge \
     arc_easy \
+    google_re_long \
+    google_re_short \
+    squad_v2_answerable \
     qasc
 do
     echo
-    echo ">>>>>> $dn"
+    echo ">>>>>> $dn ext chat_template train"
     uv run python ./tokenize_dataset_from_json.py \
         -ct \
         --tokenizer $TOKENIZER \
         --input-path $INPUT_PATH/$dn/train.json \
         --output-path $OUTPUT_PATH/$dn/train
+    echo
+    echo ">>>>>> $dn ext chat_template test"
     uv run python ./tokenize_dataset_from_json.py \
         -ct \
         --tokenizer $TOKENIZER \
@@ -101,8 +123,8 @@ done
     # cflx_clasheval \
     # cflx_nq_swap \
     # cwq \
-    # google_re_long_context \
-    # google_re_short_context \
+    # google_re_long \
+    # google_re_short \
     # google_re_no_context \
     # metaqa_1hop \
     # metaqa_2hop \
@@ -110,7 +132,7 @@ done
     # mintaka \
     # mintaka_multihop \
     # squad_v2 \
-    # squad_v2_ctxt_answerable \
+    # squad_v2_answerable \
     # squad_v2_wo_ctxt
 # for dn in \
 #     commonsense_qa \

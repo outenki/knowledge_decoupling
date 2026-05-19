@@ -115,7 +115,7 @@ def main():
 
     evaluated_samples = []
     for sample in eval_samples:
-        input_ids = encode_mcq(sample["prompt"], sample["options"], tokenizer)
+        input_ids = encode_mcq(sample["question"], sample["options"], tokenizer)
         pred, scores = predict(model, input_ids, device)
         sample["pred"] = pred
         sample["scores"] = scores

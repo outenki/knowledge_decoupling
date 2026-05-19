@@ -1,8 +1,9 @@
 #!/bin/bash
 TOKENIZER=$1
 PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-$HOME/projects/knowledge_decoupling}"
-DATA_NAME="SmolLM2-20B"
-DATA_PATH=$PROJECT_BASE_PATH/data/$DATA_NAME/
+DATA_NAME="SmolLM2-135M-20B-bk_th2"
+DATA_PATH=$PROJECT_BASE_PATH/data/$DATA_NAME
+KEPT_INDICES_PATH=$PROJECT_BASE_PATH/data/$DATA_NAME/kept_indices.json 
 OUTPUT_PATH=$PROJECT_BASE_PATH/data/$DATA_NAME/tokenized/$TOKENIZER
 ITER_NUM=1
 SIZE=2000000
@@ -21,11 +22,11 @@ do
     echo "====== tokenizing part$part (from $i) ======"
     uv run python $PROJECT_BASE_PATH/src/data_processing/tokenize_and_slice_data.py \
         --tokenizer $TOKENIZER \
-        -dn $DATA_NAME \
-        -lf hf \
+        -dn $DATA_PATH \
+        -lf local \
         -dc text \
         -ds train \
-        -ki $DATA_PATH/kept_indices.json \
+        -ki $KEPT_INDICES_PATH \
         --start-from $i \
         --limit $SIZE \
         -t \
