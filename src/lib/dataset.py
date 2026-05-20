@@ -146,11 +146,11 @@ def generate_qa_message(example):
         options = "\n".join(example["options"]).strip()
     answer = example["answer"]
 
-    content = f"Question:\n{q}\n\n"
+    content = f"Question:\n{question}\n\n"
     if context:
         content += f"Context:\n{context}\n\n"
     if options and options:
-        content += f"Options:\n{options_text}\n\n"
+        content += f"Options:\n{options}\n\n"
     if context and not options:
         content += "Answer the question based on the context."
     if not context and options:
@@ -163,7 +163,7 @@ def generate_qa_message(example):
     return [
         {
             "role": "user",
-            "content": q
+            "content": content
         },
         {
             "role": "assistant",

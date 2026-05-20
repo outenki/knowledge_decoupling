@@ -111,6 +111,7 @@ EPOCHS=3
 
 
 run_evaluate() {
+    echo
     local m_path="$1"
  
     local save_dir="$m_path/evaluation/options/0_shots/$EVALUATE_DATA/$DATA_FORMAT"
@@ -125,7 +126,6 @@ run_evaluate() {
         --data-format "$DATA_FORMAT" \
         -o "$save_dir"
     echo ">>> [Evaluating on generation] Model: $m_path"
-
     local save_dir="$m_path/evaluation/generation/0_shots/$EVALUATE_DATA/$DATA_FORMAT"
     uv run python "$SCRIPT_PATH/eval/evaluate.py" \
         --model "$m_path" \

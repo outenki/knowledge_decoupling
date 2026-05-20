@@ -114,6 +114,7 @@ run_evaluate() {
     local m_path="$1"
     local save_dir="$m_path/evaluation/options/0_shots/$EVALUATE_DATA/$DATA_FORMAT"
  
+    echo
     echo ">>> [Evaluating on options] Model: $m_path"
     uv run python "$SCRIPT_PATH/eval/evaluate.py" \
         --model "$m_path" \
