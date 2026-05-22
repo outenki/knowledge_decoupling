@@ -105,11 +105,11 @@ print_evaluate() {
     fi
 }
 
-    $CONFIG_PATH/random/rnd \
-    $CONFIG_PATH/HuggingFace/hf \
-    $CONFIG_PATH/smolLM2/smolLM2_bs1024_dl0_ep1 \
-    $CONFIG_PATH/ss/smolLM2_135M_sents_shuffled_bs1024_ep1 \
-    $CONFIG_PATH/nonce/smolLM2_nonce_mn3_bs1024_dl0_ep1
+    # $CONFIG_PATH/random/rnd \
+    # $CONFIG_PATH/HuggingFace/hf \
+    # $CONFIG_PATH/smolLM2/smolLM2_bs1024_dl0_ep1 \
+    # $CONFIG_PATH/ss/smolLM2_135M_sents_shuffled_bs1024_ep1 \
+    # $CONFIG_PATH/nonce/smolLM2_nonce_mn3_bs1024_dl0_ep1
 CONFIG_PATH="$PROJECT_BASE_PATH/output/$CONFIG_NAME"
 for MODEL_PATH in \
     $CONFIG_PATH/SmolLM2-135M-20B-bs4096/$BASE_MODEL \

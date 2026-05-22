@@ -2,6 +2,7 @@ from typing import Any
 from pathlib import Path
 from functools import partial
 from tqdm import tqdm
+import json
 
 from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
@@ -80,6 +81,7 @@ def slice_dataset(dataset: Dataset, start: int, limit: int) -> Dataset:
     end = start + limit
     if end <= start or end >= len(dataset):
         end = len(dataset)
+    print(f"**** {end - start} samples selected...")
     return dataset.select(range(start, end))
 
 
@@ -170,3 +172,18 @@ def generate_qa_message(example):
             "content": answer
         }
     ]
+
+
+def select_data_by_indices(dataset: Dataset, indices_fn: str) -> Dataset:
+    kept_indices = None
+    if not Path(indices_fn).is_file():
+        print(f"Warning: kept indices file not found at {indices_fn}. All examples will be kept.")
+    else:
+        with open(indices_fn, "r") as f:
+            kept_indices = json.load(f)
+        percent = (len(kept_indices) / len(dataset)) * 100 if len(dataset) else 0
+        print(f"  -> {len(kept_indices)} ({percent:.2f}%) examples will be kept based on the provided indices.")
+        print(">>> Filtering dataset based on kept indices ...")
+        dataset = dataset.select(kept_indices)
+        print(f"  -> Dataset size after filtering: {len(dataset)}")
+    return dataset

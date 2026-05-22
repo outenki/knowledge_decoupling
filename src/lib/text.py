@@ -1,5 +1,4 @@
 from spacy.lang.en import English
-from spacy.tokens import Doc
 import re
 
 from nltk.tokenize import sent_tokenize
@@ -98,3 +97,11 @@ def inflect_candidate(lemma, target_tag):
     if infl:
         return infl[0]
     return None
+
+
+def safe_texts(texts, max_len):
+    for t in texts:
+        if len(t) <= max_len:
+            yield t
+        else:
+            yield ""

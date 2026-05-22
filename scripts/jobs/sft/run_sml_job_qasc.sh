@@ -10,5 +10,5 @@
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/jobs/sft
 
-sh run_sml.sh qasc concat
+# sh run_sml.sh qasc concat
 sh run_sml.sh qasc chat_template

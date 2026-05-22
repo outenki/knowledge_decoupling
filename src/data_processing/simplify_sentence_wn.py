@@ -15,7 +15,7 @@ from nltk.corpus import wordnet as wn
 from src.lib.basic_words.basic_words_850 import BASIC_WORDS_850
 from src.lib.basic_words.oxford_3000 import OXFORD_3000
 from src.lib.dataset import load_custom_dataset, slice_dataset, skip_dataset_by_column
-from src.lib.text import simple_split_text, inflect_candidate
+from src.lib.text import simple_split_text, inflect_candidate, safe_texts
 from src.lib.utils import print_args
 
 
@@ -118,14 +118,6 @@ def get_simple_candidate(token):
         # best_cand = sorted(candidates, key=lambda x: (len(x.split()), len(x)))[0]
         best_cand = candidates[0]
     return best_cand
-
-
-def safe_texts(texts, max_len):
-    for t in texts:
-        if len(t) <= max_len:
-            yield t
-        else:
-            yield ""
 
 
 def simplify_long_text(text: str):

@@ -21,10 +21,7 @@ def read_args():
     parser.add_argument("--tokenize", "-t", action="store_true")
     parser.add_argument("--slice", "-s", action="store_true")
     parser.add_argument("--block-size", "-bs", type=int, required=True)
-    parser.add_argument(
-        "--kept-indices", "-ki", type=str, default=None,
-        help="Path to json file"
-    )
+    parser.add_argument( "--kept-indices", "-ki", type=str, default=None, help="Path to json file")
     parser.add_argument(
         '--start-from', '-sf', dest='start_from', type=int, default=0, required=False,
         help='Start offset before shuffling.'

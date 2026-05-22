@@ -437,6 +437,36 @@ def main():
 
     # Load checkpoint if provided
     checkpoint = args.checkpoint
+    def inspect_checkpoint(cp_path: str) -> dict:
+        info = {
+            "exists": False,
+            "is_dir": False,
+            "files": [],
+            "has_model": False,
+            "has_optimizer": False,
+            "has_scheduler": False,
+            "has_trainer_state": False,
+        }
+        if cp_path is None:
+            return info
+        p = Path(cp_path)
+        if not p.exists():
+            return info
+        info["exists"] = True
+        info["is_dir"] = p.is_dir()
+        try:
+            if p.is_dir():
+                info["files"] = [f.name for f in p.iterdir()]
+            else:
+                info["files"] = [p.name]
+        except Exception:
+            info["files"] = []
+        fnames = set(info["files"])
+        info["has_model"] = any(n in fnames for n in ("pytorch_model.bin", "pytorch_model.pt", "tf_model.h5")) or (p / "pytorch_model.bin").exists()
+        info["has_optimizer"] = "optimizer.pt" in fnames or (p / "optimizer.pt").exists()
+        info["has_scheduler"] = "scheduler.pt" in fnames or (p / "scheduler.pt").exists()
+        info["has_trainer_state"] = "trainer_state.json" in fnames or (p / "trainer_state.json").exists()
+        return info
     if args.init_model and not checkpoint:
         print(f">>> Staring from model: {args.init_model}")
     elif not checkpoint or not Path(checkpoint).exists() or not Path(checkpoint).is_dir():
@@ -444,6 +474,50 @@ def main():
         print(">>> Starting from random model")
     else:
         print(f">>> Resuming from checkpoint: {checkpoint}")
+        ck_info = inspect_checkpoint(checkpoint)
+        print(f">>> Checkpoint info: exists={ck_info['exists']}, is_dir={ck_info['is_dir']}, files={ck_info['files']}")
+        # Try to load optimizer/scheduler state if available. Use CPU map_location to avoid device mismatch.
+        try:
+            opt_path = Path(checkpoint) / "optimizer.pt"
+            if opt_path.exists():
+                opt_state = torch.load(opt_path, map_location="cpu")
+                try:
+                    optimizer.load_state_dict(opt_state)
+                    print(">>> Optimizer state loaded from checkpoint")
+                except Exception as e:
+                    print(f"‼️ Failed to load optimizer state: {e}")
+            sch_path = Path(checkpoint) / "scheduler.pt"
+            if sch_path.exists():
+                sch_state = torch.load(sch_path, map_location="cpu")
+                try:
+                    scheduler_ws.load_state_dict(sch_state)
+                    print(">>> Scheduler state loaded from checkpoint")
+                except Exception as e:
+                    print(f"‼️ Failed to load scheduler state: {e}")
+        except Exception as e:
+            print(f"‼️ Error while inspecting/loading checkpoint auxiliary files: {e}")
+        # If a raw model state dict exists, report mismatches when trying a non-strict load.
+        try:
+            model_state_path = Path(checkpoint) / "pytorch_model.bin"
+            if model_state_path.exists():
+                print(">>> Found raw model weights in checkpoint; attempting a non-strict load to report mismatches.")
+                state_dict = torch.load(model_state_path, map_location="cpu")
+                # strip possible 'module.' prefix
+                new_state = {}
+                for k, v in state_dict.items():
+                    nk = k[len("module."):] if k.startswith("module.") else k
+                    new_state[nk] = v
+                try:
+                    load_res = model.load_state_dict(new_state, strict=False)
+                    missing = getattr(load_res, "missing_keys", None) or load_res.get("missing_keys") if isinstance(load_res, dict) else []
+                    unexpected = getattr(load_res, "unexpected_keys", None) or load_res.get("unexpected_keys") if isinstance(load_res, dict) else []
+                    print(f">>> Model load (non-strict) reported missing keys: {missing}")
+                    print(f">>> Model load (non-strict) reported unexpected keys: {unexpected}")
+                except Exception as e:
+                    print(f"‼️ Failed to load model state dict from checkpoint (non-strict): {e}")
+        except Exception as e:
+            print(f"‼️ Error while inspecting/loading model weights: {e}")
+    # Use Trainer's resume functionality. Pass the checkpoint path (or None) so Trainer can restore trainer state.
     trainer.train(resume_from_checkpoint=checkpoint)
     print(f">>> Save model to: {args.out_path}")
     model.save_pretrained(Path(args.out_path))
