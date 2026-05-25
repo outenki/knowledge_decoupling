@@ -78,6 +78,9 @@ def skip_dataset_by_column(dataset: Dataset, column_name, column_values):
 def slice_dataset(dataset: Dataset, start: int, limit: int) -> Dataset:
     print(f"**** Slicing dataset from index {start} with limit {limit} ...")
     assert start <= len(dataset), f"start index {start} is out of bounds for dataset of size {len(dataset)}"
+    if start == 0 and limit <= 0:
+        print(f"**** {len(dataset)} samples selected...")
+        return dataset
     end = start + limit
     if end <= start or end >= len(dataset):
         end = len(dataset)

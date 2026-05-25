@@ -5,7 +5,6 @@ from datasets.dataset_dict import DatasetDict
 from datasets.arrow_dataset import Dataset
 from math import ceil
 from pathlib import Path
-import json
 
 import tqdm
 
@@ -13,7 +12,7 @@ from src.lib.dataset import load_custom_dataset, load_texts_from_dataset_batch
 from src.lib.dataset import slice_dataset, select_data_by_indices
 from src.lib.utils import print_args
 from src.lib.text import split_text_to_sentences
-from src.lib.nonce_data import generate_nonce_word_bank
+from src.lib.nonce_data import generate_nonce_word_bank, save_nonce_word_bank
 
 
 SKIP_SOURCES = {"finemath", "stack_edu", "infimm_webmath", "stack-edu", "infimm-webmath"}
@@ -41,7 +40,7 @@ def read_args():
     )
     parser.add_argument(
         '--out-path', '-o', dest='out_path', type=str,
-        help='Path to save the dataset with nonce sentences.'
+        help='Output path for the nonce word bank. Prefer a .lmdb path for large banks.'
     )
     return parser.parse_args()
 
@@ -101,9 +100,7 @@ def main():
     nonce_bank = generate_nonce_bank_from_dataset(dt, args.multi_process)
     
     out_path = Path(args.out_path)
-    out_path.parent.mkdir(parents=True, exist_ok=True)
-    with open(out_path, "w") as f:
-        json.dump(nonce_bank, f, indent=4)
+    save_nonce_word_bank(nonce_bank, out_path)
     print(f"Nonce bank saved to {out_path}.")
 
 

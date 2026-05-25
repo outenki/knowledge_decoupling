@@ -7,12 +7,12 @@ OUTPUT_PATH=$PROJECT_BASE_PATH/data/$DATA_NAME/nonce/
 start_time=$(date +"%s")
 echo "start time: $(date -d @$start_time +"%D %T")"
 
+    # -mp \
 uv run python $PROJECT_BASE_PATH/src/data_processing/nonce_data/generate_nonce_data.py \
     -d $DATA_NAME \
     -l 10 \
     -sp train \
-    -nwb $PROJECT_BASE_PATH/data/$DATA_NAME/nonce/nonce_word_bank.json \
-    -mp \
+    -nwb $PROJECT_BASE_PATH/data/$DATA_NAME/nonce/nonce_word_bank.lmdb \
     -lf hf \
     -ki $DATA_PATH/kept_indices.json \
     -o $OUTPUT_PATH

@@ -1,13 +1,12 @@
 # %%
 import argparse
+import json
+import math
+import tempfile
 from datasets.dataset_dict import DatasetDict
 from datasets.arrow_dataset import Dataset
 from pathlib import Path
-import tqdm
-import json
 import multiprocessing
-
-import tqdm
 
 from src.lib.dataset import load_custom_dataset, select_data_by_indices
 from src.lib.dataset import slice_dataset
@@ -20,8 +19,7 @@ from src.lib.nonce_data import generate_nonce_for_dataset
 #     print("Using CPU")
 
 CPU_NUM = min(2, multiprocessing.cpu_count())
-BATCH_SIZE = 64
-NONCE_WORD_BANK = {}
+PART_SIZE = 10_000
 
 
 def read_args():
@@ -43,7 +41,7 @@ def read_args():
     )
     parser.add_argument(
         '--nonce-word-bank', '-nwb', dest='nonce_word_bank', type=str, default="",
-        help='Path to existing nonce word bank.'
+        help='Path to an existing nonce word bank. Prefer a sharded bank directory for large banks.'
     )
     parser.add_argument(
         '--multi-process', '-mp', dest='multi_process', action='store_true',
@@ -61,28 +59,53 @@ def read_args():
         '--out-path', '-o', dest='out_path', type=str,
         help='Path to save the dataset with nonce sentences.'
     )
+    parser.add_argument(
+        '--part-size', dest='part_size', type=int, default=PART_SIZE,
+        help='Number of rows to process and save per output part.'
+    )
     return parser.parse_args()
 
 
-def _prcocess_dataset(
-    dataset: Dataset, start_from: int, data_limit: int, args
-) -> Dataset | None:
-    dt = slice_dataset(dataset, start_from, data_limit)
+def _process_dataset(dataset: Dataset, args) -> tuple[int, int, Path]:
+    dt = slice_dataset(dataset, args.start_from, args.data_limit)
     print(f"Dataset has {dt.num_rows} samples after slicing.")
-    nonce_word_bank_js = args.nonce_word_bank
+    bank_path = Path(args.nonce_word_bank)
+    if bank_path.is_file() and bank_path.suffix == ".json":
+        bank_size_gb = bank_path.stat().st_size / (1024 ** 3)
+        print(
+            f"Warning: nonce word bank is a JSON file ({bank_size_gb:.2f} GiB). "
+            "Large JSON banks are still memory-heavy. Prefer regenerating the bank as a sharded directory."
+        )
 
-    print(f"Loading nonce word bank from {nonce_word_bank_js}...")
-    with tqdm.open(nonce_word_bank_js, mode='r', encoding='utf-8', total=None, unit='B', unit_scale=True, desc="加载 JSON") as f:
-        nonce_word_bank = json.load(f)
+    out_path = Path(args.out_path)
+    parts_dir = Path(tempfile.mkdtemp(prefix="parts_", dir=str(out_path)))
 
-    processed_dataset = generate_nonce_for_dataset(
-        dt,
-        multi_process=args.multi_process,
-        max_n=args.max_n,
-        nonce_word_bank=nonce_word_bank,
-        keep_word_identical=args.keep_word_identical,
-    )
-    return processed_dataset
+    total_rows = len(dt)
+    total_parts = math.ceil(total_rows / args.part_size) if total_rows else 0
+    example_written = False
+
+    for part_idx in range(total_parts):
+        start = part_idx * args.part_size
+        end = min(start + args.part_size, total_rows)
+        print(f"**** Processing part {part_idx + 1}/{total_parts}: rows [{start}, {end})")
+        batch = dt.select(range(start, end))
+        processed_dataset = generate_nonce_for_dataset(
+            batch,
+            multi_process=args.multi_process,
+            max_n=args.max_n,
+            nonce_word_bank=args.nonce_word_bank,
+            keep_word_identical=args.keep_word_identical,
+        )
+        part_path = parts_dir / f"part_{part_idx:05d}"
+        processed_dataset.save_to_disk(str(part_path), max_shard_size="500MB")
+
+        if not example_written and len(processed_dataset) > 0:
+            processed_dataset.select(range(min(5, len(processed_dataset)))).to_json(
+                out_path / "example_sentences.json"
+            )
+            example_written = True
+
+    return total_parts, total_rows, parts_dir
 
 
 def main():
@@ -91,9 +114,9 @@ def main():
     out_path = args.out_path
     Path(out_path).mkdir(parents=True, exist_ok=True)
     if args.multi_process:
-        print("Multi process for NLP.pipe")
+        print("Using spaCy multi-process inside each part.")
     else:
-        print("NON-Multi process for NLP.pipe")
+        print("Using single-process spaCy pipeline.")
 
     # ========  Load dataset ========
     print("**** Loading dataset...")
@@ -110,12 +133,20 @@ def main():
 
     # ======== Generate nonce sentences ========
     print("**** Processing dataset ...")
-    dataset = _prcocess_dataset(dataset, args.start_from, args.data_limit, args)
-    if dataset:
-        print(f"Dataset has {dataset.num_rows} samples after generating nonce sentences.")
-        print(f"Saving dataset with nonce sentences to {out_path}...")
-        dataset.save_to_disk(out_path)
-        dataset.select(range(5)).to_json(Path(args.out_path) / "example_sentences.json")
+    total_parts, total_rows, parts_dir = _process_dataset(dataset, args)
+    with open(Path(out_path) / "manifest.json", "w", encoding="utf-8") as f:
+        json.dump(
+            {
+                "parts_dir": str(parts_dir),
+                "part_size": args.part_size,
+                "total_parts": total_parts,
+                "total_input_rows": total_rows,
+            },
+            f,
+            indent=2,
+        )
+    print(f"Saved {total_rows} input rows into {total_parts} processed part(s) under {parts_dir}")
+    print("Use src/data_processing/merge_dataset.py to merge parts later if you need a single dataset directory.")
 
 
 if __name__ == "__main__":

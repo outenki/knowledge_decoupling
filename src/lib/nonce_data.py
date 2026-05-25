@@ -1,9 +1,11 @@
 """
 Nonce data handling utilities.
 """
-import multiprocessing
 import itertools
-import tempfile
+import multiprocessing
+import json
+import lmdb
+import pickle
 from typing import Any
 from math import ceil
 from functools import partial
@@ -23,9 +25,123 @@ from src.lib.text import split_text_to_sentences
 
 CPU_NUM = min(4, multiprocessing.cpu_count())
 NLP = spacy.load("en_core_web_sm")
-BATCH_SIZE = 64
+BATCH_SIZE = 1
 NONCE_WORD_BANK = {}
+NONCE_WORD_BANK_SOURCE = None
 random.seed(42)
+
+
+class LMDBNonceWordBank:
+    def __init__(self, db_path: str | Path):
+        self.db_path = Path(db_path)
+        if not self.db_path.exists():
+            raise FileNotFoundError(f"Missing nonce word bank database: {self.db_path}")
+        self._env = lmdb.open(
+            str(self.db_path),
+            subdir=self.db_path.is_dir(),
+            readonly=True,
+            lock=False,
+            readahead=False,
+            meminit=False,
+            max_readers=1024,
+        )
+        self._cache: dict[str, list[tuple[str, str]]] = {}
+
+    def get(self, morph_key: str, default: list | None = None) -> list[tuple[str, str]]:
+        if morph_key not in self._cache:
+            with self._env.begin() as txn:
+                payload = txn.get(morph_key.encode("utf-8"))
+            self._cache[morph_key] = pickle.loads(payload) if payload is not None else []
+        if default is None:
+            default = []
+        return self._cache.get(morph_key, default)
+
+    def items(self):
+        with self._env.begin() as txn:
+            with txn.cursor() as cursor:
+                for key, value in cursor:
+                    yield key.decode("utf-8"), pickle.loads(value)
+
+    def __len__(self) -> int:
+        with self._env.begin() as txn:
+            stat = txn.stat()
+        return int(stat["entries"])
+
+
+def _estimate_lmdb_map_size(bank: dict[str, list]) -> int:
+    estimated = 0
+    sample_limit = 1024
+    for idx, (morph, words) in enumerate(bank.items()):
+        estimated += len(morph.encode("utf-8")) + len(pickle.dumps(words, protocol=pickle.HIGHEST_PROTOCOL))
+        if idx + 1 >= sample_limit:
+            avg = estimated / sample_limit
+            estimated = int(avg * len(bank))
+            break
+    if not estimated:
+        estimated = 1 << 20
+    return max(estimated * 2, 1 << 30)
+
+
+def create_lmdb_nonce_word_bank(bank: dict[str, list], out_path: str | Path) -> None:
+    out_path = Path(out_path)
+    if out_path.exists():
+        if out_path.is_dir():
+            for child in out_path.iterdir():
+                child.unlink()
+        else:
+            out_path.unlink()
+    out_path.mkdir(parents=True, exist_ok=True)
+
+    env = lmdb.open(
+        str(out_path),
+        subdir=True,
+        map_size=_estimate_lmdb_map_size(bank),
+        readonly=False,
+        meminit=False,
+        map_async=True,
+        writemap=True,
+        lock=True,
+    )
+    try:
+        with env.begin(write=True) as txn:
+            for morph, words in tqdm(bank.items(), desc="Writing nonce bank lmdb", total=len(bank)):
+                txn.put(
+                    morph.encode("utf-8"),
+                    pickle.dumps(words, protocol=pickle.HIGHEST_PROTOCOL),
+                )
+    finally:
+        env.sync()
+        env.close()
+
+
+def save_nonce_word_bank(bank: dict[str, list], out_path: str | Path) -> None:
+    out_path = Path(out_path)
+    if out_path.suffix == ".lmdb" or not out_path.suffix:
+        create_lmdb_nonce_word_bank(bank, out_path)
+        return
+    if out_path.suffix == ".json":
+        out_path.parent.mkdir(parents=True, exist_ok=True)
+        with open(out_path, "w", encoding="utf-8") as f:
+            json.dump(bank, f)
+        return
+
+
+def load_nonce_word_bank(bank_source: dict | str | Path):
+    if isinstance(bank_source, dict):
+        return bank_source
+
+    bank_path = Path(bank_source)
+    if bank_path.suffix == ".lmdb" or (bank_path.is_dir() and (bank_path / "data.mdb").exists()):
+        return LMDBNonceWordBank(bank_path)
+    if bank_path.suffix == ".json":
+        print("Warning: loading a JSON nonce word bank will materialize the full file in memory.")
+        with open(bank_path, "r", encoding="utf-8") as f:
+            return json.load(f)
+
+    raise ValueError(
+        f"Unsupported nonce word bank path: {bank_path}. "
+        "Use a sharded bank directory or a JSON file."
+    )
 
 
 def serialize_morph(morph_tuple) -> str:
@@ -92,9 +208,9 @@ def generate_nonce_word_bank(texts, multi_process) -> dict:
 
     # need the full pipeline for sentence segmentation
     if multi_process:
-        docs = NLP.pipe(texts, batch_size=64, n_process=CPU_NUM)
+        docs = NLP.pipe(texts, batch_size=BATCH_SIZE, n_process=CPU_NUM)
     else:
-        docs = NLP.pipe(texts, batch_size=64)
+        docs = NLP.pipe(texts, batch_size=BATCH_SIZE)
 
     for doc in docs:
         for token in doc:
@@ -123,7 +239,7 @@ def match_nonce_words(token: Token, max_n: int, keep_word_identical: bool) -> li
     """
     text, lemma, morph = extract_token_morph_features(token)
     key = serialize_morph(morph)
-    candidates = NONCE_WORD_BANK.get(key, [])
+    candidates = list(NONCE_WORD_BANK.get(key, []))
     if len(candidates) <= 1:
         return []
 
@@ -169,10 +285,15 @@ def generate_nonce_sentence(doc, max_n: int, keep_word_identical: bool) -> list:
     """
     # get content words
     content_words = [token for token in doc if is_content_word(token)]
+    if not content_words:
+        return []
 
     # get nonce words for each content word
     nonce_words_per_token = []
     matched_content_word_num = 0
+    print(f"Generating nonce sentence for: {doc.text}")
+    print(f"Content words: {[t.text for t in content_words]}")
+    print("Matching nonce words for each content word...")
     for token in content_words:
         candidates = match_nonce_words(token, max_n, keep_word_identical)
         if not candidates:
@@ -190,10 +311,14 @@ def generate_nonce_sentence(doc, max_n: int, keep_word_identical: bool) -> list:
         # ...
         nonce_words_per_token.append(candidates)
     assert len(nonce_words_per_token) == len(content_words)
+    print(f"Matched nonce words: {nonce_words_per_token}")
 
     content_indices = [t.i for t in content_words]
     ori_words = [t.text_with_ws for t in doc]
+    print("Generating possible candidates by producing the Cartesian product of nonce words for each content word...")
     nonce_words = random.sample(list(itertools.product(*nonce_words_per_token)), k=max_n)
+    # nonce_words = list(zip(*nonce_words_per_token))[:max_n]
+    print("Generating nonce sentences by replacing content words with matched nonce words...")
     nonce_sentences = []
     for cand in nonce_words:
         nonce_sent_words = ori_words.copy()
@@ -220,18 +345,36 @@ def generate_nonce_for_examples(examples, multi_process: bool, max_n: int, keep_
     assert NLP is not None, "NLP should be initialized"
     texts = examples["text"]
     sents = []
+    print(f"Generating nonce sentences for a batch of {len(texts)} texts...")
     for text in texts:
         sents.extend(split_text_to_sentences(text))
+    print(f"Split into {len(sents)} sentences. Generating nonce sentences...")
 
-    nonce = []
+    print(f"Processing sentences in batches of {BATCH_SIZE} with multi_process={multi_process}...")
     if multi_process:
-        docs = NLP.pipe(safe_texts(sents, NLP.max_length), batch_size=64, n_process=CPU_NUM)
+        docs = NLP.pipe(safe_texts(sents, NLP.max_length), batch_size=BATCH_SIZE, n_process=CPU_NUM)
     else:
-        docs = NLP.pipe(safe_texts(sents, NLP.max_length), batch_size=64)
+        docs = NLP.pipe(safe_texts(sents, NLP.max_length), batch_size=BATCH_SIZE)
     nonce = []
+    
+    ori_texts = []
+    nonce_texts = []
+    matched_content_word_nums = []
+    total_content_word_nums = []
     for doc in docs:
-        nonce.append(generate_nonce_sentence(doc, max_n, keep_word_identical))
-    return nonce
+        nonce_sentences = generate_nonce_sentence(doc, max_n, keep_word_identical)
+        for item in nonce_sentences:
+            ori_texts.append(item["ori_text"])
+            nonce_texts.append(item["nonce_text"])
+            matched_content_word_nums.append(item["matched_content_word_num"])
+            total_content_word_nums.append(item["total_content_word_num"])
+
+    return {
+        "text": ori_texts,
+        "nonce": nonce_texts,
+        "matched_content_word_num": matched_content_word_nums,
+        "total_content_word_num": total_content_word_nums,
+    }
 
 
 def generate_nonce_for_dataset(
@@ -239,14 +382,15 @@ def generate_nonce_for_dataset(
     multi_process: bool,
     max_n: int,
     keep_word_identical: bool,
-    nonce_word_bank: dict,
+    nonce_word_bank: dict | str | Path,
 ):
     batch_number = ceil(dataset.num_rows / BATCH_SIZE)
     print(f"***Processing {dataset.num_rows} samples in {batch_number} batches of size {BATCH_SIZE}...")
 
-    global NONCE_WORD_BANK
-    if not NONCE_WORD_BANK:
-        NONCE_WORD_BANK = nonce_word_bank
+    global NONCE_WORD_BANK, NONCE_WORD_BANK_SOURCE
+    if NONCE_WORD_BANK_SOURCE != nonce_word_bank:
+        NONCE_WORD_BANK = load_nonce_word_bank(nonce_word_bank)
+        NONCE_WORD_BANK_SOURCE = nonce_word_bank
     print("**** Preprocessing...")
     print("**** Generating nonce sentence...")
 
@@ -256,16 +400,43 @@ def generate_nonce_for_dataset(
         max_n=max_n,
         keep_word_identical=keep_word_identical,
     )
+    
     dataset = dataset.map(
         process_fn,
-        num_proc=CPU_NUM,
+        num_proc=1,
         batch_size=BATCH_SIZE,
         batched=True,
         writer_batch_size=1000,
-        desc="Generating nonce sentences"
+        desc="Generating nonce sentences",
+        load_from_cache_file=False 
     )
-    dataset = dataset.filter(lambda x: len(x["nonce"]) > 0)
-    dataset = dataset.shuffle(seed=42)
+    
+    # dataset = dataset.filter(lambda x: len(x["nonce"]) > 0, load_from_cache_file=False)
+    
+    # dataset = dataset.shuffle(seed=42)
 
-    print(f"Generated {len(dataset)} samples with nonce sentences.")
     return dataset
+
+
+def clean_nonce_word_bank(
+    bank: dict | LMDBNonceWordBank,
+    out_path: str | Path | None = None,
+) -> dict:
+    """
+    Cleans a nonce word bank by removing morph features that have too few candidate words.
+    This can help improve the quality of generated nonce sentences by ensuring more variability in nonce word selection.
+    """
+    cleaned_bank = {
+        morph: words
+        for morph, words in tqdm(bank.items(), desc="Cleaning nonce word bank", total=len(bank))
+        if len(words) > 1
+    }
+    removed_count = len(bank) - len(cleaned_bank)
+    print(f"Cleaned nonce word bank: removed {removed_count} morph features with <= 1 candidate words.")
+
+    if out_path is not None:
+        print(f"Saving cleaned nonce word bank to {out_path}...")
+        save_nonce_word_bank(cleaned_bank, out_path)
+        print(f"Saved cleaned nonce word bank to {out_path}.")
+
+    return cleaned_bank
