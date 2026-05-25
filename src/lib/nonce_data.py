@@ -28,6 +28,7 @@ NLP = spacy.load("en_core_web_sm")
 BATCH_SIZE = 1
 NONCE_WORD_BANK = {}
 NONCE_WORD_BANK_SOURCE = None
+NONCE_WORD_BANK_INDEX = {}
 random.seed(42)
 
 
@@ -239,22 +240,23 @@ def match_nonce_words(token: Token, max_n: int, keep_word_identical: bool) -> li
     """
     text, lemma, morph = extract_token_morph_features(token)
     key = serialize_morph(morph)
-    candidates = list(NONCE_WORD_BANK.get(key, []))
+    candidates = NONCE_WORD_BANK.get(key, [])
     if len(candidates) <= 1:
         return []
 
-    # shuffle candidates
-    if not keep_word_identical:
-        random.shuffle(candidates)
-    if not candidates:
-        return []
-    try:
-        # start from the token next to the input token
-        start_index = candidates.index((text, lemma)) + 1
-    except ValueError:
-        return []
+    if keep_word_identical:
+        if key not in NONCE_WORD_BANK_INDEX:
+            NONCE_WORD_BANK_INDEX[key] = {
+                candidate: idx for idx, candidate in enumerate(candidates)
+            }
+        start_index = NONCE_WORD_BANK_INDEX[key].get((text, lemma))
+        if start_index is None:
+            return []
+        start_index += 1
+    else:
+        start_index = random.randrange(len(candidates))
+
     nonce_words = []
-    # for nonce_text, nonce_lemma in candidates:
     for i in range(len(candidates)):
         nonce_text, nonce_lemma = candidates[(start_index + i) % len(candidates)]
         if not nonce_text.strip().isalpha():
@@ -387,10 +389,11 @@ def generate_nonce_for_dataset(
     batch_number = ceil(dataset.num_rows / BATCH_SIZE)
     print(f"***Processing {dataset.num_rows} samples in {batch_number} batches of size {BATCH_SIZE}...")
 
-    global NONCE_WORD_BANK, NONCE_WORD_BANK_SOURCE
+    global NONCE_WORD_BANK, NONCE_WORD_BANK_SOURCE, NONCE_WORD_BANK_INDEX
     if NONCE_WORD_BANK_SOURCE != nonce_word_bank:
         NONCE_WORD_BANK = load_nonce_word_bank(nonce_word_bank)
         NONCE_WORD_BANK_SOURCE = nonce_word_bank
+        NONCE_WORD_BANK_INDEX = {}
     print("**** Preprocessing...")
     print("**** Generating nonce sentence...")
 
