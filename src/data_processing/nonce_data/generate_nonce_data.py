@@ -1,21 +1,16 @@
 # %%
 import argparse
-from typing import Any
-from random import sample
 from datasets.dataset_dict import DatasetDict
 from datasets.arrow_dataset import Dataset
-from math import ceil
 from pathlib import Path
-from functools import partial
+import tqdm
 import json
 import multiprocessing
 
 import tqdm
-import spacy
-from spacy.tokens import Token
 
 from src.lib.dataset import load_custom_dataset, select_data_by_indices
-from src.lib.dataset import slice_dataset, simple_split_to_sents
+from src.lib.dataset import slice_dataset
 from src.lib.utils import print_args
 from src.lib.nonce_data import generate_nonce_for_dataset
 
@@ -47,7 +42,7 @@ def read_args():
         help='Limit the number of samples to process. 0 means no limit.'
     )
     parser.add_argument(
-        '--nonce-word-bank', '-wb', dest='nonce_word_bank', type=str, default="",
+        '--nonce-word-bank', '-nwb', dest='nonce_word_bank', type=str, default="",
         help='Path to existing nonce word bank.'
     )
     parser.add_argument(
@@ -74,10 +69,10 @@ def _prcocess_dataset(
 ) -> Dataset | None:
     dt = slice_dataset(dataset, start_from, data_limit)
     print(f"Dataset has {dt.num_rows} samples after slicing.")
-    dt = simple_split_to_sents(dt, args.split_sents, CPU_NUM, BATCH_SIZE)
     nonce_word_bank_js = args.nonce_word_bank
 
-    with open(nonce_word_bank_js, "r") as f:
+    print(f"Loading nonce word bank from {nonce_word_bank_js}...")
+    with tqdm.open(nonce_word_bank_js, mode='r', encoding='utf-8', total=None, unit='B', unit_scale=True, desc="加载 JSON") as f:
         nonce_word_bank = json.load(f)
 
     processed_dataset = generate_nonce_for_dataset(
@@ -85,7 +80,7 @@ def _prcocess_dataset(
         multi_process=args.multi_process,
         max_n=args.max_n,
         nonce_word_bank=nonce_word_bank,
-        keep_word_identical=args.keep_word_identical
+        keep_word_identical=args.keep_word_identical,
     )
     return processed_dataset
 
@@ -104,7 +99,7 @@ def main():
     print("**** Loading dataset...")
     dataset = load_custom_dataset(
         data_name=args.data,
-        data_type=args.data_type,
+        data_type=None,
         load_from=args.load_from
     )
     print(f"Dataset loaded with {dataset.num_rows} samples.")
@@ -115,12 +110,12 @@ def main():
 
     # ======== Generate nonce sentences ========
     print("**** Processing dataset ...")
-    dataset = _prcocess_dataset(dataset, args.start_from, args.data_limit, args, out_path)
+    dataset = _prcocess_dataset(dataset, args.start_from, args.data_limit, args)
     if dataset:
-        dataset.select(range(5)).to_json(Path(args.out_path) / "example_sentences.json")
         print(f"Dataset has {dataset.num_rows} samples after generating nonce sentences.")
         print(f"Saving dataset with nonce sentences to {out_path}...")
         dataset.save_to_disk(out_path)
+        dataset.select(range(5)).to_json(Path(args.out_path) / "example_sentences.json")
 
 
 if __name__ == "__main__":

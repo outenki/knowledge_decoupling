@@ -100,7 +100,9 @@ print_evaluate() {
     acc=$(cat "$save_dir/evaluation_summary.json"|grep accuracy|cut -d":" -f 2|cut -d"," -f1)
     if [ "$EVALUATE_ON" == "generation" ]; then
         echo "F1 Score for $m_path: $f1"
+        echo "Accuracy for $m_path: $acc"
     elif [ "$EVALUATE_ON" == "options" ]; then
+        echo "F1 Score for $m_path: $f1"
         echo "Accuracy for $m_path: $acc"
     fi
 }

@@ -3,9 +3,13 @@ Nonce data handling utilities.
 """
 import multiprocessing
 import itertools
+import tempfile
 from typing import Any
 from math import ceil
 from functools import partial
+from copy import deepcopy
+from pathlib import Path
+from tqdm import tqdm
 
 import spacy
 from spacy.tokens import Token
@@ -14,6 +18,7 @@ from datasets.arrow_dataset import Dataset
 
 from src.lib.parser import extract_token_morph_features, is_content_word, is_vowel
 from src.lib.text import safe_texts
+from src.lib.text import split_text_to_sentences
 
 
 CPU_NUM = min(4, multiprocessing.cpu_count())
@@ -31,15 +36,45 @@ def serialize_morph(morph_tuple) -> str:
 def merge_nonce_banks(bank1: dict, bank2: dict) -> dict:
     """
     Merges two nonce word banks by concatenating the lists of words for each morph feature.
+    
+    Args:
+        bank1 (dict): First nonce word bank {morph_key: [(text, lemma), ...], ...}
+        bank2 (dict): Second nonce word bank with the same structure
+    
+    Returns:
+        dict: Merged nonce word bank with duplicates removed
+    
+    Raises:
+        TypeError: If inputs are not dictionaries
+        ValueError: If morph values are not lists
     """
-    merged_bank = bank1.copy()
-    for morph, words in bank2.items():
+    if not isinstance(bank1, dict):
+        raise TypeError(f"bank1 must be a dict, got {type(bank1)}")
+    if not isinstance(bank2, dict):
+        raise TypeError(f"bank2 must be a dict, got {type(bank2)}")
+    
+    # Use deepcopy to avoid modifying the original bank1
+    merged_bank = bank1
+    
+    for morph, words in tqdm(bank2.items(), desc="Merging nonce banks", total=len(bank2)):
+        if not isinstance(words, list):
+            raise ValueError(f"morph '{morph}' has value of type {type(words)}, expected list")
+        
+        words = [tuple(w) for w in words]
+        
         if morph in merged_bank:
+            # Verify existing value is a list
+            if not isinstance(merged_bank[morph], list):
+                raise ValueError(f"morph '{morph}' in bank1 has type {type(merged_bank[morph])}, expected list")
+            
             merged_bank[morph].extend(words)
-            # remove duplicates
+            # Remove duplicates while preserving elements (tuples are hashable)
+            # Note: set() will change order, but order is not critical for nonce banks
             merged_bank[morph] = list(set(merged_bank[morph]))
         else:
-            merged_bank[morph] = words
+            # Deepcopy to avoid sharing references
+            merged_bank[morph] = deepcopy(words)
+    
     return merged_bank
 
 
@@ -89,21 +124,26 @@ def match_nonce_words(token: Token, max_n: int, keep_word_identical: bool) -> li
     text, lemma, morph = extract_token_morph_features(token)
     key = serialize_morph(morph)
     candidates = NONCE_WORD_BANK.get(key, [])
+    if len(candidates) <= 1:
+        return []
+
     # shuffle candidates
     if not keep_word_identical:
         random.shuffle(candidates)
     if not candidates:
         return []
     try:
+        # start from the token next to the input token
         start_index = candidates.index((text, lemma)) + 1
     except ValueError:
         return []
-
     nonce_words = []
     # for nonce_text, nonce_lemma in candidates:
     for i in range(len(candidates)):
-        # 
         nonce_text, nonce_lemma = candidates[(start_index + i) % len(candidates)]
+        if not nonce_text.strip().isalpha():
+            # skip if the candidate word is not purely alphabetic to maintain some orthographic similarity
+            continue
         if nonce_text == text or nonce_lemma == lemma:
             # skip if the candidate word is the same as the original word in text or lemma form
             continue
@@ -178,12 +218,16 @@ def generate_nonce_sentence(doc, max_n: int, keep_word_identical: bool) -> list:
 
 def generate_nonce_for_examples(examples, multi_process: bool, max_n: int, keep_word_identical: bool):
     assert NLP is not None, "NLP should be initialized"
+    texts = examples["text"]
+    sents = []
+    for text in texts:
+        sents.extend(split_text_to_sentences(text))
 
     nonce = []
     if multi_process:
-        docs = NLP.pipe(safe_texts(examples["text"], NLP.max_length), batch_size=64, n_process=CPU_NUM)
+        docs = NLP.pipe(safe_texts(sents, NLP.max_length), batch_size=64, n_process=CPU_NUM)
     else:
-        docs = NLP.pipe(safe_texts(examples["text"], NLP.max_length), batch_size=64)
+        docs = NLP.pipe(safe_texts(sents, NLP.max_length), batch_size=64)
     nonce = []
     for doc in docs:
         nonce.append(generate_nonce_sentence(doc, max_n, keep_word_identical))
@@ -195,16 +239,23 @@ def generate_nonce_for_dataset(
     multi_process: bool,
     max_n: int,
     keep_word_identical: bool,
-    nonce_word_bank: dict
+    nonce_word_bank: dict,
 ):
     batch_number = ceil(dataset.num_rows / BATCH_SIZE)
     print(f"***Processing {dataset.num_rows} samples in {batch_number} batches of size {BATCH_SIZE}...")
 
     global NONCE_WORD_BANK
-    NONCE_WORD_BANK = nonce_word_bank
+    if not NONCE_WORD_BANK:
+        NONCE_WORD_BANK = nonce_word_bank
     print("**** Preprocessing...")
     print("**** Generating nonce sentence...")
-    process_fn = partial(generate_nonce_for_examples, multi_process=multi_process, max_n=max_n, keep_word_identical)
+
+    process_fn = partial(
+        generate_nonce_for_examples,
+        multi_process=multi_process,
+        max_n=max_n,
+        keep_word_identical=keep_word_identical,
+    )
     dataset = dataset.map(
         process_fn,
         num_proc=CPU_NUM,
@@ -213,7 +264,7 @@ def generate_nonce_for_dataset(
         writer_batch_size=1000,
         desc="Generating nonce sentences"
     )
-    dataset = dataset.filter(lambda x: x["nonce"] != "")
+    dataset = dataset.filter(lambda x: len(x["nonce"]) > 0)
     dataset = dataset.shuffle(seed=42)
 
     print(f"Generated {len(dataset)} samples with nonce sentences.")

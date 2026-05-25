@@ -171,24 +171,25 @@ echo ">>>>>> evaluation data: $EVALUATE_DATA"
 echo ">>>>>> model config: $CONFIG_NAME"
 echo ">>>>>> model path: $MODEL_PATH"
 echo ">>> evaluating "
-run_evaluate "$MODEL_PATH"
+# run_evaluate "$MODEL_PATH"
 
-for sft_split in test train
-do
-    echo
-    echo
-    echo ">>>>>> model config: $CONFIG_NAME"
-    echo ">>>>>> model path: $MODEL_PATH"
-    echo ">>>>>> SFT data: $SFT_DATA/$sft_split"
-    echo ">>> SFT training"
-    SFT_MODEL_PATH="$MODEL_PATH-$EVALUATE_DATA-$OUTPUT_SUFFIX/sft_${sft_split}_ep${EPOCHS}_lr${LEARNING_RATE}"
-    run_train "$MODEL_PATH" "$SFT_DATA/$sft_split" "$SFT_MODEL_PATH" $LEARNING_RATE
-    echo ">>> evaluating "
-    run_evaluate "$SFT_MODEL_PATH"
-done
+# for sft_split in test train
+# do
+#     echo
+#     echo
+#     echo ">>>>>> model config: $CONFIG_NAME"
+#     echo ">>>>>> model path: $MODEL_PATH"
+#     echo ">>>>>> SFT data: $SFT_DATA/$sft_split"
+#     echo ">>> SFT training"
+#     SFT_MODEL_PATH="$MODEL_PATH-$EVALUATE_DATA-$OUTPUT_SUFFIX/sft_${sft_split}_ep${EPOCHS}_lr${LEARNING_RATE}"
+#     run_train "$MODEL_PATH" "$SFT_DATA/$sft_split" "$SFT_MODEL_PATH" $LEARNING_RATE
+#     echo ">>> evaluating "
+#     run_evaluate "$SFT_MODEL_PATH"
+# done
 
 # with extended training
-for ext_train_split in test train
+# for ext_train_split in test train
+for ext_train_split in train test
 do
     echo
     echo

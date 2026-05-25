@@ -13,8 +13,7 @@ TOKENIZER=Qwen/Qwen3.5-0.8B-Base
 INPUT_PATH=$PROJECT_BASE_PATH/data/sft
 OUTPUT_PATH=$PROJECT_BASE_PATH/input/tokenized/$TOKENIZER/sft/concat
 for dn in \
-    google_re_long\
-    google_re_short
+    squad_v2_answerable
 do
     echo
     echo ">>>>>> $dn sft concat train"
@@ -36,8 +35,7 @@ done
 INPUT_PATH=$PROJECT_BASE_PATH/data/sft
 OUTPUT_PATH=$PROJECT_BASE_PATH/input/tokenized/$TOKENIZER/sft/chat_template
 for dn in \
-    google_re_long\
-    google_re_short
+    squad_v2_answerable
 do
     echo
     echo ">>>>>> $dn sft chat_template train"
@@ -62,8 +60,7 @@ done
 INPUT_PATH=$PROJECT_BASE_PATH/data/ext
 OUTPUT_PATH=$PROJECT_BASE_PATH/input/tokenized/$TOKENIZER/ext/concat
 for dn in \
-    google_re_long\
-    google_re_short
+    squad_v2_answerable
 do
     echo
     echo ">>>>>> $dn ext concat train"
@@ -83,8 +80,7 @@ done
 INPUT_PATH=$PROJECT_BASE_PATH/data/ext
 OUTPUT_PATH=$PROJECT_BASE_PATH/input/tokenized/$TOKENIZER/ext/chat_template
 for dn in \
-    google_re_long \
-    google_re_short
+    squad_v2_answerable
 do
     echo
     echo ">>>>>> $dn ext chat_template train"

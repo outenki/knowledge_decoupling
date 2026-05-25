@@ -9,7 +9,9 @@ echo "start time: $(date -d @$start_time +"%D %T")"
 
 uv run python $PROJECT_BASE_PATH/src/data_processing/nonce_data/generate_nonce_data.py \
     -d $DATA_NAME \
-    -dn train \
+    -l 10 \
+    -sp train \
+    -nwb $PROJECT_BASE_PATH/data/$DATA_NAME/nonce/nonce_word_bank.json \
     -mp \
     -lf hf \
     -ki $DATA_PATH/kept_indices.json \

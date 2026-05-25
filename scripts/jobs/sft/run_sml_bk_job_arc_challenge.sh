@@ -11,4 +11,4 @@ source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/jobs/sft
 
 sh run_sml_bk.sh arc_challenge concat
-sh run_sml_bk.sh arc_challenge chat_template
+# sh run_sml_bk.sh arc_challenge chat_template
