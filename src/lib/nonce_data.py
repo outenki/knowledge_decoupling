@@ -6,6 +6,7 @@ import multiprocessing
 import json
 import lmdb
 import pickle
+from collections import OrderedDict
 from typing import Any
 from math import ceil
 from functools import partial
@@ -25,15 +26,16 @@ from src.lib.text import split_text_to_sentences
 
 CPU_NUM = min(4, multiprocessing.cpu_count())
 NLP = spacy.load("en_core_web_sm")
-BATCH_SIZE = 1
+BATCH_SIZE = 64
 NONCE_WORD_BANK = {}
 NONCE_WORD_BANK_SOURCE = None
 NONCE_WORD_BANK_INDEX = {}
+NONCE_WORD_BANK_CACHE_SIZE = 4096
 random.seed(42)
 
 
 class LMDBNonceWordBank:
-    def __init__(self, db_path: str | Path):
+    def __init__(self, db_path: str | Path, cache_size: int = NONCE_WORD_BANK_CACHE_SIZE):
         self.db_path = Path(db_path)
         if not self.db_path.exists():
             raise FileNotFoundError(f"Missing nonce word bank database: {self.db_path}")
@@ -46,13 +48,18 @@ class LMDBNonceWordBank:
             meminit=False,
             max_readers=1024,
         )
-        self._cache: dict[str, list[tuple[str, str]]] = {}
+        self._cache: OrderedDict[str, list[tuple[str, str]]] = OrderedDict()
+        self.cache_size = cache_size
 
     def get(self, morph_key: str, default: list | None = None) -> list[tuple[str, str]]:
-        if morph_key not in self._cache:
+        if morph_key in self._cache:
+            self._cache.move_to_end(morph_key)
+        else:
             with self._env.begin() as txn:
                 payload = txn.get(morph_key.encode("utf-8"))
             self._cache[morph_key] = pickle.loads(payload) if payload is not None else []
+            if len(self._cache) > self.cache_size:
+                self._cache.popitem(last=False)
         if default is None:
             default = []
         return self._cache.get(morph_key, default)
@@ -293,9 +300,6 @@ def generate_nonce_sentence(doc, max_n: int, keep_word_identical: bool) -> list:
     # get nonce words for each content word
     nonce_words_per_token = []
     matched_content_word_num = 0
-    print(f"Generating nonce sentence for: {doc.text}")
-    print(f"Content words: {[t.text for t in content_words]}")
-    print("Matching nonce words for each content word...")
     for token in content_words:
         candidates = match_nonce_words(token, max_n, keep_word_identical)
         if not candidates:
@@ -313,14 +317,11 @@ def generate_nonce_sentence(doc, max_n: int, keep_word_identical: bool) -> list:
         # ...
         nonce_words_per_token.append(candidates)
     assert len(nonce_words_per_token) == len(content_words)
-    print(f"Matched nonce words: {nonce_words_per_token}")
 
     content_indices = [t.i for t in content_words]
     ori_words = [t.text_with_ws for t in doc]
-    print("Generating possible candidates by producing the Cartesian product of nonce words for each content word...")
-    nonce_words = random.sample(list(itertools.product(*nonce_words_per_token)), k=max_n)
-    # nonce_words = list(zip(*nonce_words_per_token))[:max_n]
-    print("Generating nonce sentences by replacing content words with matched nonce words...")
+    # nonce_words = random.sample(list(itertools.product(*nonce_words_per_token)), k=max_n)
+    nonce_words = list(zip(*nonce_words_per_token))[:max_n]
     nonce_sentences = []
     for cand in nonce_words:
         nonce_sent_words = ori_words.copy()
@@ -347,17 +348,13 @@ def generate_nonce_for_examples(examples, multi_process: bool, max_n: int, keep_
     assert NLP is not None, "NLP should be initialized"
     texts = examples["text"]
     sents = []
-    print(f"Generating nonce sentences for a batch of {len(texts)} texts...")
     for text in texts:
         sents.extend(split_text_to_sentences(text))
-    print(f"Split into {len(sents)} sentences. Generating nonce sentences...")
 
-    print(f"Processing sentences in batches of {BATCH_SIZE} with multi_process={multi_process}...")
     if multi_process:
         docs = NLP.pipe(safe_texts(sents, NLP.max_length), batch_size=BATCH_SIZE, n_process=CPU_NUM)
     else:
         docs = NLP.pipe(safe_texts(sents, NLP.max_length), batch_size=BATCH_SIZE)
-    nonce = []
     
     ori_texts = []
     nonce_texts = []
@@ -409,15 +406,11 @@ def generate_nonce_for_dataset(
         num_proc=1,
         batch_size=BATCH_SIZE,
         batched=True,
+        remove_columns=dataset.column_names,
         writer_batch_size=1000,
         desc="Generating nonce sentences",
-        load_from_cache_file=False 
+        load_from_cache_file=False
     )
-    
-    # dataset = dataset.filter(lambda x: len(x["nonce"]) > 0, load_from_cache_file=False)
-    
-    # dataset = dataset.shuffle(seed=42)
-
     return dataset
 
 
