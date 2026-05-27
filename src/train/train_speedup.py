@@ -16,7 +16,7 @@ from transformers.training_args import TrainingArguments
 from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
 
-from src.lib.dataset import load_custom_dataset, slice_dataset
+from src.lib.dataset import load_custom_dataset
 from src.lib.utils import print_args
 
 
@@ -319,7 +319,7 @@ def main():
     checkpoint = args.checkpoint
     if not checkpoint or not Path(checkpoint).exists() or not Path(checkpoint).is_dir():
         checkpoint = None
-        print(f"Starting from random model")
+        print("Starting from random model")
     else:
         print(f"Resuming from checkpoint: {checkpoint}")
 

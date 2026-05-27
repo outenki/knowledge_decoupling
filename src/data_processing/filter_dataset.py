@@ -302,7 +302,7 @@ def main() -> None:
     )
 
     # count kept samples where filter_source is not "drop"
-    print(f"Calculating kept samples")
+    print("Calculating kept samples")
     kept_ds = filtered_ds.filter(lambda x: x["filter_source"] != "drop")
     print(f"Kept {len(kept_ds)} / {len(ds)} examples")
     filtered_ds.save_to_disk(output_path)

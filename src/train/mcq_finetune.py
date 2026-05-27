@@ -274,7 +274,7 @@ def main():
         with open(Path(args.out_path)/"arguments.json", "w") as f:
             json.dump(vars(args), f, indent=4)
     except Exception as e:
-        print(f"‼️Failed to dump arguments!")
+        print("‼️Failed to dump arguments!")
         print(e)
 
     WANDB_RUN = wandb.init(

@@ -34,7 +34,7 @@ def load_word_bank(path_to_word_bank: str | Path) -> dict:
     with open(path_to_word_bank, "r") as f:
         try:
             word_bank = json.load(f)
-        except json.JSONDecodeError as e:
+        except json.JSONDecodeError:
             print(f"Warning: Failed to load {path_to_word_bank}. Skipping...")
             return {}
     return {k: set([tuple(t) for t in v]) for k, v in word_bank.items()}

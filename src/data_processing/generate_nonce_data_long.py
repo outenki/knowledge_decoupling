@@ -8,7 +8,6 @@ from math import ceil
 from pathlib import Path
 from functools import partial
 import json
-import os
 import multiprocessing
 import pickle
 
@@ -18,7 +17,7 @@ import spacy
 from spacy.tokens import Token
 
 from src.lib.dataset import load_custom_dataset, load_texts_from_dataset_batch
-from src.lib.dataset import slice_dataset, skip_dataset_by_column, simple_split_to_sents
+from src.lib.dataset import slice_dataset, skip_dataset_by_column
 from src.lib.parser import extract_token_morph_features, is_content_word, is_vowel
 from src.lib.text import simple_split_text
 from src.lib.utils import print_args

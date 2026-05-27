@@ -1,7 +1,6 @@
 """
 Nonce data handling utilities.
 """
-import itertools
 import multiprocessing
 import json
 import lmdb

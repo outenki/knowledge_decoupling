@@ -1,12 +1,8 @@
 # %%
 import argparse
-import json
-import math
-import tempfile
 from datasets.dataset_dict import DatasetDict
 from datasets.arrow_dataset import Dataset
 from pathlib import Path
-import multiprocessing
 
 from src.lib.dataset import load_custom_dataset, select_data_by_indices
 from src.lib.dataset import slice_dataset

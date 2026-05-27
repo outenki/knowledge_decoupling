@@ -12,7 +12,6 @@ import wandb
 from datasets import concatenate_datasets
 from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
-from torch.optim import AdamW
 from torch.optim.lr_scheduler import LambdaLR
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 from transformers.trainer import Trainer
@@ -273,7 +272,7 @@ def main():
         with open(Path(args.out_path)/"arguments.json", "w") as f:
             json.dump(vars(args), f, indent=4)
     except Exception:
-        print(f"‼️Failed to dumpt arguments!")
+        print("‼️Failed to dumpt arguments!")
     
     run_id_path = Path(args.out_path) / "wandb_id.txt"
     if run_id_path.exists():

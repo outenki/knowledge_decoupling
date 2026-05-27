@@ -6,18 +6,16 @@ from dataclasses import asdict, is_dataclass
 import random
 
 import torch
-import torch.nn as nn
 import wandb
 from torch.optim import AdamW
 from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
 from transformers import AutoTokenizer, AutoModel
 from transformers import Trainer, TrainingArguments
-from datasets import load_dataset
 from datasets import concatenate_datasets
 
 from src.lib.dataset import load_custom_dataset
-from src.lib.utils import get_device, print_args
+from src.lib.utils import print_args
 from src.lib.linear_model import MCQModel, MCQCollator
 
 
@@ -160,7 +158,7 @@ def main():
         with open(Path(args.out_path)/"arguments.json", "w") as f:
             json.dump(vars(args), f, indent=4)
     except Exception:
-        print(f"‼️Failed to dumpt arguments!")
+        print("‼️Failed to dumpt arguments!")
 
     if args.init_model:
         print(">>> Loading init model from:", args.init_model)

@@ -4,7 +4,6 @@ from functools import partial
 from pathlib import Path
 import json
 
-from datasets import Dataset
 from transformers import AutoTokenizer
 
 from src.lib.dataset import load_custom_dataset, slice_dataset

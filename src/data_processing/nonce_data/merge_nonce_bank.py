@@ -4,7 +4,6 @@
 import json
 import argparse
 from src.lib.nonce_data import merge_nonce_banks
-from pathlib import Path
 
 
 def read_args():
