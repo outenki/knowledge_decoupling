@@ -2,14 +2,14 @@
 PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-$HOME/projects/knowledge_decoupling}"
 DATA_NAME="SmolLM2-20B"
 DATA_PATH=$PROJECT_BASE_PATH/data/$DATA_NAME/
-OUTPUT_PATH=$PROJECT_BASE_PATH/data/$DATA_NAME/nonce/dataset
+OUTPUT_PATH=$PROJECT_BASE_PATH/data/$DATA_NAME/nonce/dataset/test
 
 start_time=$(date +"%s")
 echo "start time: $(date -d @$start_time +"%D %T")"
 
 uv run python $PROJECT_BASE_PATH/src/data_processing/nonce_data/generate_nonce_data.py \
     -d $DATA_NAME \
-    -l 10000 \
+    -l 300 \
     -sp train \
     -nwb $PROJECT_BASE_PATH/data/$DATA_NAME/nonce/nonce_word_bank.lmdb \
     -lf hf \

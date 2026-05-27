@@ -84,6 +84,7 @@ def _process_dataset(dataset: Dataset, args):
         nonce_word_bank=args.nonce_word_bank,
         keep_word_identical=args.keep_word_identical,
     )
+    processed_dataset.save_to_disk(str(out_path), max_shard_size="500MB")
      
     # parts_dir = Path(tempfile.mkdtemp(prefix="parts_", dir=str(out_path)))
 
