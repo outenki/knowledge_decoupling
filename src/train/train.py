@@ -1,4 +1,3 @@
-import argparse
 import json
 import math
 import random
@@ -7,167 +6,43 @@ from datetime import datetime
 from pathlib import Path
 from typing import Any
 
+import hydra
+from omegaconf import DictConfig
 import torch
 import wandb
+from wandb.sdk.lib.runid import generate_id
 from datasets import concatenate_datasets
 from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
 from torch.optim.lr_scheduler import LambdaLR
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 from transformers.trainer import Trainer
-from transformers.trainer_callback import TrainerCallback
 from transformers.training_args import TrainingArguments
-from bitsandbytes.optim import AdamW8bit
+# from bitsandbytes.optim import AdamW8bit
+from bitsandbytes.optim.adamw import AdamW
 
 from src.lib.dataset import load_custom_dataset
-from src.lib.utils import print_args
+from src.lib.utils import print_args, training_args_to_dict, inspect_checkpoint, load_checkpoint_auxiliary_files
+from src.lib.dataset import slice_dataset
 
 DECAY_RATE = 0.9
 random.seed(42)
 
 
-def training_args_to_dict(args: TrainingArguments) -> dict:
-    serializable_args = {}
-    args_dict = asdict(args) if is_dataclass(args) else vars(args)
-    for k, v in args_dict.items():
-        try:
-            json.dumps(v)
-            serializable_args[k] = v
-        except (TypeError, OverflowError):
-            serializable_args[k] = str(v)
-    return serializable_args
-
-
-class LossLoggerCallback(TrainerCallback):
-    def __init__(self, log_path):
-        self.log_path = log_path
-        self.train_log = open(Path(log_path)/"train_loss.log", "w")
-        self.eval_log = open(Path(log_path)/"eval_loss.log", "w")
-
-    def on_train_begin(self, args, state, control, **kwargs):
-        self.train_log.write("step\ttrain_loss\n")
-        self.train_log.flush()
-        self.eval_log.write("step\teval_loss\n")
-        self.eval_log.flush()
-
-    def on_log(self, args, state, control, logs=None, **kwargs):
-        if logs is None:
-            return
-        if "loss" in logs:
-            self.train_log.write(f"{state.global_step}\t{logs['loss']}\n")
-            self.train_log.flush()
-
-    def on_evaluate(self, args, state, control, metrics=None, **kwargs):
-        if metrics and "eval_loss" in metrics:
-            # 评估日志使用 state.global_step，确保与训练步骤对齐
-            self.eval_log.write(f"{state.global_step}\t{metrics['eval_loss']}\n")
-            self.eval_log.flush()
-
-    def on_train_end(self, args, state, control, **kwargs):
-        self.train_log.close()
-        self.eval_log.close()
-
-
-def read_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        '--data-path', '-dp', dest='data_path', type=str, action='append',
-        help='Dataset path to load from.'
-    )
-    parser.add_argument(
-        '--config-name', '-cn', dest='config_name', type=str, required=False, default=None,
-        help="Config name of models."
-    )
-    parser.add_argument(
-        '--init-model', '-im', dest='init_model', type=str, required=False, default=None,
-        help='Path to pre-trained model'
-    )
-    parser.add_argument(
-        '--skip-eval', '-se', dest='skip_eval', action='store_true',
-        help='Skip evaluation during training.'
-    )
-    parser.add_argument(
-        '--random-init', '-ri', dest='random_init', action='store_true',
-        help='Initialize model from random weights using config_name instead of pretrained weights.'
-    )
-    parser.add_argument(
-        '--checkpoint', '-cp', dest='checkpoint', type=str, required=False, default=None,
-        help='Path to checkpoint'
-    )
-    parser.add_argument(
-        '--epochs', '-e', dest='epochs', type=int, required=False, default=3,
-    )
-    parser.add_argument(
-        '--learning-rate', '-lr', dest='lr', type=float, required=False, default=5e-5,
-    )
-    parser.add_argument(
-        '--epoch-checkpoints-num', '-ckn', dest='epoch_checkpoints_num', type=int, required=False, default=50,
-    )
-    parser.add_argument(
-        '--save-checkpoints-num', '-sckn', dest='save_checkpoints_num', type=int, required=False, default=2,
-    )
-    parser.add_argument(
-        '--data-limit', '-dl', dest='data_limit', type=int, action='append',
-        help='Max number of samples for training. 0 for no limit.'
-    )
-    parser.add_argument(
-        '--speedup', '-su', dest='speedup', action='store_true',
-        help='Enable speedup options.'
-    )
-    parser.add_argument(
-        '--out-path', '-o', dest='out_path', type=str,
-        help='Path to save the dataset with nonce sentences.'
-    )
-    return parser.parse_args()
-
-
-def load_model_from_disk(model_path: str, speedup: bool) -> Any:
+def load_model_from_pretrained(model_path: str, speedup: bool) -> Any:
         print(">>> Loading init model from:", model_path)
         if speedup:
             print(">>> Applying speedup options...")
             print("- speed up with flash attention 3")
             model = AutoModelForCausalLM.from_pretrained(
                 model_path,
-                quantization_config=None,
                 # attn_implementation="flash_attention_3"
                 attn_implementation="sdpa"
             )
         else:
-            model = AutoModelForCausalLM.from_pretrained(
-                model_path,
-                quantization_config=None,
-            )
+            model = AutoModelForCausalLM.from_pretrained(model_path)
         print(">>> Init model loaded. Config:", model.config)
         return model
-
-
-def load_model_from_pretrained(config_name: str, speedup: bool) -> Any:
-    if speedup:
-        # torch.backends.cuda.enable_flash_sdp(True)
-        # torch.backends.cuda.enable_mem_efficient_sdp(True)
-        # torch.backends.cuda.enable_math_sdp(True)
-        # print(">>> speed up with torch 2.0 compile...")
-        # model = torch.compile(model)
-        print(">>> Applying speedup options...")
-        # print("- speed up with flash attention 3")
-        print("- speed up with sdpa")
-        model = AutoModelForCausalLM.from_pretrained(
-            config_name,
-            torch_dtype=torch.bfloat16,
-            trust_remote_code=True,
-            # attn_implementation="flash_attention_3"
-            attn_implementation="sdpa"
-        )
-    else:
-        model = AutoModelForCausalLM.from_pretrained(
-            config_name,
-            torch_dtype=torch.bfloat16,
-            trust_remote_code=True
-        )
-    model.tie_weights()
-    # model.gradient_checkpointing_enable()
-    model.config.use_cache = False
-    return model
 
 
 def load_model_from_config_random(config_name: str, speedup: bool) -> Any:
@@ -213,28 +88,19 @@ def load_model_from_config_random(config_name: str, speedup: bool) -> Any:
     return model.to(torch.bfloat16)
     
 
-
-def random_sample(dataset, number: int) -> Dataset:
-    if not isinstance(dataset, Dataset):
-        raise TypeError(f"Invalid data type {type(dataset)}")
-    if number >= len(dataset):
-        return dataset
-    indices = random.sample(range(len(dataset)), number)
-    return dataset.select(indices)
-
-
-def limit_dataset_dict(data_dict: DatasetDict, data_limit: int) -> DatasetDict:
+def _limit_dataset_dict(data_dict: DatasetDict, data_limit: int) -> DatasetDict:
     for k, dt in data_dict.items():
+        dt = dt.shuffle(seed=42)
         if k == "train":
-            data_dict[k] = random_sample(dt, data_limit)
+            data_dict[k] = slice_dataset(dt, 0, data_limit)
         else:
             # For validation and test sets, use a smaller limit
             _data_limit = data_limit // 10
-            data_dict[k] = random_sample(dt, _data_limit)
+            data_dict[k] = slice_dataset(dt, 0, _data_limit)
     return data_dict
 
 
-def load_dataset_dict(data_path: str) -> DatasetDict:
+def _load_dataset_dict(data_path: str) -> DatasetDict:
     dataset = load_custom_dataset(data_path, None, "local")
     if isinstance(dataset, Dataset):
         data_dict = DatasetDict({"train": dataset})
@@ -250,75 +116,79 @@ def load_and_limit_dataset_dict(data_path: str, data_limit: int) -> DatasetDict:
     For validation and test sets, use a smaller limit (data_limit // 10).
     """
     print(f">>> Loading dataset from {data_path}")
-    _data_dict = load_dataset_dict(data_path)
+    _data_dict = _load_dataset_dict(data_path)
     print(_data_dict)
     print(">>> data loaded")
     if data_limit > 0:
-        _data_dict = limit_dataset_dict(_data_dict, data_limit)
+        _data_dict = _limit_dataset_dict(_data_dict, data_limit)
     return _data_dict
 
+@hydra.main(
+    version_base=None,
+    config_path="../../configs",
+    config_name="train"
+)
+def main(cfg: DictConfig):
 
-def main():
+    # === Save a copy of the config for later reference
+    Path(cfg.output.path).mkdir(parents=True, exist_ok=True)
+    log_path = f"{cfg.output.path}/logs"
+    Path(log_path).mkdir(parents=True, exist_ok=True)
+
+    print_args(vars(cfg))
+    try:
+        with open(Path(cfg.output.path)/"arguments.json", "w") as f:
+            json.dump(vars(cfg), f, indent=4)
+    except Exception:
+        print("‼️Failed to dumpt arguments!")
+
     print(">>> CUDA available:", torch.cuda.is_available())
     print(">>> GPU count:", torch.cuda.device_count())
-
     for i in range(torch.cuda.device_count()):
         print(f">>> GPU {i}: {torch.cuda.get_device_name(i)}")
 
-    args = read_args()
-    Path(args.out_path).mkdir(parents=True, exist_ok=True)
-    print_args(vars(args))
-    try:
-        with open(Path(args.out_path)/"arguments.json", "w") as f:
-            json.dump(vars(args), f, indent=4)
-    except Exception:
-        print("‼️Failed to dumpt arguments!")
     
-    run_id_path = Path(args.out_path) / "wandb_id.txt"
+    # === initialize wandb
+    run_id_path = Path(cfg.output.path) / "wandb_id.txt"
     if run_id_path.exists():
         run_id = run_id_path.read_text().strip()
     else:
-        run_id = wandb.util.generate_id()
+        run_id = generate_id()
         run_id_path.write_text(run_id)
-
     WANDB_RUN = wandb.init(
         # Set the wandb entity where your project will be logged (generally your team name).
         entity="tianqi-wang-a2-tohoku-university",
-        group=args.config_name + datetime.now().strftime("-%Y%m%d"),
+        group=cfg.model.config + datetime.now().strftime("-%Y%m%d"),
         # Set the wandb project where this run will be logged.
         project="Knowledge Decoupling",
     )
-    WANDB_RUN.name = args.out_path.split("output/", maxsplit=1)[1]
+    WANDB_RUN.name = cfg.output.path.split("output/", maxsplit=1)[1]
 
 
     # === Load model
     model = None
-    if args.random_init:
-        assert args.config_name is not None, "--config-name is required when using --random-init"
-        model = load_model_from_config_random(args.config_name, args.speedup)
-        print(">>> Randomly initialized model. Config:", model.config)
-    elif args.init_model:
-        print(">>> Loading init model from:", args.init_model)
-        model = load_model_from_disk(args.init_model, args.speedup)
+    if cfg.model.init_model:
+        print(">>> Loading init model from pretrained model:", cfg.model.init_model)
+        model = load_model_from_pretrained(cfg.model.init_model, cfg.speedup)
         print(">>> Init model loaded. Config:", model.config)
     else:
-        assert args.config_name is not None, "--config-name is required when no init model is provided"
-        print(">>> Loading model from config:", args.config_name)
-        model = load_model_from_pretrained(args.config_name, args.speedup)
+        assert cfg.model.config is not None, "--config-name is required when using --random-init"
+        model = load_model_from_config_random(cfg.model.config, cfg.speedup)
+        print(">>> Randomly initialized model. Config:", model.config)
 
-    tokenizer = AutoTokenizer.from_pretrained(args.config_name if args.config_name is not None else args.init_model)
+    tokenizer = AutoTokenizer.from_pretrained(cfg.model.config if cfg.model.config is not None else cfg.model.init_model)
     if tokenizer.pad_token is None:
-        tokenizer.pad_token = tokenizer.eos_token  # 👈 先设！
+        tokenizer.pad_token = tokenizer.eos_token
     model.config.pad_token_id = tokenizer.pad_token_id
     assert model is not None
-    model.save_pretrained(Path(args.out_path) / "init_model")
+    model.save_pretrained(Path(cfg.output.path) / "init_model")
 
     # === load data
     data_list = []
-    if args.data_limit is None:
-        args.data_limit = [0] * len(args.data_path)
-    assert len(args.data_path) == len(args.data_limit), "data_path and data_limit should have the same length."
-    for dp, dl in zip(args.data_path, args.data_limit):
+    if cfg.data.limit is None or len(cfg.data.limit) == 0:
+        cfg.data.limit = [0] * len(cfg.data.paths)
+    assert len(cfg.data.paths) == len(cfg.data.limit), "data_paths and data_limit should have the same length."
+    for dp, dl in zip(cfg.data.paths, cfg.data.limit):
         _data_dict = load_and_limit_dataset_dict(dp, dl)
         data_list.append(_data_dict)
     data_dict = DatasetDict({
@@ -330,80 +200,71 @@ def main():
     train_dataset: Dataset | None = None
     eval_dataset: Dataset | None = None
     train_dataset = data_dict["train"]
-    if "val" in data_dict:
-        eval_dataset = data_dict["val"]
-    elif "validation" in data_dict:
-        eval_dataset = data_dict["validation"]
-    else:
+    for split in ("val", "validation", "dev"):
+        if split in data_dict:
+            eval_dataset = data_dict[split]
+            break
+    if eval_dataset is None:
         data_dict = train_dataset .train_test_split(test_size=0.05, shuffle=True, seed=42)
         train_dataset = data_dict["train"]
         eval_dataset = data_dict["test"]
     print(">>> dataset features:", train_dataset.features)
-
-
     print(f">>> Training data size: {len(train_dataset)}")
     print(f">>> Eval data size: {len(eval_dataset)}")
 
-    log_path = f"{args.out_path}/logs"
-    Path(log_path).mkdir(parents=True, exist_ok=True)
 
+    # === Training setup
     train_dataset_size = len(train_dataset)
     per_device_train_batch_size = 2
     gradient_accumulation_steps = max(1, 16 // per_device_train_batch_size)
     world_size = max(1, torch.cuda.device_count())
-
     effective_batch_size = per_device_train_batch_size * gradient_accumulation_steps * world_size
 
     # 计算总步数
     steps_per_epoch = train_dataset_size // effective_batch_size
-    total_steps = steps_per_epoch * args.epochs
+    total_steps = steps_per_epoch * cfg.epochs
 
     # 计算 Warmup Steps
     warmup_steps = total_steps // 20 
 
     # 计算保存和评估间隔
-    epoch_total_checkpoints = args.epoch_checkpoints_num
-    save_steps = max(1, total_steps // (epoch_total_checkpoints * args.epochs))
+    save_steps = max(1, total_steps // (cfg.checkpoints_per_epoch * cfg.epochs))
 
     print(f">>> Total training steps: {total_steps}")
-    print(f">>> Targeting {epoch_total_checkpoints} checkpoints per epoch.")
+    print(f">>> Targeting {cfg.checkpoints_per_epoch} checkpoints per epoch.")
     print(f">>> Computed save/eval steps: {save_steps}")
 
-    # optimizer = AdamW(model.parameters(), lr=args.lr, weight_decay=0.01)
-    optimizer = AdamW8bit(model.parameters(), lr=args.lr, weight_decay=0.01)
 
     training_args = TrainingArguments(
-        output_dir=args.out_path,
+        output_dir=cfg.output.path,
         warmup_steps=warmup_steps,
         ddp_find_unused_parameters=False,
-        # bf16=torch.cuda.is_available(),
         bf16=True,
-        fp16=False,
-        dataloader_pin_memory=True,
         dataloader_num_workers=4,
         per_device_train_batch_size=per_device_train_batch_size,
         gradient_accumulation_steps=gradient_accumulation_steps,
         per_device_eval_batch_size=per_device_train_batch_size,
-        num_train_epochs=args.epochs,
+        num_train_epochs=cfg.epochs,
         logging_dir=log_path,
         logging_steps=save_steps,
         eval_steps=save_steps,
         save_steps=save_steps,
         logging_strategy="steps",
         save_strategy="steps",
-        eval_strategy="no" if args.skip_eval else "steps",
+        eval_strategy=cfg.eval_strategy,
         report_to="wandb",
-        save_total_limit=args.save_checkpoints_num,
-        # speed up with fused AdamW optimizer
-        # optim="adamw_torch_fused",
+        save_total_limit=cfg.save_checkpoints_num,
     )
 
     # Save training arguments to JSON for later reference
-    with open(Path(args.out_path) / "training_args.json", "w") as f:
+    with open(Path(cfg.output.path) / "training_args.json", "w") as f:
         json.dump(training_args.to_dict(), f, indent=4)
     print(">>> eval_dataset:", eval_dataset)
 
+
     # WSD settings
+    # optimizer = AdamW8bit(model.parameters(), lr=cfg.lr, weight_decay=0.01)
+    optimizer = AdamW(model.parameters(), lr=cfg.learning_rate, weight_decay=0.01)
     def ws_decay(step):
         if step < warmup_steps:
             return step / warmup_steps
@@ -417,12 +278,9 @@ def main():
         args=training_args,
         train_dataset=train_dataset,
         eval_dataset=eval_dataset,
-        # data_collator=data_collator,
-        callbacks=[LossLoggerCallback(f"{args.out_path}/logs")],
         optimizers=(optimizer, scheduler_ws)
     )
-
-    WANDB_RUN.config.update(training_args_to_dict(trainer.args))
+    WANDB_RUN.config.update(trainer.args)
     WANDB_RUN.config.update({
         "total_steps": total_steps,
         "warmup_steps": warmup_steps,
@@ -431,95 +289,54 @@ def main():
         "batch_size": per_device_train_batch_size,
     })
 
-    with open(Path(args.out_path) / "trainer.json", "w") as f:
-        json.dump(training_args_to_dict(trainer.args), f, indent=4)
+    with open(Path(cfg.output.path) / "trainer.json", "w") as f:
+        json.dump(trainer.args, f, indent=4)
 
     # Load checkpoint if provided
-    checkpoint = args.checkpoint
-    def inspect_checkpoint(cp_path: str) -> dict:
-        info = {
-            "exists": False,
-            "is_dir": False,
-            "files": [],
-            "has_model": False,
-            "has_optimizer": False,
-            "has_scheduler": False,
-            "has_trainer_state": False,
-        }
-        if cp_path is None:
-            return info
-        p = Path(cp_path)
-        if not p.exists():
-            return info
-        info["exists"] = True
-        info["is_dir"] = p.is_dir()
-        try:
-            if p.is_dir():
-                info["files"] = [f.name for f in p.iterdir()]
-            else:
-                info["files"] = [p.name]
-        except Exception:
-            info["files"] = []
-        fnames = set(info["files"])
-        info["has_model"] = any(n in fnames for n in ("pytorch_model.bin", "pytorch_model.pt", "tf_model.h5")) or (p / "pytorch_model.bin").exists()
-        info["has_optimizer"] = "optimizer.pt" in fnames or (p / "optimizer.pt").exists()
-        info["has_scheduler"] = "scheduler.pt" in fnames or (p / "scheduler.pt").exists()
-        info["has_trainer_state"] = "trainer_state.json" in fnames or (p / "trainer_state.json").exists()
-        return info
-    if args.init_model and not checkpoint:
-        print(f">>> Staring from model: {args.init_model}")
-    elif not checkpoint or not Path(checkpoint).exists() or not Path(checkpoint).is_dir():
+    checkpoint = cfg.model.checkpoint
+
+    if not checkpoint:
         checkpoint = None
         print(">>> Starting from random model")
     else:
+        info = inspect_checkpoint(checkpoint)
+        assert info["exists"] and info["is_dir"] and info["has_model"] and info["has_optimizer"] and info["has_scheduler"] and info["has_trainer_state"]
+        ck_state = load_checkpoint_auxiliary_files(checkpoint)
+        optimizer = ck_state["optimizer"]
+        scheduler = ck_state["scheduler"]
+        trainer.optimizer = optimizer
+        trainer.lr_scheduler = scheduler
         print(f">>> Resuming from checkpoint: {checkpoint}")
-        ck_info = inspect_checkpoint(checkpoint)
-        print(f">>> Checkpoint info: exists={ck_info['exists']}, is_dir={ck_info['is_dir']}, files={ck_info['files']}")
+        # print(f">>> Resuming from checkpoint: {checkpoint}")
+        # ck_info = inspect_checkpoint(checkpoint)
+        # print(f">>> Checkpoint info: exists={ck_info['exists']}, is_dir={ck_info['is_dir']}, files={ck_info['files']}")
         # Try to load optimizer/scheduler state if available. Use CPU map_location to avoid device mismatch.
-        try:
-            opt_path = Path(checkpoint) / "optimizer.pt"
-            if opt_path.exists():
-                opt_state = torch.load(opt_path, map_location="cpu")
-                try:
-                    optimizer.load_state_dict(opt_state)
-                    print(">>> Optimizer state loaded from checkpoint")
-                except Exception as e:
-                    print(f"‼️ Failed to load optimizer state: {e}")
-            sch_path = Path(checkpoint) / "scheduler.pt"
-            if sch_path.exists():
-                sch_state = torch.load(sch_path, map_location="cpu")
-                try:
-                    scheduler_ws.load_state_dict(sch_state)
-                    print(">>> Scheduler state loaded from checkpoint")
-                except Exception as e:
-                    print(f"‼️ Failed to load scheduler state: {e}")
-        except Exception as e:
-            print(f"‼️ Error while inspecting/loading checkpoint auxiliary files: {e}")
-        # If a raw model state dict exists, report mismatches when trying a non-strict load.
-        try:
-            model_state_path = Path(checkpoint) / "pytorch_model.bin"
-            if model_state_path.exists():
-                print(">>> Found raw model weights in checkpoint; attempting a non-strict load to report mismatches.")
-                state_dict = torch.load(model_state_path, map_location="cpu")
-                # strip possible 'module.' prefix
-                new_state = {}
-                for k, v in state_dict.items():
-                    nk = k[len("module."):] if k.startswith("module.") else k
-                    new_state[nk] = v
-                try:
-                    load_res = model.load_state_dict(new_state, strict=False)
-                    missing = getattr(load_res, "missing_keys", None) or load_res.get("missing_keys") if isinstance(load_res, dict) else []
-                    unexpected = getattr(load_res, "unexpected_keys", None) or load_res.get("unexpected_keys") if isinstance(load_res, dict) else []
-                    print(f">>> Model load (non-strict) reported missing keys: {missing}")
-                    print(f">>> Model load (non-strict) reported unexpected keys: {unexpected}")
-                except Exception as e:
-                    print(f"‼️ Failed to load model state dict from checkpoint (non-strict): {e}")
-        except Exception as e:
-            print(f"‼️ Error while inspecting/loading model weights: {e}")
+
+        # # If a raw model state dict exists, report mismatches when trying a non-strict load.
+        # try:
+        #     model_state_path = Path(checkpoint) / "pytorch_model.bin"
+        #     if model_state_path.exists():
+        #         print(">>> Found raw model weights in checkpoint; attempting a non-strict load to report mismatches.")
+        #         state_dict = torch.load(model_state_path, map_location="cpu")
+        #         # strip possible 'module.' prefix
+        #         new_state = {}
+        #         for k, v in state_dict.items():
+        #             nk = k[len("module."):] if k.startswith("module.") else k
+        #             new_state[nk] = v
+        #         try:
+        #             load_res = model.load_state_dict(new_state, strict=False)
+        #             missing = getattr(load_res, "missing_keys", None) or load_res.get("missing_keys") if isinstance(load_res, dict) else []
+        #             unexpected = getattr(load_res, "unexpected_keys", None) or load_res.get("unexpected_keys") if isinstance(load_res, dict) else []
+        #             print(f">>> Model load (non-strict) reported missing keys: {missing}")
+        #             print(f">>> Model load (non-strict) reported unexpected keys: {unexpected}")
+        #         except Exception as e:
+        #             print(f"‼️ Failed to load model state dict from checkpoint (non-strict): {e}")
+        # except Exception as e:
+        #     print(f"‼️ Error while inspecting/loading model weights: {e}")
     # Use Trainer's resume functionality. Pass the checkpoint path (or None) so Trainer can restore trainer state.
     trainer.train(resume_from_checkpoint=checkpoint)
-    print(f">>> Save model to: {args.out_path}")
-    model.save_pretrained(Path(args.out_path))
+    print(f">>> Save model to: {cfg.output.path}")
+    model.save_pretrained(Path(cfg.output.path))
     WANDB_RUN.finish()
 
 

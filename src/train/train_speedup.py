@@ -3,7 +3,6 @@ from pathlib import Path
 from math import ceil
 import random
 import json
-from dataclasses import asdict, is_dataclass
 
 
 import torch
@@ -17,7 +16,7 @@ from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
 
 from src.lib.dataset import load_custom_dataset
-from src.lib.utils import print_args
+from src.lib.utils import print_args, training_args_to_dict
 
 
 import warnings
@@ -25,17 +24,6 @@ warnings.filterwarnings("ignore", message="Was asked to gather along dimension 0
 
 
 DECAY_RATE = 0.9  # for WSD
-
-
-def training_args_to_dict(args) -> dict:
-    serializable_args = {}
-    args_dict = asdict(args) if is_dataclass(args) else vars(args)
-    for k, v in args_dict.items():
-        try:
-            json.dumps(v)
-            serializable_args[k] = v
-        except (TypeError, OverflowError):
-            serializable_args[k] = str(v)
 
 
 class LossLoggerCallback(TrainerCallback):

@@ -2,7 +2,6 @@ from datetime import datetime
 import argparse
 from pathlib import Path
 import json
-from dataclasses import asdict, is_dataclass
 import random
 
 import torch
@@ -15,20 +14,8 @@ from transformers import Trainer, TrainingArguments
 from datasets import concatenate_datasets
 
 from src.lib.dataset import load_custom_dataset
-from src.lib.utils import print_args
+from src.lib.utils import print_args, training_args_to_dict
 from src.lib.linear_model import MCQModel, MCQCollator
-
-
-def training_args_to_dict(args) -> dict:
-    serializable_args = {}
-    args_dict = asdict(args) if is_dataclass(args) else vars(args)
-    for k, v in args_dict.items():
-        try:
-            json.dumps(v)
-            serializable_args[k] = v
-        except (TypeError, OverflowError):
-            serializable_args[k] = str(v)
-    return serializable_args
 
 
 def load_dataset_dict(data_path: str) -> DatasetDict:

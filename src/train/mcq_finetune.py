@@ -2,7 +2,6 @@ import argparse
 import json
 import math
 import random
-from dataclasses import asdict, is_dataclass
 from datetime import datetime
 from pathlib import Path
 from typing import Any
@@ -21,7 +20,7 @@ from transformers.training_args import TrainingArguments
 
 
 from src.lib.dataset import load_custom_dataset
-from src.lib.utils import print_args
+from src.lib.utils import print_args, training_args_to_dict
 
 
 DECAY_RATE = 0.9  # for WSD
@@ -104,18 +103,6 @@ class MCQTrainer(Trainer):
         if return_outputs:
             return loss, {"logits": choice_logits}
         return loss
-
-
-def training_args_to_dict(args: TrainingArguments) -> dict:
-    serializable_args = {}
-    args_dict = asdict(args) if is_dataclass(args) else vars(args)
-    for k, v in args_dict.items():
-        try:
-            json.dumps(v)
-            serializable_args[k] = v
-        except (TypeError, OverflowError):
-            serializable_args[k] = str(v)
-    return serializable_args
 
 
 class LossLoggerCallback(TrainerCallback):
