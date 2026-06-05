@@ -7,6 +7,7 @@ import json
 from datasets.arrow_dataset import Dataset
 from datasets.dataset_dict import DatasetDict
 from datasets.load import load_dataset, load_from_disk
+from datasets import concatenate_datasets
 
 from src.lib.text import split_text_to_sentences
 
@@ -190,3 +191,70 @@ def select_data_by_indices(dataset: Dataset, indices_fn: str) -> Dataset:
         dataset = dataset.select(kept_indices)
         print(f"  -> Dataset size after filtering: {len(dataset)}")
     return dataset
+
+
+def _limit_dataset_dict(data_dict: DatasetDict, data_limit: int) -> DatasetDict:
+    for k, dt in data_dict.items():
+        dt = dt.shuffle(seed=42)
+        if k == "train":
+            data_dict[k] = slice_dataset(dt, 0, data_limit)
+        else:
+            # For validation and test sets, use a smaller limit
+            _data_limit = data_limit // 10
+            data_dict[k] = slice_dataset(dt, 0, _data_limit)
+    return data_dict
+
+
+def _load_dataset_dict(data_path: str) -> DatasetDict:
+    dataset = load_custom_dataset(data_path, None, "local")
+    if isinstance(dataset, Dataset):
+        data_dict = DatasetDict({"train": dataset})
+    elif isinstance(dataset, DatasetDict):
+        data_dict = dataset
+    else:
+        raise TypeError(f"Invalid data type {type(dataset)}")
+    return data_dict
+
+def load_and_limit_dataset_dict(data_path: str, data_limit: int) -> DatasetDict:
+    """
+    Load data and limit the number of samples for training.
+    For validation and test sets, use a smaller limit (data_limit // 10).
+    """
+    print(f">>> Loading dataset from {data_path}")
+    _data_dict = _load_dataset_dict(data_path)
+    print(_data_dict)
+    print(">>> data loaded")
+    if data_limit > 0:
+        _data_dict = _limit_dataset_dict(_data_dict, data_limit)
+    return _data_dict
+
+
+def load_dataset_for_training(cfg) -> tuple[Dataset, Dataset]:
+    data_list = []
+    if cfg.data.limit is None or len(cfg.data.limit) == 0:
+        cfg.data.limit = [0] * len(cfg.data.paths)
+    assert len(cfg.data.paths) == len(cfg.data.limit), "data_paths and data_limit should have the same length."
+    for dp, dl in zip(cfg.data.paths, cfg.data.limit):
+        _data_dict = load_and_limit_dataset_dict(dp, dl)
+        data_list.append(_data_dict)
+    data_dict = DatasetDict({
+        split: concatenate_datasets([dd[split] for dd in data_list])
+        for split in data_list[0].keys()
+    })
+    print(">>> Dataset:", data_dict)
+
+    train_dataset: Dataset | None = None
+    eval_dataset: Dataset | None = None
+    train_dataset = data_dict["train"]
+    for split in ("val", "validation", "dev"):
+        if split in data_dict:
+            eval_dataset = data_dict[split]
+            break
+    if eval_dataset is None:
+        data_dict = train_dataset .train_test_split(test_size=0.05, shuffle=True, seed=42)
+        train_dataset = data_dict["train"]
+        eval_dataset = data_dict["test"]
+    print(">>> dataset features:", train_dataset.features)
+    print(f">>> Training data size: {len(train_dataset)}")
+    print(f">>> Eval data size: {len(eval_dataset)}")
+    return train_dataset, eval_dataset

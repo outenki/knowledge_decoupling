@@ -3,6 +3,7 @@ import json
 from pathlib import Path
 
 import torch
+from transformers.training_args import TrainingArguments
 
 
 def get_device():
@@ -61,7 +62,7 @@ def inspect_checkpoint(cp_path: str) -> dict:
     except Exception:
         info["files"] = []
     fnames = set(info["files"])
-    info["has_model"] = any(n in fnames for n in ("pytorch_model.bin", "pytorch_model.pt", "tf_model.h5")) or (p / "pytorch_model.bin").exists()
+    info["has_model"] = any(n in fnames for n in ("pytorch_model.bin", "pytorch_model.pt", "tf_model.h5", "model.safetensors")) or (p / "pytorch_model.bin").exists()
     info["has_optimizer"] = "optimizer.pt" in fnames or (p / "optimizer.pt").exists()
     info["has_scheduler"] = "scheduler.pt" in fnames or (p / "scheduler.pt").exists()
     info["has_trainer_state"] = "trainer_state.json" in fnames or (p / "trainer_state.json").exists()
