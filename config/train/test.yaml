@@ -19,12 +19,8 @@ training:
   batch_size: 4
   learning_rate: 2e-4
   eval_strategy: "no"
-
-checkpointing:
   checkpoints_per_epoch: 50
   save_checkpoints_num: 5
-
-runtime:
   attn_implementation: "flash_attention_2"
 
 output:

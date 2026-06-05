@@ -229,12 +229,12 @@ def load_and_limit_dataset_dict(data_path: str, data_limit: int) -> DatasetDict:
     return _data_dict
 
 
-def load_dataset_for_training(cfg) -> tuple[Dataset, Dataset]:
+def load_dataset_for_training(data_paths: list, data_limits: list) -> tuple[Dataset, Dataset]:
     data_list = []
-    if cfg.data.limit is None or len(cfg.data.limit) == 0:
-        cfg.data.limit = [0] * len(cfg.data.paths)
-    assert len(cfg.data.paths) == len(cfg.data.limit), "data_paths and data_limit should have the same length."
-    for dp, dl in zip(cfg.data.paths, cfg.data.limit):
+    if not data_limits or len(data_limits) == 0:
+        data_limits = [0] * len(data_paths)
+    assert len(data_paths) == len(data_limits), "data_paths and data_limits should have the same length."
+    for dp, dl in zip(data_paths, data_limits):
         _data_dict = load_and_limit_dataset_dict(dp, dl)
         data_list.append(_data_dict)
     data_dict = DatasetDict({

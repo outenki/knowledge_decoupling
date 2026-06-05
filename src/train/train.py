@@ -1,27 +1,13 @@
-import json
-import math
 import random
-from datetime import datetime
 from pathlib import Path
-from typing import Any
+from datetime import datetime
 
 import hydra
 from omegaconf import DictConfig, OmegaConf
 import torch
-import wandb
-from wandb.sdk.lib.runid import generate_id
-from datasets import concatenate_datasets
-from datasets.arrow_dataset import Dataset
-from datasets.dataset_dict import DatasetDict
-from torch.optim.lr_scheduler import LambdaLR
-from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
-from transformers.trainer import Trainer
-from transformers.training_args import TrainingArguments
-# from bitsandbytes.optim import AdamW8bit
-from bitsandbytes.optim.adamw import AdamW
+from transformers import AutoTokenizer
 
 from src.lib.dataset import load_dataset_for_training
-from src.lib.utils import inspect_checkpoint
 from src.lib.trainer import train_model_with_data, init_wandb_run
 from src.lib.model import load_model_from_pretrained, load_model_from_config_random
 
@@ -52,13 +38,12 @@ def main(cfg: DictConfig):
     model = None
     if cfg.model.init_model:
         print(">>> Loading init model from pretrained model:", cfg.model.init_model)
-        model = load_model_from_pretrained(cfg.model.init_model, cfg.runtime.attn_implementation)
+        model = load_model_from_pretrained(cfg.model.init_model, cfg.training.attn_implementation)
         print(">>> Init model loaded. Config:", model.config)
     else:
         assert cfg.model.config is not None, "--config-name is required when using --random-init"
-        model = load_model_from_config_random(cfg.model.config, cfg.runtime.attn_implementation)
+        model = load_model_from_config_random(cfg.model.config, cfg.training.attn_implementation)
         print(">>> Randomly initialized model. Config:", model.config)
-
     tokenizer = AutoTokenizer.from_pretrained(cfg.model.config if cfg.model.config is not None else cfg.model.init_model)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
@@ -67,9 +52,18 @@ def main(cfg: DictConfig):
     model.save_pretrained(Path(cfg.output.path) / "init_model")
 
     # === train model
-    train_dataset, eval_dataset = load_dataset_for_training(cfg)
-    wandb_run = init_wandb_run(cfg)
-    train_model_with_data(model, train_dataset, eval_dataset, cfg, wandb_run) 
+    train_dataset, eval_dataset = load_dataset_for_training(cfg.data.paths, cfg.data.limits)
+    wandb_run = init_wandb_run(cfg.output.path, cfg.model.config + datetime.now().strftime("-%Y%m%d"))
+    # train_model_with_data(model, train_dataset, eval_dataset, cfg, wandb_run) 
+    train_model_with_data(
+        model, train_dataset, eval_dataset, wandb_run,
+        output_path=cfg.output.path,
+        batch_size=cfg.training.batch_size,
+        epochs=cfg.training.epochs,
+        checkpoints_per_epoch=cfg.training.checkpoints_per_epoch,
+        eval_strategy=cfg.training.eval_strategy,
+        save_checkpoints_num=cfg.training.save_checkpoints_num,
+    ) 
     wandb_run.finish()
 
 

@@ -8,7 +8,7 @@ model:
   checkpoint: null
 
 data:
-  name: SmolLM2-135M-20B-bs4096
+  name: SmolLM2-135M-20B-bs1024
   paths:
     - ${base.path}/input/tokenized/${model.config}/train/${data.name}
   limit: 
@@ -19,12 +19,8 @@ training:
   batch_size: 1
   learning_rate: 2e-4
   eval_strategy: "no"
-
-checkpointing:
   checkpoints_per_epoch: 50
-  save_checkpoints_num: 5
-
-runtime:
+  save_checkpoints_num: 2
   attn_implementation: "sdpa"
 
 output:

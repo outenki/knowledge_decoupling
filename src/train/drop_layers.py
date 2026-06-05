@@ -122,10 +122,19 @@ def main(cfg: DictConfig):
         get_layers(model)[-1].apply(reset_parameters)
 
 
-    train_dataset, eval_dataset = load_dataset_for_training(cfg)
-    wandb_run = init_wandb_run(cfg)
-    train_model_with_data(model, train_dataset, eval_dataset, cfg, wandb_run) 
-    wandb_run.finish()
+    if cfg.finetune:
+        train_dataset, eval_dataset = load_dataset_for_training(cfg.data.paths, cfg.data.limits)
+        wandb_run = init_wandb_run(cfg)
+        train_model_with_data(
+            model, train_dataset, eval_dataset, wandb_run,
+            output_path=cfg.output.path,
+            batch_size=cfg.training.batch_size,
+            epochs=cfg.training.epochs,
+            checkpoints_per_epoch=cfg.checkpointing.checkpoints_per_epoch,
+            eval_strategy=cfg.training.eval_strategy,
+            save_checkpoints_num=cfg.checkpointing.save_checkpoints_num,
+        ) 
+        wandb_run.finish()
 
 
 if __name__ == "__main__":

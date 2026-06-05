@@ -233,7 +233,7 @@ def generate_nonce_word_bank(texts, multi_process) -> dict:
     return {m: list(set(f)) for m, f in features.items()}
 
 
-def match_nonce_words(token: Token, max_n: int, keep_word_identical: bool) -> list[str]:
+def match_nonce_words(token: Token, max_n: int, keep_word_identical: bool, shift: int) -> list[str]:
     """
     Matches a token with a list of words based on its pos and morph features
 
@@ -241,6 +241,7 @@ def match_nonce_words(token: Token, max_n: int, keep_word_identical: bool) -> li
         token (Token): A spaCy Token object.
         max_n (int): The maximum number of nonce sentences to return.
         keep_word_identical (bool): A word is always replaced by the same nonce word.
+        shift (int): The number of positions to shift the nonce word selection.
     Returns:
         list: A list of matched words.
     """
@@ -255,9 +256,10 @@ def match_nonce_words(token: Token, max_n: int, keep_word_identical: bool) -> li
             NONCE_WORD_BANK_INDEX[key] = {
                 candidate: idx for idx, candidate in enumerate(candidates)
             }
-        start_index = NONCE_WORD_BANK_INDEX[key].get((text, lemma))
-        if start_index is None:
-            return []
+        # the start index is determined by the original word and the shift(decided by each sample),
+        # so that the same word will always be replaced by the same nonce word for each sample
+        start_index = NONCE_WORD_BANK_INDEX[key].get((text, lemma), 0)
+        start_index = (start_index + shift) % len(candidates)
         start_index += 1
     else:
         start_index = random.randrange(len(candidates))
@@ -283,16 +285,20 @@ def match_nonce_words(token: Token, max_n: int, keep_word_identical: bool) -> li
     return nonce_words
 
 
-def generate_nonce_sentence(doc, max_n: int, keep_word_identical: bool) -> list:
+def generate_nonce_sentence(doc, max_n: int, keep_word_identical: bool, ne_only: bool = False) -> list:
     """Generates a nonce sentence by replacing tokens in the document with nonce words.
     Args:
         doc (Doc): A spaCy Doc object.
         max_n (int): The number of nonce words to generate for each token.
+        keep_word_identical (bool): A word is always replaced by the same nonce word.
+        ne_only (bool): Only replace named entities.
     returns:
         list[str]: A list of nonce words forming a sentence.
     """
     # get content words
     content_words = [token for token in doc if is_content_word(token)]
+    if ne_only:
+        content_words = [token for token in content_words if token.ent_type_]
     if not content_words:
         return []
 
@@ -300,7 +306,7 @@ def generate_nonce_sentence(doc, max_n: int, keep_word_identical: bool) -> list:
     nonce_words_per_token = []
     matched_content_word_num = 0
     for token in content_words:
-        candidates = match_nonce_words(token, max_n, keep_word_identical)
+        candidates = match_nonce_words(token, max_n, keep_word_identical, len(doc))
         if not candidates:
             # if no nonce words found, skip this sentence and return an empty list
             # make sure the nonce data is nonsensical enough
@@ -343,7 +349,7 @@ def generate_nonce_sentence(doc, max_n: int, keep_word_identical: bool) -> list:
     return nonce_sentences
 
 
-def generate_nonce_for_examples(examples, multi_process: bool, max_n: int, keep_word_identical: bool):
+def generate_nonce_for_examples(examples, multi_process: bool, max_n: int, keep_word_identical: bool, ne_only: bool = False):
     assert NLP is not None, "NLP should be initialized"
     texts = examples["text"]
     sents = []
@@ -360,7 +366,7 @@ def generate_nonce_for_examples(examples, multi_process: bool, max_n: int, keep_
     matched_content_word_nums = []
     total_content_word_nums = []
     for doc in docs:
-        nonce_sentences = generate_nonce_sentence(doc, max_n, keep_word_identical)
+        nonce_sentences = generate_nonce_sentence(doc, max_n, keep_word_identical, ne_only)
         for item in nonce_sentences:
             ori_texts.append(item["ori_text"])
             nonce_texts.append(item["nonce_text"])
@@ -381,6 +387,7 @@ def generate_nonce_for_dataset(
     max_n: int,
     keep_word_identical: bool,
     nonce_word_bank: dict | str | Path,
+    ne_only: bool = False
 ):
     batch_number = ceil(dataset.num_rows / BATCH_SIZE)
     print(f"***Processing {dataset.num_rows} samples in {batch_number} batches of size {BATCH_SIZE}...")
@@ -398,6 +405,7 @@ def generate_nonce_for_dataset(
         multi_process=multi_process,
         max_n=max_n,
         keep_word_identical=keep_word_identical,
+        ne_only=ne_only
     )
     
     dataset = dataset.map(
