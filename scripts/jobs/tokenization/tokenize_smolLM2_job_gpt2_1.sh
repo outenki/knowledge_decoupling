@@ -10,4 +10,4 @@
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/jobs/tokenization
 
-sh ./tokenize_smolLM2_paralle.sh "gpt2" 1024 0
+sh ./tokenize_smolLM2_paralle.sh "gpt2" 1024 1

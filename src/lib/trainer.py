@@ -37,8 +37,8 @@ def init_wandb_run(output_path, group_name):
 
 
 def train_model_with_data(
-    model, train_dataset, eval_dataset, wandb_run,
-    output_path, batch_size, epochs, checkpoints_per_epoch, eval_strategy, save_checkpoints_num
+    model, train_dataset, eval_dataset, wandb_run, output_path,
+    batch_size, epochs, checkpoints_per_epoch, eval_strategy, save_checkpoints_num, learning_rate, attn_implementation, checkpoint=None
 ):
     # === Training setup
     log_path = f"{output_path}/logs"
@@ -57,7 +57,7 @@ def train_model_with_data(
     warmup_steps = total_steps // 20 
 
     # 计算保存和评估间隔
-    save_steps = max(1, total_steps // (checkpoints_per_epoch * cfg.training.epochs))
+    save_steps = max(1, total_steps // (checkpoints_per_epoch * epochs))
 
     print(f">>> Total training steps: {total_steps}")
     print(f">>> Targeting {checkpoints_per_epoch} checkpoints per epoch.")
@@ -65,7 +65,7 @@ def train_model_with_data(
 
 
     training_args = TrainingArguments(
-        output_dir=cfg.output.path,
+        output_dir=output_path,
         warmup_steps=warmup_steps,
         ddp_find_unused_parameters=False,
         bf16=True,
@@ -75,7 +75,7 @@ def train_model_with_data(
         per_device_train_batch_size=per_device_train_batch_size,
         gradient_accumulation_steps=gradient_accumulation_steps,
         per_device_eval_batch_size=per_device_train_batch_size,
-        num_train_epochs=cfg.training.epochs,
+        num_train_epochs=epochs,
         logging_dir=log_path,
         logging_steps=save_steps,
         eval_steps=save_steps,
@@ -91,14 +91,13 @@ def train_model_with_data(
     )
 
     # Save training arguments to JSON for later reference
-    with open(Path(cfg.output.path) / "training_args.json", "w") as f:
+    with open(Path(output_path) / "training_args.json", "w") as f:
         json.dump(training_args.to_dict(), f, indent=4)
     print(">>> eval_dataset:", eval_dataset)
 
 
     # WSD settings
-    # optimizer = AdamW8bit(model.parameters(), lr=cfg.lr, weight_decay=0.01)
-    optimizer = AdamW(model.parameters(), lr=cfg.training.learning_rate, weight_decay=0.01)
+    optimizer = AdamW(model.parameters(), lr=learning_rate, weight_decay=0.01)
     def ws_decay(step):
         if step < warmup_steps:
             return step / warmup_steps
@@ -108,13 +107,6 @@ def train_model_with_data(
         return cosine * wsd
     scheduler_ws = LambdaLR(optimizer, lr_lambda=ws_decay)
     
-    # Compile model for faster execution (PyTorch 2.0+)
-    try:
-        print(">>> Attempting to compile model with torch.compile()...")
-        model = torch.compile(model, mode="reduce-overhead", fullgraph=False)
-        print(">>> Model compiled successfully")
-    except Exception as e:
-        print(f">>> Model compilation skipped: {e}")
     
     trainer = Trainer(
         model=model,
@@ -131,11 +123,11 @@ def train_model_with_data(
         "save_steps": save_steps,
         "batch_size": per_device_train_batch_size,
     }, allow_val_change=True)
-    with open(Path(cfg.output.path) / "trainer.json", "w") as f:
+    with open(Path(output_path) / "trainer.json", "w") as f:
         json.dump(trainer.args.to_dict(), f, indent=4)
 
     # Load checkpoint if provided
-    checkpoint = cfg.model.checkpoint
+    checkpoint = checkpoint
 
     if not checkpoint:
         checkpoint = None
@@ -148,7 +140,7 @@ def train_model_with_data(
     print(f"params={model.num_parameters():,}")
     print(f"gradient_checkpointing={model.is_gradient_checkpointing}")
     print(">>> Acceleration optimizations enabled:")
-    print(f"    - Flash Attention: {cfg.runtime.attn_implementation}")
+    print(f"    - Flash Attention: {attn_implementation}")
     print(f"    - Gradient Checkpointing: True")
     print(f"    - Dataloader Workers: 8")
     print(f"    - Memory Pinning: True")
@@ -157,5 +149,4 @@ def train_model_with_data(
     print(f"    - flash_sdp: {torch.backends.cuda.flash_sdp_enabled()}")
 
     trainer.train(resume_from_checkpoint=checkpoint)
-    print(f">>> Save model to: {cfg.output.path}")
-    model.save_pretrained(Path(cfg.output.path))
+    return trainer.model

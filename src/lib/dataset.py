@@ -40,6 +40,8 @@ def load_custom_dataset(data_name: str, data_type: str | None, load_from: str) -
             return load_dataset("EleutherAI/SmolLM2-135M-10B")
         if data_name.lower() == "smollm2-20B".lower():
             return load_dataset("EleutherAI/SmolLM2-135M-20B")
+        if data_name.lower() == "smollm2-135m-20B".lower():
+            return load_dataset("EleutherAI/SmolLM2-135M-20B")
         else:
             return load_dataset(data_name)
     else:

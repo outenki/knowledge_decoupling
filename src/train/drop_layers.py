@@ -15,7 +15,7 @@ from datasets.dataset_dict import DatasetDict
 from transformers import AutoTokenizer
 
 from src.lib.dataset import load_dataset_for_training
-from src.lib.model import load_model_from_pretrained
+from src.lib.model import load_model_from_pretrained, load_model_from_config_random
 from src.lib.trainer import train_model_with_data, init_wandb_run
 
 random.seed(42)
@@ -88,10 +88,15 @@ def main(cfg: DictConfig):
         print(f">>> GPU {i}: {torch.cuda.get_device_name(i)}")
 
     # === Load model
-    print(">>> Loading init model from pretrained model:", cfg.model.init_model)
-    model = load_model_from_pretrained(cfg.model.init_model, cfg.runtime.attn_implementation)
-    print(">>> Init model loaded. Config:", model.config)
-
+    model = None
+    if cfg.model.init_model:
+        print(">>> Loading init model from pretrained model:", cfg.model.init_model)
+        model = load_model_from_pretrained(cfg.model.init_model, cfg.training.attn_implementation)
+        print(">>> Init model loaded. Config:", model.config)
+    else:
+        assert cfg.model.config is not None, "--config-name is required when using --random-init"
+        model = load_model_from_config_random(cfg.model.config, cfg.training.attn_implementation)
+        print(">>> Randomly initialized model. Config:", model.config)
     tokenizer = AutoTokenizer.from_pretrained(cfg.model.config if cfg.model.config is not None else cfg.model.init_model)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
@@ -117,24 +122,29 @@ def main(cfg: DictConfig):
     unfreeze_parameters(new_layers[-1])
     
     # init the new top layer with random weights
-    if cfg.model.init_top_random:
+    if cfg.model.reset_top_layer:
         print(">>> Initializing the new top layer with random weights.")
         get_layers(model)[-1].apply(reset_parameters)
 
 
     if cfg.finetune:
         train_dataset, eval_dataset = load_dataset_for_training(cfg.data.paths, cfg.data.limits)
-        wandb_run = init_wandb_run(cfg)
-        train_model_with_data(
+        wandb_run = init_wandb_run(cfg.output.path, cfg.model.config + datetime.now().strftime("-%Y%m%d"))
+        model = train_model_with_data(
             model, train_dataset, eval_dataset, wandb_run,
             output_path=cfg.output.path,
             batch_size=cfg.training.batch_size,
             epochs=cfg.training.epochs,
-            checkpoints_per_epoch=cfg.checkpointing.checkpoints_per_epoch,
+            checkpoints_per_epoch=cfg.training.checkpoints_per_epoch,
             eval_strategy=cfg.training.eval_strategy,
-            save_checkpoints_num=cfg.checkpointing.save_checkpoints_num,
+            save_checkpoints_num=cfg.training.save_checkpoints_num,
+            learning_rate=cfg.training.learning_rate,
+            attn_implementation=cfg.training.attn_implementation,
+            checkpoint=cfg.model.checkpoint
         ) 
         wandb_run.finish()
+    print(f">>> Save model to: {cfg.output.path}")
+    model.save_pretrained(Path(cfg.output.path))
 
 
 if __name__ == "__main__":

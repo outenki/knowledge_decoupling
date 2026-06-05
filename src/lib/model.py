@@ -1,3 +1,4 @@
+from typing import Any
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 import torch
 
@@ -46,4 +47,3 @@ def load_model_from_config_random(config_name: str, attn_implementation: str) ->
             print(name, p.mean().item(), p.std().item())
             break
     return model.to(torch.bfloat16)
-    

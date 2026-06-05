@@ -54,8 +54,7 @@ def main(cfg: DictConfig):
     # === train model
     train_dataset, eval_dataset = load_dataset_for_training(cfg.data.paths, cfg.data.limits)
     wandb_run = init_wandb_run(cfg.output.path, cfg.model.config + datetime.now().strftime("-%Y%m%d"))
-    # train_model_with_data(model, train_dataset, eval_dataset, cfg, wandb_run) 
-    train_model_with_data(
+    model = train_model_with_data(
         model, train_dataset, eval_dataset, wandb_run,
         output_path=cfg.output.path,
         batch_size=cfg.training.batch_size,
@@ -63,8 +62,13 @@ def main(cfg: DictConfig):
         checkpoints_per_epoch=cfg.training.checkpoints_per_epoch,
         eval_strategy=cfg.training.eval_strategy,
         save_checkpoints_num=cfg.training.save_checkpoints_num,
+        learning_rate=cfg.training.learning_rate,
+        attn_implementation=cfg.training.attn_implementation,
+        checkpoint=cfg.model.checkpoint
     ) 
     wandb_run.finish()
+    print(f">>> Save model to: {cfg.output.path}")
+    model.save_pretrained(Path(cfg.output.path))
 
 
 if __name__ == "__main__":
