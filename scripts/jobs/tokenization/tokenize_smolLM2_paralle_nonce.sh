@@ -5,7 +5,7 @@ PART=$3
 
 PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-$HOME/projects/knowledge_decoupling}"
 DATA_PATH=$PROJECT_BASE_PATH/data/SmolLM2-20B/nonce/dataset
-OUTPUT_PATH=$PROJECT_BASE_PATH/input/tokenized/$TOKENIZER/train/SmolLM2-135M-20B-bs$BLOCK_SIZE
+OUTPUT_PATH=$PROJECT_BASE_PATH/input/tokenized/$TOKENIZER/train/SmolLM2-135M-20B-nonce-bs$BLOCK_SIZE
 SIZE=80000000
 START=$(($PART * $SIZE))
 END=$(($(($PART + 1)) * $SIZE -1))

@@ -9,10 +9,6 @@ from src.lib.dataset import slice_dataset
 from src.lib.utils import print_args
 from src.lib.nonce_data import generate_nonce_for_dataset
 
-# if spacy.prefer_gpu():
-#     print("Using GPU")
-# else:
-#     print("Using CPU")
 
 PART_SIZE = 10_000
 
@@ -82,39 +78,9 @@ def _process_dataset(dataset: Dataset, args):
     )
     processed_dataset.save_to_disk(str(out_path), max_shard_size="500MB")
      
-    # parts_dir = Path(tempfile.mkdtemp(prefix="parts_", dir=str(out_path)))
-
-    # total_rows = len(dt)
-    # total_parts = math.ceil(total_rows / args.part_size) if total_rows else 0
-    # total_generated_rows = 0
-    # example_written = False
-
-    # for part_idx in range(total_parts):
-    #     start = part_idx * args.part_size
-    #     end = min(start + args.part_size, total_rows)
-    #     print(f"**** Processing part {part_idx + 1}/{total_parts}: rows [{start}, {end})")
-    #     batch = dt.select(range(start, end))
-    #     processed_dataset = generate_nonce_for_dataset(
-    #         batch,
-    #         multi_process=args.multi_process,
-    #         max_n=args.max_n,
-    #         nonce_word_bank=args.nonce_word_bank,
-    #         keep_word_identical=args.keep_word_identical,
-    #     )
-    #     generated_rows = len(processed_dataset)
-    #     total_generated_rows += generated_rows
-    #     print(
-    #         f"**** Part {part_idx + 1}/{total_parts} generated "
-    #         f"{generated_rows} rows from {len(batch)} input rows."
-    #     )
-    #     part_path = parts_dir / f"part_{part_idx:05d}"
-    #     processed_dataset.save_to_disk(str(part_path), max_shard_size="500MB")
-
     processed_dataset.select(range(min(50, len(processed_dataset)))).to_json(
         out_path / "example_sentences.json"
     )
-
-    # return total_parts, total_rows, total_generated_rows, parts_dir
 
 
 def main():
@@ -143,20 +109,6 @@ def main():
     # ======== Generate nonce sentences ========
     print("**** Processing dataset ...")
     _process_dataset(dataset, args)
-    # with open(Path(out_path) / "manifest.json", "w", encoding="utf-8") as f:
-    #     json.dump(
-    #         {
-    #             "parts_dir": str(parts_dir),
-    #             "part_size": args.part_size,
-    #             "total_parts": total_parts,
-    #             "total_input_rows": total_rows,
-    #             "total_generated_rows": total_generated_rows,
-    #         },
-    #         f,
-    #         indent=2,
-    #     )
-    # print(f"Saved {total_rows} input rows into {total_parts} processed part(s) under {parts_dir}")
-    # print(f"Generated dataset size: {total_generated_rows} rows.")
     print("Use src/data_processing/merge_dataset.py to merge parts later if you need a single dataset directory.")
 
 

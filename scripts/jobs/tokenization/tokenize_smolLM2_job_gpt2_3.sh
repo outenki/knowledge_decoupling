@@ -1,13 +1,13 @@
 #!/bin/bash
 #PJM -L "rscgrp=a-batch"
-#PJM -L "elapse=100:00:00"
+#PJM -L "elapse=50:00:00"
 #PJM -L "vnode-core=10"
 #PJM -e logs/tokenization_1024_3.out
 #PJM -o logs/tokenization_1024_3.out
-#PJM -N "tk_s_3"
+#PJM -N "tkg_3"
 
 
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/jobs/tokenization
 
-sh ./tokenize_smolLM2_paralle.sh "Qwen/Qwen3.5-0.8B-Base" 1024 3
+sh ./tokenize_smolLM2_paralle.sh "gpt2" 1024 3

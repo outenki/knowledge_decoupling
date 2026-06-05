@@ -12,11 +12,11 @@ from src.lib.dataset import load_custom_dataset, slice_dataset
 def read_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--tokenizer", type=str, required=False, default="gpt2")
-    parser.add_argument("--data-name", "-dn", type=str, required=True)
+    parser.add_argument("--data-path", "-dp", type=str, required=True)
     parser.add_argument("--load-from", "-lf", type=str, choices=["local", "hf"], required=True)
     parser.add_argument("--data-type", "-dt", type=str, default=None)
     parser.add_argument("--data-column", "-dc", type=str, choices=["text", "nonce"], default="text")
-    parser.add_argument("--data-split", "-ds", type=str, required=True, help="train/dev/test")
+    parser.add_argument("--split", "-sp", type=str, required=True, help="train/dev/test")
     parser.add_argument("--tokenize", "-t", action="store_true")
     parser.add_argument("--slice", "-s", action="store_true")
     parser.add_argument("--block-size", "-bs", type=int, required=True)
@@ -124,17 +124,15 @@ def main():
     output_path.mkdir(parents=True, exist_ok=True)
 
     print(">>> Loading data ...")
-    datasets = load_custom_dataset(args.data_name, args.data_type, args.load_from)
+    datasets = load_custom_dataset(args.data_path, args.data_type, args.load_from)
     if isinstance(datasets, dict):
-        dataset = datasets[args.data_split]
+        dataset = datasets[args.split]
     else:
         dataset = datasets
     print(f"  -> Dataset size: {len(dataset)}")
 
     kept_indices = None
-    if not Path(args.kept_indices).is_file():
-        print(f"Warning: kept indices file not found at {args.kept_indices}. All examples will be kept.")
-    else:
+    if args.kept_indices and Path(args.kept_indices).is_file():
         with open(args.kept_indices, "r") as f:
             kept_indices = json.load(f)
         print(f"  -> {len(kept_indices)} examples will be kept based on the provided indices.")

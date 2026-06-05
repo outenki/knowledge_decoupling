@@ -37,8 +37,6 @@ random.seed(42)
 def main(cfg: DictConfig):
     # === Save a copy of the config for later reference
     Path(cfg.output.path).mkdir(parents=True, exist_ok=True)
-    log_path = f"{cfg.output.path}/logs"
-    Path(log_path).mkdir(parents=True, exist_ok=True)
 
     print(OmegaConf.to_yaml(cfg))
     with open(Path(cfg.output.path) / "config.yaml", "w") as f:
