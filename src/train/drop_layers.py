@@ -145,6 +145,7 @@ def main(cfg: DictConfig):
         wandb_run.finish()
     print(f">>> Save model to: {cfg.output.path}")
     model.save_pretrained(Path(cfg.output.path))
+    tokenizer.save_pretrained(cfg.output.path)
 
 
 if __name__ == "__main__":
