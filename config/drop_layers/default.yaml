@@ -1,6 +1,6 @@
 # configs/train.yaml
 base:
-  path: /home/pj24001974/ku50001571/projects/knowledge_decoupling
+  path: 
 
 model:
   config: openai-community/gpt2
@@ -10,7 +10,7 @@ model:
   reset_top_layer: false
 
 data:
-  name: SmolLM2-135M-20B-nonce-bs4096
+  name: 
   paths:
     - ${base.path}/input/tokenized/${model.config}/train/${data.name}
   limit: 
@@ -27,7 +27,7 @@ training:
   attn_implementation: "sdpa"
 
 output:
-  path: ${base.path}/output/${model.config}/toplayers_${model.keep_n_layers}/${data.name}/test
+  path: ${base.path}/output/${model.config}/layers_${model.keep_n_layers}/base
 
 hydra:
   run:
