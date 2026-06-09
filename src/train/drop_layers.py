@@ -108,7 +108,7 @@ def main(cfg: DictConfig):
     layers = get_layers(model)
     n_layers = len(layers)
     assert n_layers == get_num_layers(model), "Layer count mismatch"
-    keep_n = cfg.model.keep_n_layers + 1  # add a new layer on top to finetune
+    keep_n = cfg.model.keep_n_layers
     assert keep_n > 0 and keep_n <= n_layers, f"keep_n_layers={keep_n} is out of valid range. Valid range is 1 to {n_layers}."
 
     print(f">>> Original number of layers: {n_layers}")
