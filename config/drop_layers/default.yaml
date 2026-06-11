@@ -4,7 +4,7 @@ base:
 
 model:
   config: openai-community/gpt2
-  init_model: null
+  randomly_init_model: false
   checkpoint: null
   keep_n_layers: 5
   reset_top_layer: false

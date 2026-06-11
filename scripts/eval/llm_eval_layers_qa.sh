@@ -3,6 +3,9 @@ START_LAYER=$2
 END_LAYER=$3
 STEP=$4
 
+export HF_DATASETS_OFFLINE=1
+export HF_HUB_OFFLINE=1
+
 cd $PROJECT_BASE_PATH/output/$MODEL_NAME
 for i in $(seq $START_LAYER $STEP $END_LAYER); do
     echo

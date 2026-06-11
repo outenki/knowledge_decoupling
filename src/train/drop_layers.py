@@ -89,14 +89,15 @@ def main(cfg: DictConfig):
 
     # === Load model
     model = None
-    if cfg.model.init_model:
-        print(">>> Loading init model from pretrained model:", cfg.model.init_model)
-        model = load_model_from_pretrained(cfg.model.init_model, cfg.training.attn_implementation)
-        print(">>> Init model loaded. Config:", model.config)
-    else:
+    if cfg.model.randomly_init_model:
         assert cfg.model.config is not None, "--config-name is required when using --random-init"
         model = load_model_from_config_random(cfg.model.config, cfg.training.attn_implementation)
         print(">>> Randomly initialized model. Config:", model.config)
+    else:
+        print(">>> Loading init model from pretrained model:", cfg.model.config)
+        model = load_model_from_pretrained(cfg.model.config, cfg.training.attn_implementation)
+        print(">>> Init model loaded. Config:", model.config)
+        
     tokenizer = AutoTokenizer.from_pretrained(cfg.model.config if cfg.model.config is not None else cfg.model.init_model)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token

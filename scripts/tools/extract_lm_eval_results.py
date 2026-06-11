@@ -39,6 +39,7 @@ import sys
 
 
 input_json = sys.argv[1]
+metric = sys.argv[2] if len(sys.argv) > 2 else 'acc,none'
 with open(input_json, 'r') as f:
     data = json.load(f)
 results = data['results']
