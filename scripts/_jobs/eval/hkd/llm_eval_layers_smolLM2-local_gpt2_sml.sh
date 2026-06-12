@@ -4,16 +4,16 @@
 #PBS -l walltime=24:00:00
 #PBS -W group_list=c30897
 #PBS -j oe
-#PBS -o logs/SmolLM2-360M.log
+#PBS -o logs/local_gpt2_sml.log
 
 
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/eval
 
-MODEL_PATH=$PROJECT_BASE_PATH/output/"HuggingFaceTB/SmolLM2-360M"
+MODEL_PATH=$PROJECT_BASE_PATH/output/gpt2/smolLM2/smolLM2_bs1024_dl0_ep1
 L1=2
-L2=32
+L2=12
 STEP=2
 
-sh llm_eval_layers_qa.sh $MODEL_PATH $L1 $L2 $STEP
+# sh llm_eval_layers_qa.sh $MODEL_PATH $L1 $L2 $STEP
 sh llm_eval_layers_blimp.sh $MODEL_PATH $L1 $L2 $STEP

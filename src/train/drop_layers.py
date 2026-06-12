@@ -98,7 +98,7 @@ def main(cfg: DictConfig):
         model = load_model_from_pretrained(cfg.model.config, cfg.training.attn_implementation)
         print(">>> Init model loaded. Config:", model.config)
         
-    tokenizer = AutoTokenizer.from_pretrained(cfg.model.config if cfg.model.config is not None else cfg.model.init_model)
+    tokenizer = AutoTokenizer.from_pretrained(cfg.model.tokenizer if cfg.model.tokenizer is not None else cfg.model.config)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     model.config.pad_token_id = tokenizer.pad_token_id

@@ -10,7 +10,7 @@
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/eval
 
-MODEL_NAME="openai-community/gpt2"
+MODEL_PATH=$PROJECT_BASE_PATH/output/"openai-community/gpt2"
 L1=1
 L2=12
 STEP=1

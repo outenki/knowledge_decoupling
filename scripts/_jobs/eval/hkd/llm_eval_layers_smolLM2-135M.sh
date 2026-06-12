@@ -10,14 +10,10 @@
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/eval
 
-MODEL_NAME="HuggingFaceTB/SmolLM2-135M"
+MODEL_PATH=$PROJECT_BASE_PATH/output/"HuggingFaceTB/SmolLM2-135M"
 L1=2
 L2=30
 STEP=2
-for i in $(seq $L1 $STEP $L2); do
-    echo "keep $i layers"
-    uv run python $PROJECT_BASE_PATH/src/train/drop_layers.py --config-name=default model.config=$MODEL_NAME model.keep_n_layers=$i base.path=$PROJECT_BASE_PATH
-done
 
-sh llm_eval_layers_qa.sh $MODEL_NAME $L1 $L2 $STEP
-sh llm_eval_layers_blimp.sh $MODEL_NAME $L1 $L2 $STEP
+sh llm_eval_layers_qa.sh $MODEL_PATH $L1 $L2 $STEP
+sh llm_eval_layers_blimp.sh $MODEL_PATH $L1 $L2 $STEP

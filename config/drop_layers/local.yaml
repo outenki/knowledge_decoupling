@@ -3,12 +3,12 @@ base:
   path: 
 
 model:
-  config: openai-community/gpt2
+  config: null
   randomly_init_model: false
   checkpoint: null
   keep_n_layers: 5
   reset_top_layer: false
-  tokenizer: null
+  tokenizer: openai-community/gpt2
 
 data:
   name: 
@@ -28,7 +28,7 @@ training:
   attn_implementation: "sdpa"
 
 output:
-  path: ${base.path}/output/${model.config}/layers_${model.keep_n_layers}/base
+  path: ${model.config}/layers_${model.keep_n_layers}/base
 
 hydra:
   run:

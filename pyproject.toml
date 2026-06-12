@@ -14,6 +14,7 @@ dependencies = [
     "lemminflect>=0.2.3",
     "lm-eval[hf]>=0.4.12",
     "lmdb>=2.2.0",
+    "ninja>=1.13.0",
     "nltk>=3.9.4",
     "omegaconf>=2.3.0",
     "spacy>=3.8.14",
