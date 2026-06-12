@@ -20,7 +20,7 @@ uv run python $PROJECT_BASE_PATH/src/data_processing/tokenize_and_slice_data.py 
     --tokenizer $TOKENIZER \
     -dp $DATA_PATH \
     -lf local \
-    -dc nonce \
+    -dc text\
     -sp train \
     --no-shuffle \
     --start-from $START \
