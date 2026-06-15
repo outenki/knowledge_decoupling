@@ -4,7 +4,7 @@
 #PBS -l walltime=100:00:00
 #PBS -W group_list=c30897
 #PBS -j oe
-#PBS -o log/trrain_gpt2_sml.log
+#PBS -o logs/train_gpt2_sml.log
 
 
 source $HOME/.zshrc
