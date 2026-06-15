@@ -45,13 +45,14 @@ def main(cfg: DictConfig):
         print(">>> Loading init model from pretrained model:", cfg.model.init_model)
         model = load_model_from_pretrained(cfg.model.init_model, cfg.training.attn_implementation)
         print(">>> Init model loaded. Config:", model.config)
+        tokenizer = AutoTokenizer.from_pretrained(cfg.model.init_model)
     else:
         assert cfg.model.config is not None, "model.config is required"
         model = load_model_from_config_random(cfg.model.config, cfg.training.attn_implementation)
+        tokenizer = AutoTokenizer.from_pretrained(cfg.model.config)
         print(">>> Randomly initialized model. Config:", model.config)
     
     print(f"Loading tokenizer from: {cfg.model.init_model}")
-    tokenizer = AutoTokenizer.from_pretrained(cfg.model.init_model)
     if tokenizer.vocab_size is None or tokenizer.vocab_size == 0:
         print(">>> Tokenizer vocab size is 0 or None")
         print(f"Loading tokenizer from: {cfg.model.config}")
