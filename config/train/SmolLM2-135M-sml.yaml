@@ -1,0 +1,32 @@
+# configs/train.yaml
+base:
+  path: null
+
+model:
+  config: HuggingFaceTB/SmolLM2-135M
+  init_model: null
+  checkpoint: null
+  freeze_layers: 0
+
+data:
+  name: SmolLM2-135M-20B-bs1024
+  paths:
+    - ${base.path}/input/tokenized/${model.config}/train/${data.name}
+  limits:
+    - 0
+
+training:
+  epochs: 1
+  batch_size: 8
+  learning_rate: 2e-4
+  eval_strategy: "no"
+  checkpoints_per_epoch: 50
+  save_checkpoints_num: 5
+  attn_implementation: "sdpa"
+
+output:
+  path: ${base.path}/output/${model.config}/${data.name}
+
+hydra:
+  run:
+    dir: ${output.path}
