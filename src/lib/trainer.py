@@ -58,6 +58,8 @@ def train_model_with_data(
 
     # 计算保存和评估间隔
     save_steps = max(1, total_steps // (checkpoints_per_epoch * epochs))
+    eval_steps = save_steps // 5
+    loging_steps = eval_steps
 
     print(f">>> Total training steps: {total_steps}")
     print(f">>> Targeting {checkpoints_per_epoch} checkpoints per epoch.")
@@ -77,8 +79,8 @@ def train_model_with_data(
         per_device_eval_batch_size=per_device_train_batch_size,
         num_train_epochs=epochs,
         logging_dir=log_path,
-        logging_steps=save_steps,
-        eval_steps=save_steps,
+        logging_steps=loging_steps,
+        eval_steps=eval_steps,
         save_steps=save_steps,
         logging_strategy="steps",
         save_strategy="steps",
@@ -131,7 +133,6 @@ def train_model_with_data(
 
     if not checkpoint:
         checkpoint = None
-        print(">>> Starting from random model")
     else:
         info = inspect_checkpoint(checkpoint)
         assert info["exists"] and info["is_dir"] and info["has_model"] and info["has_optimizer"] and info["has_scheduler"] and info["has_trainer_state"]
