@@ -4,10 +4,10 @@
 #PBS -l walltime=100:00:00
 #PBS -W group_list=c30897
 #PBS -j oe
-#PBS -o log/run_hf.log
+#PBS -o log/trrain_gpt2_nonce.log
 
 
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/src/train
 
-uv run python train.py --config-name qwen_sml_20B_nonce
+uv run python train.py --config-name gpt2-nonce base.path=$PROJECT_BASE_PATH

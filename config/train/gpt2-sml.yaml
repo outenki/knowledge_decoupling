@@ -3,12 +3,13 @@ base:
   path: null
 
 model:
-  config: null
-  init_model: null
+  config: openai-community/gpt2
+  init_model: openai-community/gpt2
   checkpoint: null
+  freeze_layers: 0
 
 data:
-  name: null
+  name: SmolLM2-135M-20B-bs1024
   paths:
     - ${base.path}/input/tokenized/${model.config}/train/${data.name}
   limits:
@@ -24,7 +25,7 @@ training:
   attn_implementation: "sdpa"
 
 output:
-  path: ${base.path}/output/${model.config}/${data.name}/test
+  path: ${base.path}/output/${model.config}/${data.name}
 
 hydra:
   run:

@@ -16,58 +16,10 @@ from transformers import AutoTokenizer
 
 from src.lib.dataset import load_dataset_for_training
 from src.lib.model import load_model_from_pretrained, load_model_from_config_random
+from src.lib.model import get_layers, set_new_layers, get_num_layers, set_num_layers, freeze_parameters, unfreeze_parameters,
 from src.lib.trainer import train_model_with_data, init_wandb_run
 
 random.seed(42)
-
-
-def get_layers(model):
-    if hasattr(model, "transformer") and hasattr(model.transformer, "h"):
-        return model.transformer.h
-
-    if hasattr(model, "model") and hasattr(model.model, "layers"):
-        return model.model.layers
-
-    raise NotImplementedError(
-        f"Unknown architecture: {type(model)}"
-    )
-
-def get_num_layers(model):
-    if hasattr(model.config, "num_hidden_layers"):
-        return model.config.num_hidden_layers
-
-    if hasattr(model.config, "n_layer"):
-        return model.config.n_layer
-
-    raise NotImplementedError
-
-def set_new_layers(model, new_layers):
-    if hasattr(model, "transformer") and hasattr(model.transformer, "h"):
-        model.transformer.h = torch.nn.ModuleList(new_layers)
-    elif hasattr(model, "model") and hasattr(model.model, "layers"):
-        model.model.layers = torch.nn.ModuleList(new_layers)
-    else:
-        raise NotImplementedError  
-
-def set_num_layers(model, layer_num):
-    if hasattr(model.config, "num_hidden_layers"):
-        model.config.num_hidden_layers = layer_num
-    elif hasattr(model.config, "n_layer"):
-        model.config.n_layer = layer_num
-    else:
-        raise NotImplementedError
-
-def freeze_parameters(model):
-    for param in model.parameters():
-        param.requires_grad = False
-
-def unfreeze_parameters(layer):
-    for param in layer.parameters():
-        param.requires_grad = True
-
-def reset_parameters(module):
-    if hasattr(module, "reset_parameters"):
-        module.reset_parameters()
 
 
 @hydra.main(
@@ -119,8 +71,7 @@ def main(cfg: DictConfig):
 
     set_new_layers(model, new_layers)
     set_num_layers(model, keep_n)
-    freeze_parameters(model)
-    unfreeze_parameters(new_layers[-1])
+    freeze_parameters(model, keep_n - 1)
     
     # init the new top layer with random weights
     if cfg.model.reset_top_layer:
@@ -128,25 +79,25 @@ def main(cfg: DictConfig):
         get_layers(model)[-1].apply(reset_parameters)
 
 
-    if cfg.finetune:
-        train_dataset, eval_dataset = load_dataset_for_training(cfg.data.paths, cfg.data.limits)
-        wandb_run = init_wandb_run(cfg.output.path, cfg.model.config + datetime.now().strftime("-%Y%m%d"))
-        model = train_model_with_data(
-            model, train_dataset, eval_dataset, wandb_run,
-            output_path=cfg.output.path,
-            batch_size=cfg.training.batch_size,
-            epochs=cfg.training.epochs,
-            checkpoints_per_epoch=cfg.training.checkpoints_per_epoch,
-            eval_strategy=cfg.training.eval_strategy,
-            save_checkpoints_num=cfg.training.save_checkpoints_num,
-            learning_rate=cfg.training.learning_rate,
-            attn_implementation=cfg.training.attn_implementation,
-            checkpoint=cfg.model.checkpoint
-        ) 
-        wandb_run.finish()
-    print(f">>> Save model to: {cfg.output.path}")
-    model.save_pretrained(Path(cfg.output.path))
-    tokenizer.save_pretrained(cfg.output.path)
+    # if cfg.finetune:
+    #     train_dataset, eval_dataset = load_dataset_for_training(cfg.data.paths, cfg.data.limits)
+    #     wandb_run = init_wandb_run(cfg.output.path, cfg.model.config + datetime.now().strftime("-%Y%m%d"))
+    #     model = train_model_with_data(
+    #         model, train_dataset, eval_dataset, wandb_run,
+    #         output_path=cfg.output.path,
+    #         batch_size=cfg.training.batch_size,
+    #         epochs=cfg.training.epochs,
+    #         checkpoints_per_epoch=cfg.training.checkpoints_per_epoch,
+    #         eval_strategy=cfg.training.eval_strategy,
+    #         save_checkpoints_num=cfg.training.save_checkpoints_num,
+    #         learning_rate=cfg.training.learning_rate,
+    #         attn_implementation=cfg.training.attn_implementation,
+    #         checkpoint=cfg.model.checkpoint
+    #     ) 
+    #     wandb_run.finish()
+    # print(f">>> Save model to: {cfg.output.path}")
+    # model.save_pretrained(Path(cfg.output.path))
+    # tokenizer.save_pretrained(cfg.output.path)
 
 
 if __name__ == "__main__":

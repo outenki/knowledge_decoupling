@@ -150,3 +150,4 @@ def train_model_with_data(
 
     trainer.train(resume_from_checkpoint=checkpoint)
     return trainer.model
+
