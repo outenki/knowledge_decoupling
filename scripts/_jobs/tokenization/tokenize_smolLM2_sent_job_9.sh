@@ -4,10 +4,10 @@
 #PJM -L "vnode-core=10"
 #PJM -e logs/tokenization_sent_1024_9.out
 #PJM -o logs/tokenization_sent_1024_9.out
-#PJM -N "tk_s_9"
+#PJM -N "tk_st_9"
 
 
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/_jobs/tokenization
 
-sh ./tokenize_smolLM2_paralle_sent.sh "HuggingFaceTB/SmolLM2-135M" 1024 9
+sh ./tokenize_smolLM2_paralle_sent.sh 1024 9

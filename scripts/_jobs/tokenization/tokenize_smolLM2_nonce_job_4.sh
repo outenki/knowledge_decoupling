@@ -10,4 +10,4 @@
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/_jobs/tokenization
 
-sh ./tokenize_smolLM2_paralle_nonce.sh "HuggingFaceTB/SmolLM2-135M" 1024 4
+sh ./tokenize_smolLM2_paralle_nonce.sh 1024 4

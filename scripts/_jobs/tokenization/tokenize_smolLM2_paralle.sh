@@ -1,7 +1,7 @@
 #!/bin/bash
-TOKENIZER=$1
-BLOCK_SIZE=$2
-PART=$3
+BLOCK_SIZE=$1
+PART=$2
+TOKENIZER="meta-llama/Llama-3.2-1B"
 
 PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-$HOME/projects/knowledge_decoupling}"
 DATA_NAME="SmolLM2-135M-20B"
