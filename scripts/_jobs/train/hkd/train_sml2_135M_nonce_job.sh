@@ -10,5 +10,5 @@
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/src/train
 
-export UV_OFFLINE=1
-uv run python train.py --config-name SmolLM2-135M-sml base.path=$PROJECT_BASE_PATH
+# export UV_OFFLINE=1
+uv run python train.py --config-name SmolLM2-135M-nonce base.path=$PROJECT_BASE_PATH
