@@ -10,4 +10,5 @@
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/src/train
 
+export WANDB_MODE=offline
 uv run python train.py --config-name gpt2-sml base.path=$PROJECT_BASE_PATH

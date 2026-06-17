@@ -10,5 +10,6 @@
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/src/train
 
-export UV_OFFLINE=1
+# export UV_OFFLINE=1
+export WANDB_MODE=offline
 uv run python train.py --config-name SmolLM2-135M-sml base.path=$PROJECT_BASE_PATH

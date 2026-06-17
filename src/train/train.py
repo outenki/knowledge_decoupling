@@ -52,7 +52,6 @@ def main(cfg: DictConfig):
         tokenizer = AutoTokenizer.from_pretrained(cfg.model.config)
         print(">>> Randomly initialized model. Config:", model.config)
     
-    print(f"Loading tokenizer from: {cfg.model.init_model}")
     if tokenizer.vocab_size is None or tokenizer.vocab_size == 0:
         print(">>> Tokenizer vocab size is 0 or None")
         print(f"Loading tokenizer from: {cfg.model.config}")
