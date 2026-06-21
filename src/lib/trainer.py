@@ -11,6 +11,7 @@ import wandb
 from wandb.sdk.lib.runid import generate_id
 
 from src.lib.utils import inspect_checkpoint
+from src.lib.model import get_layers
 
 DECAY_RATE = 0.9
 
@@ -139,7 +140,11 @@ def train_model_with_data(
         assert info["exists"] and info["is_dir"] and info["has_model"] and info["has_optimizer"] and info["has_scheduler"] and info["has_trainer_state"]
         print(f">>> Resuming from checkpoint: {checkpoint}")
     # Use Trainer's resume functionality. Pass the checkpoint path (or None) so Trainer can restore trainer state.
+    layers = get_layers(model)
+    n_layers = len(layers)
     print(f"params={model.num_parameters():,}")
+    print(f"layers={n_layers}")
+
     print(f"gradient_checkpointing={model.is_gradient_checkpointing}")
     print(">>> Acceleration optimizations enabled:")
     print(f"    - Flash Attention: {attn_implementation}")

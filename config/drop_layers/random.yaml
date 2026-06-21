@@ -4,9 +4,9 @@ base:
 
 model:
   config: null
-  randomly_init_model: false
+  randomly_init_model: true
   checkpoint: null
-  keep_n_layers: 5
+  keep_n_layers: null
   reset_top_layer: false
   tokenizer: ${model.config}
 
@@ -28,7 +28,7 @@ training:
   attn_implementation: "sdpa"
 
 output:
-  path: ${base.path}/output/${model.config}/layers_${model.keep_n_layers}
+  path: ${base.path}/output/${model.config}/random/layers_${model.keep_n_layers}
 
 hydra:
   run:

@@ -2,6 +2,7 @@ import json
 import sys
 from pathlib import Path
 
+
 fn = Path(sys.argv[1])/"bootstrap_analysis.json"
 col_name = sys.argv[2]
 with open(fn, "r") as f:

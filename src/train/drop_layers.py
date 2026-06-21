@@ -16,7 +16,7 @@ from transformers import AutoTokenizer
 
 from src.lib.dataset import load_dataset_for_training
 from src.lib.model import load_model_from_pretrained, load_model_from_config_random
-from src.lib.model import get_layers, set_new_layers, get_num_layers, set_num_layers, freeze_parameters, unfreeze_parameters,
+from src.lib.model import get_layers, set_new_layers, get_num_layers, set_num_layers, freeze_parameters 
 from src.lib.trainer import train_model_with_data, init_wandb_run
 
 random.seed(42)
@@ -65,7 +65,7 @@ def main(cfg: DictConfig):
     assert keep_n > 0 and keep_n <= n_layers, f"keep_n_layers={keep_n} is out of valid range. Valid range is 1 to {n_layers}."
 
     print(f">>> Original number of layers: {n_layers}")
-    print(f">>> Keeping top {keep_n} layers and dropping the rest.")
+    print(f">>> Keeping bottom {keep_n} layers and dropping the rest.")
     new_layers = layers[:keep_n]
     assert new_layers is not None, "New layers should have been set by this point."
 
@@ -95,9 +95,9 @@ def main(cfg: DictConfig):
     #         checkpoint=cfg.model.checkpoint
     #     ) 
     #     wandb_run.finish()
-    # print(f">>> Save model to: {cfg.output.path}")
-    # model.save_pretrained(Path(cfg.output.path))
-    # tokenizer.save_pretrained(cfg.output.path)
+    print(f">>> Save model to: {cfg.output.path}")
+    model.save_pretrained(Path(cfg.output.path))
+    tokenizer.save_pretrained(cfg.output.path)
 
 
 if __name__ == "__main__":
