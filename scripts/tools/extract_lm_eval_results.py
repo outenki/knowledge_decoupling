@@ -37,6 +37,12 @@ blimp_anaphor_number_agreement: 0.554
 import json
 import sys
 
+metrics = {
+    "squad_completion": "contains,none",
+    "boolq": "acc,none",
+    "race": "acc,none",
+    "drop": "f1,none"
+}
 
 input_json = sys.argv[1]
 metric = sys.argv[2]
@@ -44,5 +50,10 @@ with open(input_json, 'r') as f:
     data = json.load(f)
 results = data['results']
 for key, value in results.items():
-    acc = value['acc,none']
-    print(f'{key}: {acc}')
+    if metric and metric != "none":
+        acc = value['acc,none']
+        print(f'{key}: {acc}')
+    else:
+        _metric = metrics[key]
+        acc = value[_metric]
+        print(f'{key}: {acc}')
