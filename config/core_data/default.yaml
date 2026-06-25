@@ -1,0 +1,18 @@
+# configs/train.yaml
+base:
+  path: null
+
+data:
+  dataset:
+    - ${base.path}/data/TBA
+  aoa:
+    - ${base.path}/data/aoa
+  limits:
+    - 0
+
+output:
+  path: ${base.path}/data/TBA
+
+hydra:
+  run:
+    dir: ${output.path}

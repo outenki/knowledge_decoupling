@@ -127,6 +127,10 @@ def drop_skipped_sources(ds: Dataset, skip_sources):
 
 
 def format_qa_prompt(example):
+    prompt = example.get("prompt", "")
+    response = example.get("answer", "")
+    if prompt and response:
+        return prompt, response
     prompt = ""
     context = example.get("context", "").strip()
     if context:

@@ -12,4 +12,4 @@ cd $PROJECT_BASE_PATH/src/train
 
 # export UV_OFFLINE=1
 export WANDB_MODE=offline
-uv run python train.py --config-name SmolLM2-135M-nonce base.path=$PROJECT_BASE_PATH
+uv run python train.py --config-name SmolLM2_135M-nonce base.path=$PROJECT_BASE_PATH

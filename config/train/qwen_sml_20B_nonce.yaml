@@ -6,6 +6,7 @@ model:
   config: Qwen/Qwen3.5-0.8B-Base
   init_model: null
   checkpoint: null
+  freeze_layers: 0
 
 data:
   name: SmolLM2-135M-20B-nonce-bs1024

@@ -6,6 +6,7 @@ model:
   config: null
   init_model: null
   checkpoint: null
+  freeze_layers: 0yy
 
 data:
   name: null

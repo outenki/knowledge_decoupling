@@ -1,6 +1,7 @@
 #!/bin/bash
 OUTPUT_PATH=$PROJECT_BASE_PATH/input/evaluate_data/
 EXT_TRAINING_PATH=$PROJECT_BASE_PATH/data/ext
+SFT_TRAINING_PATH=$PROJECT_BASE_PATH/data/sft
 # echo ">>> ARC-Easy"
 # uv run python generate_qa_data.py -dn ai2_arc -sn ARC-Easy -p -o $OUTPUT_PATH/arc_easy
 # echo ">>> ARC-Challenge"
@@ -9,8 +10,6 @@ EXT_TRAINING_PATH=$PROJECT_BASE_PATH/data/ext
 # uv run python generate_qa_data.py -dn qasc -p -o $OUTPUT_PATH/qasc
 # echo ">>> BOOLQ"
 # uv run python generate_qa_data.py -dn boolq -p -o $OUTPUT_PATH/boolq
-# echo ">>> SquAD_v2"
-# uv run python generate_qa_data.py -dn squad_v2 -p -o $OUTPUT_PATH/squad_v2
 # echo ">>> mintaka"
 # uv run python generate_qa_data.py -dn mintaka -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/mintaka/data -o $OUTPUT_PATH/mintaka
 # echo ">>> mintaka_multihop"
@@ -35,5 +34,11 @@ EXT_TRAINING_PATH=$PROJECT_BASE_PATH/data/ext
 # ori as ext training data 
 # uv run python generate_qa_data.py -cc ori -dn google_re -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/Google_RE_conflict -o $EXT_TRAINING_PATH/google_re_long_context -ck snippet
 # uv run python generate_qa_data.py -cc ori -dn google_re -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/Google_RE_conflict -o $EXT_TRAINING_PATH/google_re_short_context -ck considered_sentences
-echo ">>> google_re no context"
-uv run python generate_qa_data.py -dn google_re -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/Google_RE -o $OUTPUT_PATH/google_re_no_context -ck ""
+# echo ">>> google_re no context"
+# uv run python generate_qa_data.py -dn google_re -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/Google_RE -o $OUTPUT_PATH/google_re_no_context -ck ""
+# echo ">>> race"
+# uv run python generate_qa_data.py -dn race -lp $PROJECT_BASE_PATH/data/race -o $OUTPUT_PATH/race -ck ""
+# echo ">>> SquAD_v2"
+# uv run python generate_qa_data.py -dn squad_v2 -o $OUTPUT_PATH/squad_v2
+echo ">>> SquAD_based"
+uv run python generate_qa_data.py -dn based_squad -lp $PROJECT_BASE_PATH/data/based_squad -o $OUTPUT_PATH/based_squad -ck ""

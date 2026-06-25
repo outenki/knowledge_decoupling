@@ -7,7 +7,7 @@ from pathlib import Path
 # from openai import OpenAI
 import random
 
-from datasets import load_dataset, Dataset
+from datasets import load_dataset, Dataset, load_from_disk
 
 # client = OpenAI(api_key=GPT_API_KEY)
 
@@ -23,7 +23,7 @@ def read_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--data-name', '-dn', dest='data_name', type=str, required=True,
-        choices=['ai2_arc', 'boolq', 'qasc', "squad_v2", "mintaka", "cwq", "metaqa", "google_re", "commonsense_qa", "clasheval", "nq_swap"],
+        choices=['ai2_arc', 'boolq', 'qasc', "squad_v2", "based_squad", "mintaka", "cwq", "metaqa", "google_re", "commonsense_qa", "clasheval", "nq_swap", "race"],
         help='Name of the dataset to load from Hugging Face'
     )
     parser.add_argument('--local-path', '-lp', dest='local_path', type=str)
@@ -33,8 +33,7 @@ def read_args():
         default=None,
         help='Name of the subset'
     )
-    parser.add_argument('--format', '-f', dest='format', action='store_true')
-    parser.add_argument('--format-with-options', '-op', dest='format_with_options', action='store_true')
+    parser.add_argument('--markdown', '-f', dest='markdown', action='store_true')
     parser.add_argument('--probing', '-p', dest='probing', action='store_true')
     parser.add_argument(
         '--context-conflict', '-cc', dest='context_conflict', type=str, choices=['ori', 'mod'], default='none',
@@ -80,45 +79,34 @@ def convert_qa_to_probing(question: str, answer: str) -> dict:
     }
 
 
-def construct_data(
-    qid: str, context: str, question: str, options: list[str], answer: str,
-    format: bool, format_with_options: bool, probing: bool,
-    argkv: dict = {}
-) -> dict:
-    ori_context = context
-    ori_question = question
-    ori_options = options
-    ori_answer = answer
-
+def construct_qa(
+    qid, context: str, question: str, options: list[str], options_str: str, answer: str, md: bool, probing: bool, argkv: dict
+) -> str:
     if probing:
         probing_text = convert_qa_to_probing(question, answer)
-        text = probing_text["text"]
         question = probing_text["question"]
         answer = probing_text["answer"]
-    else:
-        text = question + " " + answer
-    text = context + text
 
-    if format:
+    if md:
         prompt = ""
         if context:
             prompt = f"### Context\n{context}"
-
         prompt += f"\n\n### Query\n{question}"
-        if options and format_with_options:
+        if options:
             prompt += "\n\n### Options\n" + "\n".join(options)
         prompt += "\n\n Response\n"
     else:
-        prompt = context + question
-
+        prompt = context
+        if options_str:
+            prompt += "\n\n" + options_str
+        prompt += "\n\n" + question
     result = {
         "id": qid,
-        "context": ori_context,
-        "question": ori_question,
-        "options": ori_options,
-        "ori_answer": ori_answer,
+        "context": context,
+        "question": question,
+        "options": options,
         "answer": answer,
-        "text": text
+        "prompt": prompt,
     }
 
     if argkv:
@@ -126,9 +114,7 @@ def construct_data(
     return result
 
 
-def generate_qa_data_from_ai2_arc(
-    dataset: Dataset, format: bool, format_with_options: bool, probing: bool
-) -> list[dict]:
+def generate_qa_data_from_ai2_arc(dataset: Dataset, md: bool, probing: bool) -> list[dict]:
     qa_data = []
     for qid, sample in tqdm(enumerate(dataset), total=len(dataset), desc="Generating QA data"):
         assert isinstance(sample, dict)
@@ -141,16 +127,23 @@ def generate_qa_data_from_ai2_arc(
         options = sample["choices"]["text"]
         answer = options[labels.index(answer_key)]
         context = ""
-
         qa_data.append(
-            construct_data(str(qid), context, question, options, answer, format, format_with_options, probing)
+            construct_qa(
+                qid=str(qid),
+                context=context,
+                question=question,
+                options=options,
+                options_str="",
+                answer=answer,
+                md=md,
+                probing=probing,
+                argkv={}
+            )
         )
     return qa_data
 
 
-def generate_qa_data_from_boolq(
-    dataset: Dataset, format: bool, format_with_options: bool, probing: bool
-) -> list[dict]:
+def generate_qa_data_from_boolq(dataset: Dataset, md: bool, probing: bool) -> list[dict]:
     qa_data = []
     for qid, sample in tqdm(enumerate(dataset), total=len(dataset), desc="Generating QA data"):
         assert isinstance(sample, dict)
@@ -160,16 +153,23 @@ def generate_qa_data_from_boolq(
         answer = "Yes." if sample["answer"] else "No."
         context = sample["passage"]
         options = ["Yes", "No"]
-
         qa_data.append(
-            construct_data(qid, context, question, options, answer, format, format_with_options, probing)
+            construct_qa(
+                qid=str(qid),
+                context=context,
+                question=question,
+                options=options,
+                options_str="",
+                answer=answer,
+                md=md,
+                probing=probing,
+                argkv={}
+            )
         )
     return qa_data
 
 
-def generate_qa_data_from_qasc(
-    dataset: Dataset, format: bool, format_with_options: bool, probing: bool
-) -> list[dict]:
+def generate_qa_data_from_qasc(dataset: Dataset, md: bool, probing: bool) -> list[dict]:
     qa_data = []
     for qid, sample in tqdm(enumerate(dataset), total=len(dataset), desc="Generating QA data"):
         assert isinstance(sample, dict)
@@ -183,34 +183,58 @@ def generate_qa_data_from_qasc(
             continue  # Skip if the answer key is not in the labels
         answer = options[labels.index(answer_key)]
         context = ""
-
         qa_data.append(
-            construct_data(str(qid), context, question, options, answer, format, format_with_options, probing)
+            construct_qa(
+                qid=str(qid),
+                context=context,
+                question=question,
+                options=options,
+                options_str="",
+                answer=answer,
+                md=md,
+                probing=probing,
+                argkv={}
+            )
         )
     return qa_data
 
 
-def generate_qa_data_from_squad(
-    dataset: Dataset, format: bool, format_with_options: bool, probing: bool
-) -> list[dict]:
+def generate_qa_data_from_squad_v2(dataset: Dataset, md: bool, probing: bool) -> list[dict]:
     qa_data = []
-    for qid, sample in tqdm(enumerate(dataset), total=len(dataset), desc="Generating QA data"):
-        assert isinstance(sample, dict)
-        question = sample["question"]
-        context = sample["context"]
-        answers = list(set(sample["answers"]["text"]))
-        answer = answers[0] if answers else "I don't know."
-        options = []
+    for qid, doc in tqdm(enumerate(dataset), total=len(dataset), desc="Generating QA data"):
+        assert isinstance(doc, dict)
+        question = doc["question"]
+        title = doc["title"]
+        context = doc["context"]
+        prompt = "Title: " + title + "\n\n" + "Background: " + context + "\n\n" + "Question: " + question + "\n\n" + "Answer:"
+
+        answer_list = doc["answers"]["text"]
+        if len(answer_list) > 0:
+            answer = answer_list[0]
+        else:
+            answer = "unanswerable"
+        answer = " " + answer
 
         qa_data.append(
-            construct_data(str(qid), context, question, options, answer, format, format_with_options, probing)
+            construct_qa(
+                qid=str(qid),
+                context=context,
+                question=question,
+                options=[],
+                options_str="",
+                answer=answer,
+                md=md,
+                probing=probing,
+                argkv={
+                    "prompt": prompt,
+                    "title": title
+                }
+            )
         )
     return qa_data
 
 
-def generate_qa_data_from_mintaka(
-    dataset: list, format: bool, format_with_options: bool, probing: bool
-) -> list[dict]:
+def generate_qa_data_from_mintaka(dataset: list, md: bool, probing: bool) -> list[dict]:
     qa_data = []
     for sample in tqdm(dataset, total=len(dataset), desc="Generating QA data"):
         assert isinstance(sample, dict)
@@ -235,16 +259,23 @@ def generate_qa_data_from_mintaka(
             "category": sample.get("category", ""),
             "complexity_type": sample.get("complexityType", "")
         }
-
         qa_data.append(
-            construct_data(qid, context, question, options, answer, format, format_with_options, probing, argkv)
+            construct_qa(
+                qid=str(qid),
+                context=context,
+                question=question,
+                options=options,
+                options_str="",
+                answer=answer,
+                md=md,
+                probing=probing,
+                argkv=argkv
+            )
         )
     return qa_data
 
 
-def generate_qa_data_from_cwq(
-    dataset: Dataset, format: bool, format_with_options: bool, probing: bool
-) -> list[dict]:
+def generate_qa_data_from_cwq(dataset: Dataset, md: bool, probing: bool) -> list[dict]:
     qa_data = []
     for sample in tqdm(dataset, total=len(dataset), desc="Generating QA data"):
         assert isinstance(sample, dict)
@@ -265,16 +296,23 @@ def generate_qa_data_from_cwq(
         argkv = {
             "answers": [_ans.strip() for _ans in sample["answers"][0]["aliases"]],
         }
-
         qa_data.append(
-            construct_data(qid, context, question, options, answer, format, format_with_options, probing, argkv)
+            construct_qa(
+                qid=str(qid),
+                context=context,
+                question=question,
+                options=options,
+                options_str="",
+                answer=answer,
+                md=md,
+                probing=probing,
+                argkv=argkv
+            )
         )
     return qa_data
 
 
-def generate_qa_data_from_metaqa(
-    dataset: list, format: bool, format_with_options: bool, probing: bool
-) -> list[dict]:
+def generate_qa_data_from_metaqa(dataset: list, md: bool, probing: bool) -> list[dict]:
     qa_data = []
     for qid, sample in tqdm(enumerate(dataset), total=len(dataset), desc="Generating QA data"):
         assert isinstance(sample, str)
@@ -291,16 +329,24 @@ def generate_qa_data_from_metaqa(
         argkv = {
             "answers": [ans.strip() for ans in answers],
         }
-
+        options_str = ""
         qa_data.append(
-            construct_data(str(qid), context, question, options, answer, format, format_with_options, probing, argkv)
+            construct_qa(
+                qid=str(qid),
+                context=context,
+                question=question,
+                options=options,
+                options_str=options_str,
+                answer=answer,
+                md=md,
+                probing=probing,
+                argkv={}
+            )
         )
     return qa_data
 
 
-def generate_qa_data_from_google_re(
-    dataset: list, format: bool, format_with_options: bool, probing: bool, context_key: str, conflict: str
-) -> list[dict]:
+def generate_qa_data_from_google_re(dataset: list, md: bool, probing: bool, context_key: str, conflict: str) -> list[dict]:
     """
     {
         "pred": "/people/deceased_person/place_of_death",
@@ -364,16 +410,24 @@ def generate_qa_data_from_google_re(
         else:
             answer = sample["obj_label"]
         options = []
-
+        options_str = ""
         qa_data.append(
-            construct_data(str(qid), context, question, options, answer, format, format_with_options, probing, {})
+            construct_qa(
+                qid=str(qid),
+                context=context,
+                question=question,
+                options=options,
+                options_str=options_str,
+                answer=answer,
+                md=md,
+                probing=probing,
+                argkv={}
+            )
         )
     return qa_data
 
 
-def generate_qa_data_from_commonsense_qa(
-    dataset: list, format: bool, format_with_options: bool, probing: bool
-) -> list[dict]:
+def generate_qa_data_from_commonsense_qa(dataset: list, md: bool, probing: bool) -> list[dict]:
     qa_data = []
     for sample in tqdm(dataset, total=len(dataset), desc="Generating QA data"):
         assert isinstance(sample, dict)
@@ -387,16 +441,24 @@ def generate_qa_data_from_commonsense_qa(
             continue
         answer = options[labels.index(answer_key)]
         context = ""
-
+        options_str = ""
         qa_data.append(
-            construct_data(str(qid), context, question, options, answer, format, format_with_options, probing)
+            construct_qa(
+                qid=str(qid),
+                context=context,
+                question=question,
+                options=options,
+                options_str=options_str,
+                answer=answer,
+                md=md,
+                probing=probing,
+                argkv={}
+            )
         )
     return qa_data
 
 
-def generate_qa_data_from_clasheval(
-    dataset: list, format: bool, format_with_options: bool, probing: bool, context_conflict: str
-) -> list[dict]:
+def generate_qa_data_from_clasheval(dataset: list, md: bool, probing: bool, context_conflict: str) -> list[dict]:
     """
     {
         "question": "Who is the Canadian actor known for playing Peter Rasputin / Colossus in the X-Men film series, whose parents are Sue Bailey and Richard Cudmore?",
@@ -419,15 +481,24 @@ def generate_qa_data_from_clasheval(
         else:
             raise ValueError(f"Unsupported context conflict type: {context_conflict}")
         options = []
+        options_str = ""
         qa_data.append(
-            construct_data(str(qid), context, question, options, answer, format, format_with_options, probing)
+            construct_qa(
+                qid=str(qid),
+                context=context,
+                question=question,
+                options=options,
+                options_str=options_str,
+                answer=answer,
+                md=md,
+                probing=probing,
+                argkv={}
+            )
         )
     return qa_data
 
 
-def generate_qa_data_from_nq_swap(
-    dataset: list, format: bool, format_with_options: bool, probing: bool, context_conflict: str
-) -> list[dict]:
+def generate_qa_data_from_nq_swap(dataset: list, md: bool, probing: bool, context_conflict: str) -> list[dict]:
     """
     {
         "question": "how many episodes are in chicago fire season 4",
@@ -454,8 +525,125 @@ def generate_qa_data_from_nq_swap(
             raise ValueError(f"Unsupported context conflict type: {context_conflict}")
         answer = answers[0]
         options = []
+        options_str = ""
         qa_data.append(
-            construct_data(str(qid), context, question, options, answer, format, format_with_options, probing, {"answers": answers})
+            construct_qa(
+                qid=str(qid),
+                context=context,
+                question=question,
+                options=options,
+                options_str=options_str,
+                answer=answer,
+                md=md,
+                probing=probing,
+                argkv={}
+            )
+        )
+    return qa_data
+
+
+def generate_qa_data_from_race(dataset: list, md: bool, probing: bool) -> list[dict]:
+    """
+    https://huggingface.co/datasets/EleutherAI/race/viewer/high/test?row=0
+    article: The rain had continued for a week and the flood had created a big river ...
+    problems: [
+        {
+            'question': 'What did Nancy try to do before she fell over?',
+            'answer': 'C',
+            'options': [
+                'Measure the depth of the river',
+                'Look for a fallen tree trunk',
+                'Protect her cows from being drowned',
+                'Run away from the flooded farm'
+            ]
+        }, {
+            'question': 'The following are true according to the passage except _ .',
+            'answer': 'D',
+            'options': [
+                'It took Lizzie and Nancy about 20 minutes to get to safety.',
+                'It was raining harder when Nancy managed to get up.',
+                'The bad weather made it difficult for rescuers to find Nancy.',
+                'Nancy took hold of the rope and climbed into the helicopter.'
+            ]
+        }, {
+            'question': 'What did the local people do to help those in the flooded area according to the passage?',
+            'answer': 'A',
+            'options': [
+                'They put up shelter for them in a school.',
+                'They used helicopters to help carry cows.',
+                'They helped farmers gather their cows.',
+                'They set up an organization called Red Cross.'
+            ]
+        }
+    ]
+    """
+    qa_data = []
+    for qid, sample in tqdm(enumerate(dataset), total=len(dataset), desc="Generating QA data"):
+        context = "Article: " + sample["article"]
+        problems = eval(sample["problems"])
+        for problem in problems:
+            answer = problem["options"]["ABCD".index(problem["answer"])]
+            options = problem["options"]
+            options_str = ""  # following settings in lm_eval
+
+            question = problem["question"].strip()
+            append_options = False
+            if question.startswith("Which of the following"):
+                append_options = True
+
+            prompt = ""
+            arkgv = {}
+            if question[-6:] == "  _  .":
+                prompt = context + "\n\n" + question[:-5]
+                if append_options:
+                    prompt += "\n" + "\n".join(options)
+            elif question[-5:] == " _ .":
+                prompt = context + "\n\n" +  question[:-3]
+                if append_options:
+                    prompt += "\n" + "\n".join(options)
+
+            if prompt:
+                arkgv = {"prompt": prompt}
+            if append_options:
+                question += "\n" + "\n".join(options)
+            qa_data.append(
+                construct_qa(
+                    qid=str(qid),
+                    context=context,
+                    question=question,
+                    options=options,
+                    options_str=options_str,
+                    answer=answer,
+                    md=md,
+                    probing=probing,
+                    argkv=arkgv
+                )
+            )
+    return qa_data
+
+
+def generate_qa_data_from_based_squad(dataset: list, md: bool, probing: bool) -> list[dict]:
+    """
+    https://huggingface.co/datasets/hazyresearch/based-squad/viewer/default/validation?row=0
+    """
+    qa_data = []
+    for doc in tqdm(dataset, total=len(dataset), desc="Generating QA data"):
+        qid = doc["doc_id"]
+        context = ""
+        question = doc["text"].strip() + " "
+        answer = doc["value"].strip()
+        qa_data.append(
+            construct_qa(
+                qid=str(qid),
+                context=context,
+                question=question,
+                options=[],
+                options_str="",
+                answer=answer,
+                md=md,
+                probing=probing,
+                argkv={}
+            )
         )
     return qa_data
 
@@ -553,8 +741,10 @@ elif args.data_name == "clasheval":
     dataset_dict = load_dataset("sagnikrayc/clasheval")
 elif args.data_name == "nq_swap":
     dataset_dict = load_dataset("pminervini/NQ-Swap")
+elif args.data_name == "squad_v2":
+    dataset_dict = load_dataset("rajpurkar/squad_v2")
 else:
-    dataset_dict = load_dataset(args.data_name, args.subset_name)
+    dataset_dict = load_from_disk(args.local_path)
 
 assert isinstance(dataset_dict, dict)
 for split, dataset in dataset_dict.items():
@@ -563,73 +753,63 @@ for split, dataset in dataset_dict.items():
     print(f"Processing sub dataset: {split} with {len(dataset)} samples")
     if args.data_name == "ai2_arc":
         assert isinstance(dataset, Dataset)
-        qa_data = generate_qa_data_from_ai2_arc(
-            dataset, args.format, args.format_with_options, args.probing
-        )
+        qa_data = generate_qa_data_from_ai2_arc(dataset, args.markdown, args.probing)
     elif args.data_name == "boolq":
         assert isinstance(dataset, Dataset)
-        qa_data = generate_qa_data_from_boolq(
-            dataset, args.format, args.format_with_options, args.probing
-        )
+        qa_data = generate_qa_data_from_boolq(dataset, args.markdown, args.probing)
     elif args.data_name == "qasc":
         assert isinstance(dataset, Dataset)
-        qa_data = generate_qa_data_from_qasc(
-            dataset, args.format, args.format_with_options, args.probing
-        )
+        qa_data = generate_qa_data_from_qasc(dataset, args.markdown, args.probing)
     elif args.data_name == "squad_v2":
         assert isinstance(dataset, Dataset)
-        qa_data = generate_qa_data_from_squad(
-            dataset, args.format, args.format_with_options, args.probing
-        )
+        qa_data = generate_qa_data_from_squad_v2(dataset, args.markdown, args.probing)
+    elif args.data_name == "based_squad":
+        assert isinstance(dataset, Dataset)
+        qa_data = generate_qa_data_from_based_squad(dataset, args.markdown, args.probing)
     elif args.data_name == "mintaka":
         # https://huggingface.co/datasets/AmazonScience/mintaka
         # https://github.com/amazon-science/mintaka
         assert isinstance(dataset, list)
-        qa_data = generate_qa_data_from_mintaka(
-            dataset, args.format, args.format_with_options, args.probing
-        )
+        qa_data = generate_qa_data_from_mintaka(dataset, args.markdown, args.probing)
     elif args.data_name == "cwq":
         # https://huggingface.co/datasets/drt/complex_web_questions
         assert isinstance(dataset, list)
-        qa_data = generate_qa_data_from_cwq(
-            dataset, args.format, args.format_with_options, args.probing
-        )
+        qa_data = generate_qa_data_from_cwq(dataset, args.markdown, args.probing)
     elif args.data_name == "metaqa":
         # https://github.com/yuyuz/MetaQA?tab=readme-ov-file
         assert isinstance(dataset, list)
-        qa_data = generate_qa_data_from_metaqa(
-            dataset, args.format, args.format_with_options, args.probing
-        )
+        qa_data = generate_qa_data_from_metaqa(dataset, args.markdown, args.probing)
     elif args.data_name == "google_re":
         # https://github.com/facebookresearch/LAMA?tab=readme-ov-file
         assert isinstance(dataset, list)
         qa_data = generate_qa_data_from_google_re(
-            dataset, args.format, args.format_with_options, args.probing, args.context_key, conflict="none"
+            dataset, args.markdown, args.probing, args.context_key, conflict="none"
         )
     elif args.data_name == "google_re_conflict":
         # https://github.com/facebookresearch/LAMA?tab=readme-ov-file
         assert isinstance(dataset, list)
         qa_data = generate_qa_data_from_google_re(
-            dataset, args.format, args.format_with_options, args.probing, args.context_key, conflict=args.conflict
+            dataset, args.markdown, args.probing, args.context_key, conflict=args.conflict
         )
     elif args.data_name == "commonsense_qa":
         # https://huggingface.co/datasets/tau/commonsense_qa
         assert isinstance(dataset, Dataset)
-        qa_data = generate_qa_data_from_commonsense_qa(
-            dataset, args.format, args.format_with_options, args.probing
-        )
+        qa_data = generate_qa_data_from_commonsense_qa(dataset, args.markdown, args.probing)
     elif args.data_name == "clasheval":
         # https://huggingface.co/datasets/sagnikrayc/clasheval
         assert isinstance(dataset, list)
         qa_data = generate_qa_data_from_clasheval(
-            dataset, args.format, args.format_with_options, args.probing, args.context_conflict
+            dataset, args.markdown, args.probing, args.context_conflict
         )
     elif args.data_name == "nq_swap":
         # https://huggingface.co/datasets/pminervini/NQ-Swap
         assert isinstance(dataset, Dataset)
         qa_data = generate_qa_data_from_nq_swap(
-            dataset, args.format, args.format_with_options, args.probing, args.context_conflict
+            dataset, args.markdown, args.probing, args.context_conflict
         )
+    elif args.data_name == "race":
+        assert isinstance(dataset, Dataset)
+        qa_data = generate_qa_data_from_race(dataset, args.markdown,  args.probing)
     else:
         raise ValueError(f"Unsupported dataset: {args.data_name}")
     output_file = Path(args.output_path) / f"{split}.json"

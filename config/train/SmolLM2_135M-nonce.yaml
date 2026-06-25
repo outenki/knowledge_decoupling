@@ -5,7 +5,7 @@ base:
 model:
   config: HuggingFaceTB/SmolLM2-135M
   init_model: null
-  checkpoint: null
+  checkpoint: ${base.path}/output/HuggingFaceTB/SmolLM2-135M/SmolLM2-135M-20B-nonce-bs1024/checkpoint-380484
   freeze_layers: 0
 
 data:
