@@ -13,6 +13,6 @@ for i in $(seq $START_LAYER $STEP $END_LAYER); do
     uv run accelerate launch -m lm_eval \
         --model hf \
         --model_args pretrained=layers_$i/base \
-        --tasks arc_easy,arc_challenge,commonsense_qa \
+        --tasks arc_easy,arc_challenge,commonsense_qa,boolq,race,drop \
         --output_path layers_$i/base/eval/qa
 done

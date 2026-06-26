@@ -15,7 +15,7 @@ MODEL_CONFIG="openai-community/gpt2"
 MODEL_NAME=hf_full
 
 
-for SFT_DATA in based_suqad suqad_v2 race; do
+for SFT_DATA in based_squad squad_v2 race; do
     echo ">>> SFT on $SFT_DATA"
     uv run python train.py --config-name sft_train \
         base.path=$PROJECT_BASE_PATH \
@@ -26,7 +26,7 @@ done
 
 
 cd $PROJECT_BASE_PATH/scripts/eval
-for SFT_DATA in based_suqad suqad_v2 race; do
+for SFT_DATA in based_squad squad_v2 race; do
     MODEL_PATH=$PROJECT_BASE_PATH/output/$MODEL_CONFIG/$MODEL_NAME-sft_${SFT_DATA}_train
     sh llm_eval.sh $MODEL_PATH
 done

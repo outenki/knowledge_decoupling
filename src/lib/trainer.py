@@ -65,7 +65,7 @@ def train_model_with_data(
     print(f">>> Total training steps: {total_steps}")
     print(f">>> Targeting {checkpoints_per_epoch} checkpoints per epoch.")
     print(f">>> Computed save steps/times: {save_steps}/{total_steps // save_steps}")
-    print(f">>> Computed eval/logging steps/times: {logging_steps}/{total_steps // logging_steps}")
+    print(f">>> Computed eval/logging steps and times: {logging_steps}/{total_steps // logging_steps}")
 
 
     training_args = TrainingArguments(
