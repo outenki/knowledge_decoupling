@@ -15,18 +15,20 @@ MODEL_CONFIG="HuggingFaceTB/SmolLM2-135M"
 MODEL_NAME=SmolLM2-135M-20B-bs1024
 
 
-for SFT_DATA in based_squad; do
-    echo ">>> SFT on $SFT_DATA"
-    uv run python train.py --config-name sft_train \
-        base.path=$PROJECT_BASE_PATH \
-        model.config="$MODEL_CONFIG" \
-        model.init_model="$PROJECT_BASE_PATH/output/$MODEL_CONFIG/$MODEL_NAME" \
-        data.name=$SFT_DATA
-done
+# for SFT_DATA in based_squad; do
+#     echo ">>> SFT on $SFT_DATA"
+#     uv run python train.py --config-name sft_train \
+#         base.path=$PROJECT_BASE_PATH \
+#         model.config="$MODEL_CONFIG" \
+#         model.init_model="$PROJECT_BASE_PATH/output/$MODEL_CONFIG/$MODEL_NAME" \
+#         data.name=$SFT_DATA
+# done
 
 
 cd $PROJECT_BASE_PATH/scripts/eval
-for SFT_DATA in based_squad squad_v2 race; do
+for SFT_DATA in based_squad; do
     MODEL_PATH=$PROJECT_BASE_PATH/output/$MODEL_CONFIG/$MODEL_NAME-sft_${SFT_DATA}_train
-    sh llm_eval_context_qa.sh $MODEL_PATH
+    # sh llm_eval_context_qa.sh $MODEL_PATH
+    sh llm_eval_blimp.sh $MODEL_PATH
+    sh llm_eval_qa.sh $MODEL_PATH
 done

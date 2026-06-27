@@ -26,7 +26,8 @@ done
 
 
 cd $PROJECT_BASE_PATH/scripts/eval
-for SFT_DATA in based_squad squad_v2 race; do
+for SFT_DATA in based_squad; do
     MODEL_PATH=$PROJECT_BASE_PATH/output/$MODEL_CONFIG/$MODEL_NAME-sft_${SFT_DATA}_train
-    sh llm_eval_context_qa.sh $MODEL_PATH
+    sh llm_eval_blimp.sh $MODEL_PATH
+    sh llm_eval_qa.sh $MODEL_PATH
 done

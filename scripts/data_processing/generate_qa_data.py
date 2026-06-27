@@ -150,9 +150,11 @@ def generate_qa_data_from_boolq(dataset: Dataset, md: bool, probing: bool) -> li
         question = sample["question"]
         if not question.endswith("?") and not question.endswith("."):
             question += "?"
-        answer = "Yes." if sample["answer"] else "No."
+        answer = "yes" if sample["answer"] else "no"
         context = sample["passage"]
         options = ["Yes", "No"]
+
+        prompt = f"{context}\nQuestion: {question}?\nAnswer:"
         qa_data.append(
             construct_qa(
                 qid=str(qid),
@@ -163,7 +165,7 @@ def generate_qa_data_from_boolq(dataset: Dataset, md: bool, probing: bool) -> li
                 answer=answer,
                 md=md,
                 probing=probing,
-                argkv={}
+                argkv={"prompt": prompt}
             )
         )
     return qa_data
