@@ -102,7 +102,7 @@ def generate_core_dataset(
     process_fn = partial(generate_core_for_examples, replace_ne=replace_ne, multi_process=multi_process)
     dataset = dataset.map(
         process_fn,
-        num_proc=1,
+        num_proc=4,
         batch_size=BATCH_SIZE,
         batched=True,
         remove_columns=dataset.column_names,
