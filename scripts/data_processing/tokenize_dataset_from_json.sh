@@ -16,9 +16,7 @@ TOKENIZER=$PROJECT_BASE_PATH/output/$TOKENIZER_NAME/hf_full
 INPUT_PATH=$PROJECT_BASE_PATH/data/sft
 OUTPUT_PATH=$PROJECT_BASE_PATH/input/tokenized/$TOKENIZER_NAME/sft/concat
 for dn in \
-    race \
-    squad_v2 \
-    based_squad
+    boolq
 do
     echo
     echo ">>>>>> $dn sft concat train"
@@ -65,9 +63,7 @@ done
 INPUT_PATH=$PROJECT_BASE_PATH/data/ext
 OUTPUT_PATH=$PROJECT_BASE_PATH/input/tokenized/$TOKENIZER/ext/concat
 for dn in \
-    race \
-    squad_v2 \
-    based_squad
+    boolq
 do
     echo
     echo ">>>>>> $dn ext concat train"
