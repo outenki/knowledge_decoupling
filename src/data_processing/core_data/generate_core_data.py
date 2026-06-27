@@ -4,6 +4,8 @@ from datasets.dataset_dict import DatasetDict
 from datasets.arrow_dataset import Dataset
 from pathlib import Path
 
+import pandas as pd
+
 from src.lib.dataset import load_custom_dataset, select_data_by_indices
 from src.lib.dataset import slice_dataset
 from src.lib.utils import print_args
@@ -28,9 +30,9 @@ def read_args():
         '--limit', '-l', dest='data_limit', type=int, default=0, required=False,
         help='Limit the number of samples to process. 0 means no limit.'
     )
-    parser.add_argument(
-        '--ala', '-aoa', dest='aoa', type=str, default="", help='Path to aoa data (csv)'
-    )
+    parser.add_argument('--aoa', '-aoa', dest='aoa', type=str, default="", help='Path to aoa data (csv)')
+    parser.add_argument('--aoa-threshold', '-at', dest='aoa_threshold', type=float, default=0, help='AOA threshold')
+    parser.add_argument('--replace-ne', '-rne', dest='replace_ne', action='store_true')
     parser.add_argument(
         '--multi-process', '-mp', dest='multi_process', action='store_true',
         help='Use multi-processing for nonce sentence generation.'
@@ -42,18 +44,15 @@ def read_args():
     return parser.parse_args()
 
 
-def _process_dataset(dataset: Dataset, args):
+def _process_dataset(dataset: Dataset, aoa: dict,args):
     dt = slice_dataset(dataset, args.start_from, args.data_limit)
     print(f"Dataset has {dt.num_rows} samples after slicing.")
     out_path = Path(args.out_path)
     processed_dataset = generate_core_dataset(
-        dt,
-        multi_process=args.multi_process,
-        max_n=args.max_n,
-        nonce_word_bank=args.nonce_word_bank,
-        keep_word_identical=args.keep_word_identical,
+        dt, replace_ne=args.replace_ne, aoa=aoa, multi_process=args.multi_process,
     )
     processed_dataset.save_to_disk(str(out_path), max_shard_size="500MB")
+    print(f"Dataset has {processed_dataset.num_rows} core sentences.")
      
     processed_dataset.select(range(min(50, len(processed_dataset)))).to_json(
         out_path / "example_sentences.json"
@@ -83,9 +82,21 @@ def main():
         dataset = select_data_by_indices(dataset, args.kept_indices)
 
 
+    # ========  Load aoa ========
+    aoa = {}
+    if args.aoa:
+        aoa = (
+            pd.read_csv(args.aoa, usecols=["Word", "AoA_Kup_lem"])
+            .set_index("Word")["AoA_Kup_lem"]
+            .to_dict()
+        )
+        if args.aoa_threshold > 0:
+            aoa = {k: v for k, v in aoa.items() if v <= args.aoa_threshold}
+
+
     # ======== Generate nonce sentences ========
     print("**** Processing dataset ...")
-    _process_dataset(dataset, args)
+    _process_dataset(dataset, aoa, args)
     print("Use src/data_processing/merge_dataset.py to merge parts later if you need a single dataset directory.")
 
 

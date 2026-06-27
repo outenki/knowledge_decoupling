@@ -1,0 +1,5 @@
+task: based_squad_local
+class: !function task.SQUADCompletion
+
+dataset_kwargs:
+  path: /lustre1/work/c30897/wtq/projects/knowledge_decoupling/input/evaluate_data/dataset/based_squad

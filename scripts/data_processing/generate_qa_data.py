@@ -544,7 +544,7 @@ def generate_qa_data_from_nq_swap(dataset: list, md: bool, probing: bool, contex
 
 def generate_qa_data_from_race(dataset: list, md: bool, probing: bool) -> list[dict]:
     """
-    https://huggingface.co/datasets/EleutherAI/race/viewer/high/test?row=0
+    https://huggingface.co/datasets/EleutherAI/race/
     article: The rain had continued for a week and the flood had created a big river ...
     problems: [
         {
