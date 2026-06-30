@@ -199,6 +199,13 @@ def select_data_by_indices(dataset: Dataset, indices_fn: str) -> Dataset:
     return dataset
 
 
+def maybe_shuffle_dataset(dataset: Dataset | DatasetDict, shuffle: bool, seed: int = 42) -> Dataset | DatasetDict:
+    if not shuffle:
+        return dataset
+    print(f">>> Shuffling dataset with seed={seed}")
+    return dataset.shuffle(seed=seed)
+
+
 def _limit_dataset_dict(data_dict: DatasetDict, data_limit: int) -> DatasetDict:
     for k, dt in data_dict.items():
         if k == "train":
@@ -227,8 +234,7 @@ def load_and_limit_dataset_dict(data_path: str, data_limit: int, shuffle) -> Dat
     """
     print(f">>> Loading dataset from {data_path}")
     _data_dict = _load_dataset_dict(data_path)
-    if shuffle:
-        _data_dict.shuffle(seed=42)
+    _data_dict = maybe_shuffle_dataset(_data_dict, shuffle=shuffle, seed=42)
     print(_data_dict)
     print(">>> data loaded")
     if data_limit > 0:

@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.lib.dataset import load_custom_dataset, select_data_by_indices
+from src.lib.dataset import load_custom_dataset, select_data_by_indices, maybe_shuffle_dataset
 from src.lib.dataset import slice_dataset
 from src.lib.utils import print_args
 from src.data_processing.core_data.lib import generate_core_dataset
@@ -81,8 +81,7 @@ def main():
     if isinstance(dataset, DatasetDict):
         dataset = dataset[args.split]
         dataset = select_data_by_indices(dataset, args.kept_indices)
-    if args.shuffle:
-        dataset.shuffle(seed=42)
+    dataset = maybe_shuffle_dataset(dataset, shuffle=args.shuffle, seed=42)
 
 
     # ========  Load aoa ========
