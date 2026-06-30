@@ -1,6 +1,6 @@
 #!/bin/bash
 #PJM -L "rscgrp=a-batch"
-#PJM -L "elapse=100:00:00"
+#PJM -L "elapse=50:00:00"
 #PJM -L "vnode-core=10"
 #PJM -e logs/core_2.out
 #PJM -o logs/core_2.out
