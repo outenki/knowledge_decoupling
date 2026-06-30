@@ -22,15 +22,19 @@ BATCH_SIZE = 64
 AOA = {}
 random.seed(42)
 
-def generate_core_sentence(sent, doc_id: int, replace_ne: bool, ne_ids: dict[str, str]) -> tuple:
+def generate_core_sentence(sent, doc_id: int, replace_ne: bool, rp_ids: dict[str, str]) -> tuple:
     """Generate a core sentence by replacing named entities with placeholders."""
     words: list[str] = []
-    ne_num = 0
+    rp_ne_num = 0
+    rp_unk_num = 0
     content_word_num = 0
 
     for token in sent:
         if not is_content_word(token):
             words.append(token.text_with_ws)
+            continue
+        if not token.text.isascii():
+            # skip unicode chars
             continue
         content_word_num += 1
         token_text = token.text
@@ -39,49 +43,56 @@ def generate_core_sentence(sent, doc_id: int, replace_ne: bool, ne_ids: dict[str
 
         # Replace named entities.
         if replace_ne and token.ent_type_:
-            if token_lower not in ne_ids:
-                ne_ids[token_lower] = f"{doc_id}_{len(ne_ids)}"
+            if token_text not in rp_ids:
+                rp_ids[token_text] = f"{doc_id}_{len(rp_ids)}"
 
-            word = f"{token.ent_type_.upper()}_{ne_ids[token_lower]}"
+            word = f"{token.ent_type_.upper()}_{rp_ids[token_text]}"
             if token.whitespace_:
                 word += token.whitespace_
 
             words.append(word)
-            ne_num += 1
+            rp_ne_num += 1
             continue
 
         # Reject words outside AOA.
         if AOA and token_lower not in AOA and token_lemma not in AOA:
-            print("\n")
-            print(f"===sent({token_lower})===\n", sent.text)
-            print("\n")
-            return "", 0, 0
+            if token_text not in rp_ids:
+                rp_ids[token_text] = f"{doc_id}_{len(rp_ids)}"
+
+            word = f"UNK_{token.tag_.upper()}_{rp_ids[token_text]}"
+            if token.whitespace_:
+                word += token.whitespace_
+            words.append(word)
+            rp_unk_num += 1
+            # print("\n")
+            # print(f"===sent({token} -> {word})===\n")
+            # print(sent.text)
+            # print("".join(words))
+            # print("\n")
+            continue
 
         words.append(token.text_with_ws)
 
     text = "".join(words)
-    return text, content_word_num, ne_num
+    return text, content_word_num, rp_ne_num, rp_unk_num
 
 
-def generate_core_doc(doc, doc_id: int, replace_ne: bool) -> str | None:
-    ne_ids: dict[str, str] = {}
-    ne_num = 0
+def generate_core_doc(doc, doc_id: int, replace_ne: bool) -> tuple:
+    rp_ids: dict[str, str] = {}
+    rp_ne_num = 0
+    rp_unk_num = 0
     content_word_num = 0
     texts = []
 
     for sent in doc.sents:
-        t, cn, nn = generate_core_sentence(sent, doc_id, replace_ne, ne_ids)
+        t, cn, nn, un= generate_core_sentence(sent, doc_id, replace_ne, rp_ids)
         content_word_num += cn
-        ne_num += nn
+        rp_ne_num += nn
+        rp_unk_num += un
         texts.append(t)
 
     text = "".join(texts)
-    if ne_num == content_word_num:
-        return ""
-    if text:
-        return text
-    else:
-        return ""
+    return text, content_word_num, rp_ne_num, rp_unk_num
         
 
 
@@ -100,15 +111,23 @@ def generate_core_for_examples(examples, replace_ne: bool, multi_process: bool):
     
     ori_texts = []
     core_texts = []
+    content_words_num = []
+    replaced_ne_num = []
+    replaced_unk_num = []
     for d_id, doc in enumerate(docs):
-        core_sentence = generate_core_doc(doc, doc_id=d_id, replace_ne=replace_ne)
+        core_sentence , cn, nn, un= generate_core_doc(doc, doc_id=d_id, replace_ne=replace_ne)
         if core_sentence:
             ori_texts.append(doc.text)
             core_texts.append(core_sentence)
-
+            content_words_num.append(cn)
+            replaced_ne_num.append(nn)
+            replaced_unk_num.append(un)
     return {
         "text": ori_texts,
         "core": core_texts,
+        "content_words_num": content_words_num,
+        "replaced_ne_num": replaced_ne_num,
+        "replaced_unk_num": replaced_unk_num,
     }
 
 
