@@ -8,14 +8,12 @@ import argparse
 import re
 import json
 from pathlib import Path
-import tqdm
 import random
 
 import torch
 from transformers import AutoTokenizer
 from transformers import AutoModel
 
-import pandas as pd
 from src.lib.utils import get_device, print_args
 from src.lib.linear_model import MCQModel
 

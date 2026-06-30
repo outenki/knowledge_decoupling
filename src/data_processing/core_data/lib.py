@@ -22,41 +22,43 @@ BATCH_SIZE = 64
 AOA = {}
 random.seed(42)
 
+def generate_core_sentence(doc, d_id: str, replace_ne: bool) -> str | None:
+    """Generate a core sentence by replacing named entities with placeholders."""
 
-def generate_core_sentence(doc, d_id, replace_ne: bool) -> str | None:
-    """Generates a nonce sentence by replacing tokens in the document with nonce words.
-    Args:
-        doc (Doc): A spaCy Doc object.
-        max_n (int): The number of nonce words to generate for each token.
-        keep_word_identical (bool): A word is always replaced by the same nonce word.
-        ne_only (bool): Only replace named entities.
-    returns:
-        list[str]: A list of nonce words forming a sentence.
-    """
-    words = []
-    ne_ids = {}
+    words: list[str] = []
+    ne_ids: dict[str, str] = {}
     replaced_ne_num = 0
+
     for token in doc:
         if not is_content_word(token):
             words.append(token.text_with_ws)
             continue
+
+        token_text = token.text
+        token_lower = token_text.lower()
+
+        # Replace named entities.
         if replace_ne and token.ent_type_:
-            # replace named entities
-            ne_id = ne_ids.get(token.text.lower(), f"{d_id}_{len(ne_ids)}")
-            ne_ids[token.text.lower()] = ne_id
-            word = token.ent_type_.upper() + "_" + ne_id
-            if token.text_with_ws != token.text:
-                word += " "
+            if token_lower not in ne_ids:
+                ne_ids[token_lower] = f"{d_id}_{len(ne_ids)}"
+
+            word = f"{token.ent_type_.upper()}_{ne_ids[token_lower]}"
+            if token.whitespace_:
+                word += token.whitespace_
+
             words.append(word)
             replaced_ne_num += 1
-            if replaced_ne_num == len(doc):
-                return None
             continue
-        if not AOA or token.text.lower().strip() in AOA:
-            words.append(token.text_with_ws)
-            continue
-        else:
+
+        # Reject words outside AOA.
+        if AOA and token_lower not in AOA:
             return None
+
+        words.append(token.text_with_ws)
+
+    if replace_ne and replaced_ne_num == len(doc):
+        return None
+
     return "".join(words)
 
 

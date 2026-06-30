@@ -146,8 +146,8 @@ def generate_few_shots_texts(examples: list[dict]) -> str:
 
 
 def normalize_text(s: str) -> str:
-    """标准化文本：去掉标点、大小写、额外空格"""
-    s = s.lower()
+    """标准化文本：去掉标点、额外空格"""
+    # s = s.lower()
     s = re.sub(r"[^a-z0-9\u4e00-\u9fa5]+", " ", s)
     return " ".join(s.split())
 
@@ -215,15 +215,15 @@ def generate_answer(model, tokenizer, prompt, mode, max_new_tokens=50):
 
 def score_on_generation(model, tokenizer, prompt, answers, mode) -> dict:
     res = {}
-    pred = generate_answer(model, tokenizer, prompt, mode).lower().strip()
+    pred = generate_answer(model, tokenizer, prompt, mode).strip()
     res["pred"] = pred
     res["answers"] = answers
     res["pred_score"] = max(score_continuations_batch(model, tokenizer, prompt, [pred]))
     res["answer_score"] = max(score_continuations_batch(model, tokenizer, prompt, answers))
-    res["is_correct"] = any([normalize_text(pred).startswith(normalize_text(answer)) for answer in answers])
+    res["is_correct"] = any([normalize_text(pred.lower()).startswith(normalize_text(answer.lower())) for answer in answers])
     p, r, f = 0, 0, 0
     for answer in answers:
-        _p, _r, _f = f1_score(pred, answer)
+        _p, _r, _f = f1_score(pred.lower(), answer.lower())
         if _f > f:
             p, r, f = _p, _r, _f
     res["precision"] = p

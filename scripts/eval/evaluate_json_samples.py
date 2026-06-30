@@ -27,25 +27,6 @@ import sys
 import re
 
 
-def normalize_text(s: str) -> str:
-    """标准化文本：去掉标点、大小写、额外空格"""
-    s = s.lower()
-    s = re.sub(r"[^a-z0-9\u4e00-\u9fa5]+", " ", s)
-    return " ".join(s.split())
-
-
-def f1_score(pred: str, answer: str) -> tuple:
-    pred_tokens = normalize_text(pred).split()
-    ref_tokens = normalize_text(answer).split()
-    common = set(pred_tokens) & set(ref_tokens)
-    if len(common) == 0:
-        return 0, 0, 0
-    precision = len(common) / len(pred_tokens)
-    recall = len(common) / len(ref_tokens)
-    f1 = 2 * precision * recall / (precision + recall)
-    return precision, recall, f1
-
-
 def calculate_f1(sample: dict) -> float:
     answers = sample.get("answers", [])
     pred = sample.get("pred", "")
