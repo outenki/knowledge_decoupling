@@ -201,7 +201,6 @@ def select_data_by_indices(dataset: Dataset, indices_fn: str) -> Dataset:
 
 def _limit_dataset_dict(data_dict: DatasetDict, data_limit: int) -> DatasetDict:
     for k, dt in data_dict.items():
-        dt = dt.shuffle(seed=42)
         if k == "train":
             data_dict[k] = slice_dataset(dt, 0, data_limit)
         else:
@@ -221,13 +220,15 @@ def _load_dataset_dict(data_path: str) -> DatasetDict:
         raise TypeError(f"Invalid data type {type(dataset)}")
     return data_dict
 
-def load_and_limit_dataset_dict(data_path: str, data_limit: int) -> DatasetDict:
+def load_and_limit_dataset_dict(data_path: str, data_limit: int, shuffle) -> DatasetDict:
     """
     Load data and limit the number of samples for training.
     For validation and test sets, use a smaller limit (data_limit // 10).
     """
     print(f">>> Loading dataset from {data_path}")
     _data_dict = _load_dataset_dict(data_path)
+    if shuffle:
+        _data_dict.shuffle(seed=42)
     print(_data_dict)
     print(">>> data loaded")
     if data_limit > 0:
@@ -235,13 +236,13 @@ def load_and_limit_dataset_dict(data_path: str, data_limit: int) -> DatasetDict:
     return _data_dict
 
 
-def load_dataset_for_training(data_paths: list, data_limits: list) -> tuple[Dataset, Dataset]:
+def load_dataset_for_training(data_paths: list, data_limits: list, shuffle: bool) -> tuple[Dataset, Dataset]:
     data_list = []
     if not data_limits or len(data_limits) == 0:
         data_limits = [0] * len(data_paths)
     assert len(data_paths) == len(data_limits), "data_paths and data_limits should have the same length."
     for dp, dl in zip(data_paths, data_limits):
-        _data_dict = load_and_limit_dataset_dict(dp, dl)
+        _data_dict = load_and_limit_dataset_dict(dp, dl, shuffle)
         data_list.append(_data_dict)
     data_dict = DatasetDict({
         split: concatenate_datasets([dd[split] for dd in data_list])
@@ -257,7 +258,7 @@ def load_dataset_for_training(data_paths: list, data_limits: list) -> tuple[Data
             eval_dataset = data_dict[split]
             break
     if eval_dataset is None:
-        data_dict = train_dataset .train_test_split(test_size=0.05, shuffle=True, seed=42)
+        data_dict = train_dataset.train_test_split(test_size=0.05, shuffle=True, seed=42)
         train_dataset = data_dict["train"]
         eval_dataset = data_dict["test"]
     print(">>> dataset features:", train_dataset.features)

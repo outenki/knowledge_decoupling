@@ -109,7 +109,6 @@ def main():
     # ======== Generate nonce sentences ========
     print("**** Processing dataset ...")
     _process_dataset(dataset, args)
-    print("Use src/data_processing/merge_dataset.py to merge parts later if you need a single dataset directory.")
 
 
 if __name__ == "__main__":

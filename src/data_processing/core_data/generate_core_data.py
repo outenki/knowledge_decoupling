@@ -18,6 +18,7 @@ def read_args():
     parser.add_argument('--data', '-d', dest='data', type=str, help='Dataset path to load from.')
     parser.add_argument('--split', '-sp', dest='split', type=str, default="train", help='Dataset split name to process.') 
     parser.add_argument("--kept-indices", "-ki", type=str, default=None, help="Path to json file")
+    parser.add_argument('--shuffle', '-sd', dest='shuffle', action='store_true')
     parser.add_argument(
         '--load-from', '-lf', dest='load_from', choices=["hf", "local"],
         help='Load dataset from Hugging Face or local path.'
@@ -80,6 +81,8 @@ def main():
     if isinstance(dataset, DatasetDict):
         dataset = dataset[args.split]
         dataset = select_data_by_indices(dataset, args.kept_indices)
+    if args.shuffle:
+        dataset.shuffle(seed=42)
 
 
     # ========  Load aoa ========
@@ -97,7 +100,6 @@ def main():
     # ======== Generate nonce sentences ========
     print("**** Processing dataset ...")
     _process_dataset(dataset, aoa, args)
-    print("Use src/data_processing/merge_dataset.py to merge parts later if you need a single dataset directory.")
 
 
 if __name__ == "__main__":
