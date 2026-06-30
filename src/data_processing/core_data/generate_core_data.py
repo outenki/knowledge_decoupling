@@ -87,13 +87,18 @@ def main():
     # ========  Load aoa ========
     aoa = {}
     if args.aoa:
-        aoa = (
-            pd.read_csv(args.aoa, usecols=["Word", "AoA_Kup_lem"])
-            .set_index("Word")["AoA_Kup_lem"]
-            .to_dict()
-        )
+        aoa_csv = pd.read_csv(args.aoa, usecols=["Word", "Alternative.spelling", "AoA_Kup_lem"])
+        for word, alt, age in aoa_csv.itertuples(index=False, name=None):
+            aoa[word] = age
+            if alt not in aoa:
+                aoa[alt] = age
+        print(f"Loaded AoA vocabulary with {len(aoa)} entries.")
+
         if args.aoa_threshold > 0:
             aoa = {k: v for k, v in aoa.items() if v <= args.aoa_threshold}
+            print(f"AOA threshold {args.aoa_threshold} kept {len(aoa)} entries.")
+        else:
+            print("AOA threshold is 0, so all loaded AoA entries are kept.")
 
 
     # ======== Generate nonce sentences ========

@@ -35,6 +35,7 @@ def generate_core_sentence(sent, doc_id: int, replace_ne: bool, ne_ids: dict[str
         content_word_num += 1
         token_text = token.text
         token_lower = token_text.lower()
+        token_lemma = token.lemma_.lower()
 
         # Replace named entities.
         if replace_ne and token.ent_type_:
@@ -50,7 +51,10 @@ def generate_core_sentence(sent, doc_id: int, replace_ne: bool, ne_ids: dict[str
             continue
 
         # Reject words outside AOA.
-        if AOA and token_lower not in AOA:
+        if AOA and token_lower not in AOA and token_lemma not in AOA:
+            print("\n")
+            print(f"===sent({token_lower})===\n", sent.text)
+            print("\n")
             return "", 0, 0
 
         words.append(token.text_with_ws)
