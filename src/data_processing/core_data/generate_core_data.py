@@ -6,7 +6,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from src.lib.dataset import load_custom_dataset, select_data_by_indices
+from src.lib.dataset import load_custom_dataset, select_data_by_indices, maybe_shuffle_dataset
 from src.lib.dataset import slice_dataset
 from src.lib.utils import print_args
 from src.data_processing.core_data.lib import generate_core_dataset
@@ -18,6 +18,7 @@ def read_args():
     parser.add_argument('--data', '-d', dest='data', type=str, help='Dataset path to load from.')
     parser.add_argument('--split', '-sp', dest='split', type=str, default="train", help='Dataset split name to process.') 
     parser.add_argument("--kept-indices", "-ki", type=str, default=None, help="Path to json file")
+    parser.add_argument('--shuffle', '-sd', dest='shuffle', action='store_true')
     parser.add_argument(
         '--load-from', '-lf', dest='load_from', choices=["hf", "local"],
         help='Load dataset from Hugging Face or local path.'
@@ -80,24 +81,29 @@ def main():
     if isinstance(dataset, DatasetDict):
         dataset = dataset[args.split]
         dataset = select_data_by_indices(dataset, args.kept_indices)
+    dataset = maybe_shuffle_dataset(dataset, shuffle=args.shuffle, seed=42)
 
 
     # ========  Load aoa ========
     aoa = {}
     if args.aoa:
-        aoa = (
-            pd.read_csv(args.aoa, usecols=["Word", "AoA_Kup_lem"])
-            .set_index("Word")["AoA_Kup_lem"]
-            .to_dict()
-        )
+        aoa_csv = pd.read_csv(args.aoa, usecols=["Word", "Alternative.spelling", "AoA_Kup_lem"])
+        for word, alt, age in aoa_csv.itertuples(index=False, name=None):
+            aoa[word] = age
+            if alt not in aoa:
+                aoa[alt] = age
+        print(f"Loaded AoA vocabulary with {len(aoa)} entries.")
+
         if args.aoa_threshold > 0:
             aoa = {k: v for k, v in aoa.items() if v <= args.aoa_threshold}
+            print(f"AOA threshold {args.aoa_threshold} kept {len(aoa)} entries.")
+        else:
+            print("AOA threshold is 0, so all loaded AoA entries are kept.")
 
 
     # ======== Generate nonce sentences ========
     print("**** Processing dataset ...")
     _process_dataset(dataset, aoa, args)
-    print("Use src/data_processing/merge_dataset.py to merge parts later if you need a single dataset directory.")
 
 
 if __name__ == "__main__":

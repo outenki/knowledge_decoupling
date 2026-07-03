@@ -6,7 +6,7 @@ import json
 
 from transformers import AutoTokenizer
 
-from src.lib.dataset import load_custom_dataset, slice_dataset
+from src.lib.dataset import load_custom_dataset, slice_dataset, maybe_shuffle_dataset
 
 
 def read_args():
@@ -46,8 +46,8 @@ def read_args():
         help="Shuffle seed applied after slicing."
     )
     parser.add_argument(
-        "--no-shuffle", action="store_true",
-        help="Disable shuffling after slicing."
+        "--shuffle", action="store_true",
+        help="Shuffle after slicing."
     )
     parser.add_argument("--output-path", "-o", type=str, required=True)
     return parser.parse_args()
@@ -141,8 +141,7 @@ def main():
         print(f"  -> Dataset size after filtering: {len(dataset)}")
 
     dataset = slice_dataset(dataset, args.start_from, args.data_limit)
-    if not args.no_shuffle:
-        dataset = dataset.shuffle(seed=args.shuffle_seed)
+    dataset = maybe_shuffle_dataset(dataset, shuffle=args.shuffle, seed=args.shuffle_seed)
 
     # === TOKENIZATION ===
     tokenized_dataset = dataset

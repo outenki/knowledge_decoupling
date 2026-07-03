@@ -69,7 +69,7 @@ def main(cfg: DictConfig):
         print(f">>> Frozen the bottom {cfg.model.freeze_layers} layers.")
 
     # === train model
-    train_dataset, eval_dataset = load_dataset_for_training(cfg.data.paths, cfg.data.limits)
+    train_dataset, eval_dataset = load_dataset_for_training(cfg.data.paths, cfg.data.limits, cfg.data.shuffle)
     wandb_run = init_wandb_run(cfg.output.path, cfg.model.config + datetime.now().strftime("-%Y%m%d"))
     model = train_model_with_data(
         model, train_dataset, eval_dataset, wandb_run,

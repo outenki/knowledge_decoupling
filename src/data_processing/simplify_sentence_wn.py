@@ -15,7 +15,7 @@ from nltk.corpus import wordnet as wn
 from src.lib.basic_words.basic_words_850 import BASIC_WORDS_850
 from src.lib.basic_words.oxford_3000 import OXFORD_3000
 from src.lib.dataset import load_custom_dataset, slice_dataset, skip_dataset_by_column
-from src.lib.text import simple_split_text, inflect_candidate, safe_texts
+from src.lib.text import simple_split_text, inflect_candidate, safe_texts, format_word
 from src.lib.utils import print_args
 
 
@@ -78,7 +78,7 @@ def get_simple_candidate(token):
 
     lemma = token.lemma_.lower()
     if lemma in BASIC_VOCAB:
-        return lemma
+        return format_word(lemma, token.text)
 
     candidates = []
     spacy_pos = spacy_to_wordnet_pos(token.pos_)

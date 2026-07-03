@@ -22,68 +22,112 @@ BATCH_SIZE = 64
 AOA = {}
 random.seed(42)
 
+def generate_core_sentence(sent, doc_id: int, replace_ne: bool, rp_ids: dict[str, str]) -> tuple:
+    """Generate a core sentence by replacing named entities with placeholders."""
+    words: list[str] = []
+    rp_ne_num = 0
+    rp_unk_num = 0
+    content_word_num = 0
 
-def generate_core_sentence(doc, d_id, replace_ne: bool) -> str | None:
-    """Generates a nonce sentence by replacing tokens in the document with nonce words.
-    Args:
-        doc (Doc): A spaCy Doc object.
-        max_n (int): The number of nonce words to generate for each token.
-        keep_word_identical (bool): A word is always replaced by the same nonce word.
-        ne_only (bool): Only replace named entities.
-    returns:
-        list[str]: A list of nonce words forming a sentence.
-    """
-    words = []
-    ne_ids = {}
-    replaced_ne_num = 0
-    for token in doc:
+    for token in sent:
         if not is_content_word(token):
             words.append(token.text_with_ws)
             continue
+        if not token.text.isascii():
+            # skip unicode chars
+            continue
+        content_word_num += 1
+        token_text = token.text
+        token_lower = token_text.lower()
+        token_lemma = token.lemma_.lower()
+
+        # Replace named entities.
         if replace_ne and token.ent_type_:
-            # replace named entities
-            ne_id = ne_ids.get(token.text.lower(), f"{d_id}_{len(ne_ids)}")
-            ne_ids[token.text.lower()] = ne_id
-            word = token.ent_type_.upper() + "_" + ne_id
-            if token.text_with_ws != token.text:
-                word += " "
+            if token_text not in rp_ids:
+                rp_ids[token_text] = f"{doc_id}_{len(rp_ids)}"
+
+            word = f"{token.ent_type_.upper()}_{rp_ids[token_text]}"
+            if token.whitespace_:
+                word += token.whitespace_
+
             words.append(word)
-            replaced_ne_num += 1
-            if replaced_ne_num == len(doc):
-                return None
+            rp_ne_num += 1
             continue
-        if not AOA or token.text.lower().strip() in AOA:
-            words.append(token.text_with_ws)
+
+        # Reject words outside AOA.
+        if AOA and token_lower not in AOA and token_lemma not in AOA:
+            if token_text not in rp_ids:
+                rp_ids[token_text] = f"{doc_id}_{len(rp_ids)}"
+
+            word = f"UNK_{token.tag_.upper()}_{rp_ids[token_text]}"
+            if token.whitespace_:
+                word += token.whitespace_
+            words.append(word)
+            rp_unk_num += 1
+            # print("\n")
+            # print(f"===sent({token} -> {word})===\n")
+            # print(sent.text)
+            # print("".join(words))
+            # print("\n")
             continue
-        else:
-            return None
-    return "".join(words)
+
+        words.append(token.text_with_ws)
+
+    text = "".join(words)
+    return text, content_word_num, rp_ne_num, rp_unk_num
+
+
+def generate_core_doc(doc, doc_id: int, replace_ne: bool) -> tuple:
+    rp_ids: dict[str, str] = {}
+    rp_ne_num = 0
+    rp_unk_num = 0
+    content_word_num = 0
+    texts = []
+
+    for sent in doc.sents:
+        t, cn, nn, un= generate_core_sentence(sent, doc_id, replace_ne, rp_ids)
+        content_word_num += cn
+        rp_ne_num += nn
+        rp_unk_num += un
+        texts.append(t)
+
+    text = "".join(texts)
+    return text, content_word_num, rp_ne_num, rp_unk_num
+        
 
 
 def generate_core_for_examples(examples, replace_ne: bool, multi_process: bool):
     assert NLP is not None, "NLP should be initialized"
-    # texts = examples["text"]
+    texts = examples["text"]
     # sents = []
     # for text in texts:
     #     sents.extend(split_text_to_sentences(text))
-    sents = examples["text"]
+    # sents = examples["text"]
 
     if multi_process:
-        docs = NLP.pipe(safe_texts(sents, NLP.max_length), batch_size=BATCH_SIZE, n_process=CPU_NUM)
+        docs = NLP.pipe(safe_texts(texts, NLP.max_length), batch_size=BATCH_SIZE, n_process=CPU_NUM)
     else:
-        docs = NLP.pipe(safe_texts(sents, NLP.max_length), batch_size=BATCH_SIZE)
+        docs = NLP.pipe(safe_texts(texts, NLP.max_length), batch_size=BATCH_SIZE)
     
     ori_texts = []
     core_texts = []
+    content_words_num = []
+    replaced_ne_num = []
+    replaced_unk_num = []
     for d_id, doc in enumerate(docs):
-        core_sentence = generate_core_sentence(doc=doc, d_id=d_id, replace_ne=replace_ne)
+        core_sentence , cn, nn, un= generate_core_doc(doc, doc_id=d_id, replace_ne=replace_ne)
         if core_sentence:
             ori_texts.append(doc.text)
             core_texts.append(core_sentence)
-
+            content_words_num.append(cn)
+            replaced_ne_num.append(nn)
+            replaced_unk_num.append(un)
     return {
         "text": ori_texts,
         "core": core_texts,
+        "content_words_num": content_words_num,
+        "replaced_ne_num": replaced_ne_num,
+        "replaced_unk_num": replaced_unk_num,
     }
 
 

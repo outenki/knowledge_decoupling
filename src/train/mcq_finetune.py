@@ -212,16 +212,6 @@ def random_sample(dataset, number: int) -> Dataset:
     return dataset.select(indices)
 
 
-def limit_dataset_dict(data_dict: DatasetDict, data_limit: int) -> DatasetDict:
-    for k, dt in data_dict.items():
-        if k == "train":
-            data_dict[k] = random_sample(dt, data_limit)
-        else:
-            # For validation and test sets, use a smaller limit
-            _data_limit = data_limit // 10
-            data_dict[k] = random_sample(dt, _data_limit)
-    return data_dict
-
 
 def load_dataset_dict(data_path: str) -> DatasetDict:
     dataset = load_custom_dataset(data_path, None, "local")
@@ -232,19 +222,6 @@ def load_dataset_dict(data_path: str) -> DatasetDict:
     else:
         raise TypeError(f"Invalid data type {type(dataset)}")
     return data_dict
-
-def load_and_limit_dataset_dict(data_path: str, data_limit: int) -> DatasetDict:
-    """
-    Load data and limit the number of samples for training.
-    For validation and test sets, use a smaller limit (data_limit // 10).
-    """
-    print(f">>> Loading dataset from {data_path}")
-    _data_dict = load_dataset_dict(data_path)
-    print(_data_dict)
-    print(">>> data loaded")
-    if data_limit > 0:
-        _data_dict = limit_dataset_dict(_data_dict, data_limit)
-    return _data_dict
 
 
 def main():

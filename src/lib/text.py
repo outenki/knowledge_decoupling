@@ -105,3 +105,20 @@ def safe_texts(texts, max_len):
             yield t
         else:
             yield ""
+
+
+def format_word(word: str, ref: str) -> str:
+    """Format `word` to match the capitalization pattern of `ref`."""
+    if not word.strip() or not ref.strip():
+        return word
+
+    if ref.isupper():
+        return word.upper()
+
+    if ref.islower():
+        return word.lower()
+
+    if ref[0].isupper() and ref[1:].islower():
+        return word.capitalize()
+
+    return word
