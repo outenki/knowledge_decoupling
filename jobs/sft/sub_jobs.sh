@@ -1,4 +1,0 @@
-pjsub job_sft_qwen_mix_c.sh
-pjsub job_sft_qwen_squad_c.sh
-pjsub job_sft_sml_mix_c.sh
-pjsub job_sft_sml_squad_c.sh
