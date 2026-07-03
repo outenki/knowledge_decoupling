@@ -24,6 +24,15 @@ training:
   save_checkpoints_num: 10
   attn_implementation: "sdpa"
 
+wandb:
+  group: gpt2-nonce
+  tags:
+    - train
+    - gpt2
+    - sml
+    - nonce
+    - bs1024
+
 output:
   path: ${base.path}/output/${model.config}/${data.name}
 

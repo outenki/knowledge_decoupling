@@ -24,6 +24,13 @@ training:
   save_checkpoints_num: 10
   attn_implementation: "sdpa"
 
+wandb:
+  group: SmolLM2-135M-sml
+  tags:
+    - train
+    - SmolLM2-135M
+    - sml
+    - bs1024
 output:
   path: ${base.path}/output/${model.config}/${data.name}
 

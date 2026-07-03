@@ -5,7 +5,7 @@ base:
 model:
   config: HuggingFaceTB/SmolLM2-135M
   init_model: null
-  checkpoint: ${base.path}/output/HuggingFaceTB/SmolLM2-135M/SmolLM2-135M-20B-nonce-bs1024/checkpoint-380484
+  checkpoint: null
   freeze_layers: 0
 
 data:
@@ -23,6 +23,15 @@ training:
   checkpoints_per_epoch: 10
   save_checkpoints_num: 10
   attn_implementation: "sdpa"
+
+wandb:
+  group: SmolLM2-135M-nonce
+  tags:
+    - train
+    - SmolLM2-135M
+    - nonce
+    - sml
+    - bs1024
 
 output:
   path: ${base.path}/output/${model.config}/${data.name}/
