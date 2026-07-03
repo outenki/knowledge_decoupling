@@ -7,7 +7,7 @@ from pathlib import Path
 from src.lib.dataset import load_custom_dataset, select_data_by_indices
 from src.lib.dataset import slice_dataset
 from src.lib.utils import print_args
-from src.lib.nonce_data import generate_nonce_for_dataset
+from src.data_processing.nonce_data.lib import generate_nonce_for_dataset
 
 
 PART_SIZE = 10_000

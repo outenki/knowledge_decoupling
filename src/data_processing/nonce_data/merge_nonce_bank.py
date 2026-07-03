@@ -3,7 +3,7 @@
 
 import json
 import argparse
-from src.lib.nonce_data import merge_nonce_banks
+from src.data_processing.nonce_data.lib import merge_nonce_banks
 
 
 def read_args():

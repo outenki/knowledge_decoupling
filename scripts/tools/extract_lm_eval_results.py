@@ -51,7 +51,7 @@ with open(input_json, 'r') as f:
 results = data['results']
 for key, value in results.items():
     if metric and metric != "none":
-        acc = value['acc,none']
+        acc = value[metric]
         print(f'{key}: {acc}')
     else:
         _metric = metrics[key]

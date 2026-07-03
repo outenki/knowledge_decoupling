@@ -1,7 +1,7 @@
 # %%
 import sys
 
-from src.lib.nonce_data import clean_nonce_word_bank, load_nonce_word_bank
+from src.data_processing.nonce_data.lib import clean_nonce_word_bank, load_nonce_word_bank
 
 input_path = sys.argv[1]
 output_path = sys.argv[2]

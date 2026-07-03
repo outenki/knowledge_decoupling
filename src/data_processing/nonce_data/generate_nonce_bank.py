@@ -12,7 +12,7 @@ from src.lib.dataset import load_custom_dataset, load_texts_from_dataset_batch
 from src.lib.dataset import slice_dataset, select_data_by_indices
 from src.lib.utils import print_args
 from src.lib.text import split_text_to_sentences
-from src.lib.nonce_data import generate_nonce_word_bank, save_nonce_word_bank
+from src.data_processing.nonce_data.lib import generate_nonce_word_bank, save_nonce_word_bank
 
 
 SKIP_SOURCES = {"finemath", "stack_edu", "infimm_webmath", "stack-edu", "infimm-webmath"}
