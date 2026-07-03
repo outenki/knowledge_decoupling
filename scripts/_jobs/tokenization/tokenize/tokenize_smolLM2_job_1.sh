@@ -8,6 +8,6 @@
 
 
 source $HOME/.zshrc
-cd $PROJECT_BASE_PATH/scripts/_jobs/tokenization
+cd $PROJECT_BASE_PATH/scripts/_jobs/tokenization/tokenize
 
-sh ./tokenize_smolLM2.sh HuggingFaceTB/SmolLM2-135M 1
+sh ./tokenize.sh HuggingFaceTB/SmolLM2-135M 1

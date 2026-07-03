@@ -10,4 +10,4 @@
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/_jobs/tokenization/tokenize
 
-sh ./tokenize_smolLM2.sh openai-community/gpt2 0
+sh ./tokenize.sh openai-community/gpt2 0
