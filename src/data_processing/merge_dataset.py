@@ -37,6 +37,7 @@ def main():
         data_path = Path(args.data_dir) / f"part_{part}"
         print(f"Loading dataset from {data_path}...")
         if not data_path.is_dir():
+            print(f"Directory {data_path} does not exist. Skipping...")
             continue
         try:
             dataset = load_from_disk(str(data_path))
