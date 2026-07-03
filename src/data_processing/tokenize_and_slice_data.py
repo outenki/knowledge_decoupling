@@ -15,7 +15,7 @@ def read_args():
     parser.add_argument("--data-path", "-dp", type=str, required=True)
     parser.add_argument("--load-from", "-lf", type=str, choices=["local", "hf"], required=True)
     parser.add_argument("--data-type", "-dt", type=str, default=None)
-    parser.add_argument("--data-column", "-dc", type=str, choices=["text", "nonce"], default="text")
+    parser.add_argument("--data-column", "-dc", type=str, choices=["text", "nonce", "core"], default="text")
     parser.add_argument("--split", "-sp", type=str, required=True, help="train/dev/test")
     parser.add_argument("--tokenize", "-t", action="store_true")
     parser.add_argument("--slice", "-s", action="store_true")
