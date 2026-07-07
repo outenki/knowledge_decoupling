@@ -10,4 +10,4 @@
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/_jobs/tokenization/tokenize_limit
 
-sh ./tokenize_smolLM2_paralle.sh Qwen/Qwen3.5-0.8B-Base 10
+sh ./tokenize_smolLM2_paralle.sh Qwen/Qwen2.5-0.5B 10

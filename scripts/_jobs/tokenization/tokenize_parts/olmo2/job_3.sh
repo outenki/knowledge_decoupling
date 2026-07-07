@@ -2,12 +2,12 @@
 #PJM -L "rscgrp=a-batch"
 #PJM -L "elapse=10:00:00"
 #PJM -L "vnode-core=10"
-#PJM -e logs/olme2_1024_2.out
-#PJM -o logs/olme2_1024_2.out
-#PJM -N "tk_ol_2"
+#PJM -e logs/olmo2_1024_3.out
+#PJM -o logs/olmo2_1024_3.out
+#PJM -N "tk_ol_3"
 
 
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/_jobs/tokenization/tokenize_parts
 
-sh ./tokenize.sh allenai/OLMo-2-0425-1B 2
+sh ./tokenize.sh allenai/OLMo-2-0425-1B 3

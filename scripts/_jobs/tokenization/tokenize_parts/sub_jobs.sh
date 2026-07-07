@@ -16,8 +16,8 @@
 # done
 
 for i in {0..10}; do
-    echo "Submitting job for tokenize_olme2_job_${i}.sh"
-    pjsub olme2/job_${i}.sh
+    echo "Submitting job for tokenize_olmo2_job_${i}.sh"
+    pjsub olmo2/job_${i}.sh
 done
 for i in {0..10}; do
     echo "Submitting job for tokenize_qwen_job_${i}.sh"
