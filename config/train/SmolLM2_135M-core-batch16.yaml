@@ -18,7 +18,7 @@ data:
 
 training:
   epochs: 1
-  batch_size: 32
+  batch_size: 16
   learning_rate: 2e-4
   eval_strategy: "no"
   checkpoints_per_epoch: 10
@@ -26,7 +26,7 @@ training:
   attn_implementation: "sdpa"
 
 wandb:
-  group: test
+  group: SmolLM2-135M-core
   tags:
     - train
     - SmolLM2-135M
@@ -35,7 +35,7 @@ wandb:
     - bs1024
 
 output:
-  path: ${base.path}/output/test/${model.config}/${data.name}/
+  path: ${base.path}/output/${model.config}/${data.name}-batch16/
 
 hydra:
   run:

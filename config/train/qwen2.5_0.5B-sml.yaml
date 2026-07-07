@@ -3,13 +3,13 @@ base:
   path: null
 
 model:
-  config: HuggingFaceTB/SmolLM2-135M
+  config: Qwen/Qwen2.5-0.5B
   init_model: null
   checkpoint: null
   freeze_layers: 0
 
 data:
-  name: SmolLM2-135M-20B-core-bs1024
+  name: SmolLM2-135M-20B-bs1024
   paths:
     - ${base.path}/input/tokenized/${model.config}/train/${data.name}
   limits:
@@ -18,7 +18,7 @@ data:
 
 training:
   epochs: 1
-  batch_size: 32
+  batch_size: 16
   learning_rate: 2e-4
   eval_strategy: "no"
   checkpoints_per_epoch: 10
@@ -26,16 +26,15 @@ training:
   attn_implementation: "sdpa"
 
 wandb:
-  group: test
+  group: Qwen2.5-0.5B-sml
   tags:
     - train
-    - SmolLM2-135M
-    - core
+    - Qwen2.5-0.5B
     - sml
     - bs1024
 
 output:
-  path: ${base.path}/output/test/${model.config}/${data.name}/
+  path: ${base.path}/output/${model.config}/${data.name}/
 
 hydra:
   run:
