@@ -14,6 +14,7 @@ data:
     - ${base.path}/input/tokenized/${model.config}/train/${data.name}
   limits:
     - 0
+  shuffle: true
 
 training:
   epochs: 1
@@ -24,6 +25,13 @@ training:
   save_checkpoints_num: 10
   attn_implementation: "sdpa"
 
+wandb:
+  group: SmolLM2-135M-sml
+  tags:
+    - train
+    - SmolLM2-135M
+    - sml
+    - bs1024
 output:
   path: ${base.path}/output/${model.config}/${data.name}
 

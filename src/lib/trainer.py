@@ -16,7 +16,7 @@ from src.lib.model import get_layers
 DECAY_RATE = 0.9
 
 
-def init_wandb_run(output_path, group_name):
+def init_wandb_run(output_path: str, group_name: str, tags: list = []):
     run_id_path = Path(output_path) / "wandb_id.txt"
     if run_id_path.exists():
         run_id = run_id_path.read_text().strip()
@@ -32,6 +32,7 @@ def init_wandb_run(output_path, group_name):
         group=group_name,  # Set the wandb group to organize runs together (e.g., by experiment or model).
         # Set the wandb project where this run will be logged.
         project="Knowledge Decoupling",
+        tags=tags
     )
     wandb_run.name = output_path.split("output/", maxsplit=1)[1]
     return wandb_run

@@ -14,6 +14,7 @@ data:
     - ${base.path}/input/tokenized/${model.config}/train/${data.name}
   limits:
     - 0
+  shuffle: true
 
 training:
   epochs: 1
@@ -23,6 +24,14 @@ training:
   checkpoints_per_epoch: 10
   save_checkpoints_num: 10
   attn_implementation: "flash_attention_3"
+
+wandb:
+  group: Llama-3.2-1B-sml
+  tags:
+    - train
+    - Llama-3.2-1B
+    - sml
+    - bs1024
 
 output:
   path: ${base.path}/output/${model.config}/${data.name}
