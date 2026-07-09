@@ -1,0 +1,41 @@
+# configs/train.yaml
+base:
+  path: null
+
+model:
+  config: allenai/OLMo-2-0425-1B
+  init_model: null
+  checkpoint: null
+  freeze_layers: 0
+
+data:
+  name: SmolLM2-135M-20B-bs1024
+  paths:
+    - ${base.path}/input/tokenized/${model.config}/train/${data.name}
+  limits:
+    - 0
+  shuffle: true
+
+training:
+  epochs: 1
+  batch_size: 16
+  learning_rate: 2e-4
+  eval_strategy: "no"
+  checkpoints_per_epoch: 10
+  save_checkpoints_num: 10
+  attn_implementation: "sdpa"
+
+wandb:
+  group: OLMo-2-0425-1B-sml
+  tags:
+    - train
+    - OLMo-2-0425-1B
+    - sml
+    - bs1024
+
+output:
+  path: ${base.path}/output/${model.config}/${data.name}/
+
+hydra:
+  run:
+    dir: ${output.path}

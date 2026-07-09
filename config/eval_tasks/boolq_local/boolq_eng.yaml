@@ -1,12 +1,12 @@
+# https://huggingface.co/datasets/google/boolq
 task: boolq_local
 dataset_path: /lustre1/work/c30897/wtq/projects/knowledge_decoupling/input/evaluate_data/dataset/boolq/json
-# dataset_name: BoolQ-eng
 output_type: multiple_choice
 training_split: null
 validation_split: null
 test_split: test
 process_docs: !function utils.process_docs
-doc_to_text: "{{passage}}\nQuestion: {{question}}?\nAnswer:"
+doc_to_text: "Background: {{passage}}\n\nQuestion: {{question}}?\n\nAnswer:"
 doc_to_target: target
 doc_to_choice: ["no", "yes"]
 should_decontaminate: true

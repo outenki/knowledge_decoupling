@@ -23,7 +23,7 @@ def read_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
         '--data-name', '-dn', dest='data_name', type=str, required=True,
-        choices=['ai2_arc', 'boolq', 'qasc', "squad_v2", "based_squad", "mintaka", "cwq", "metaqa", "google_re", "commonsense_qa", "clasheval", "nq_swap", "race"],
+        choices=['ai2_arc', 'boolq', 'qasc', "squad_v2", "based_squad", "mintaka", "cwq", "metaqa", "google_re", "commonsense_qa", "clasheval", "nq_swap", "race", "trivia_rc_context"],
         help='Name of the dataset to load from Hugging Face'
     )
     parser.add_argument('--local-path', '-lp', dest='local_path', type=str)
@@ -152,9 +152,9 @@ def generate_qa_data_from_boolq(dataset: Dataset, md: bool, probing: bool) -> li
             question += "?"
         answer = "yes" if sample["answer"] else "no"
         context = sample["passage"]
-        options = ["Yes", "No"]
+        options = ["yes", "no"]
 
-        prompt = f"{context}\nQuestion: {question}?\nAnswer:"
+        prompt = f"Background: {context}\n\nQuestion: {question}?\n\nAnswer:"
         qa_data.append(
             construct_qa(
                 qid=str(qid),
@@ -230,6 +230,62 @@ def generate_qa_data_from_squad_v2(dataset: Dataset, md: bool, probing: bool) ->
                 argkv={
                     "prompt": prompt,
                     "title": title
+                }
+            )
+        )
+    return qa_data
+
+
+def generate_qa_data_from_trivia_rc_context(dataset: Dataset, md: bool, probing: bool) -> list[dict]:
+    qa_data = []
+    for qid, doc in tqdm(enumerate(dataset), total=len(dataset), desc="Generating QA data"):
+        assert isinstance(doc, dict)
+        descriptions = [
+            d.strip()
+            for d in doc["search_results"]["description"][:5]
+            if d and d.strip()
+        ]
+
+        if descriptions:
+            background = "\n".join(descriptions)
+        else:
+            contexts = [
+                c.strip()
+                for c in doc["search_results"]["search_context"][:5]
+                if c and c.strip()
+            ]
+            background = "\n".join(contexts[:1])
+
+        context = background
+        question = doc["question"]
+        if not question.endswith("?"):
+            question += "?"
+
+        prompt = (
+            f"Background: {background}\n\n"
+            f"Question: {question}\n\n"
+            "Answer:"
+        )
+
+        answer_list = doc["answer"]["aliases"]
+        if len(answer_list) > 0:
+            answer = answer_list[0]
+        else:
+            answer = "unanswerable"
+        answer = " " + answer
+
+        qa_data.append(
+            construct_qa(
+                qid=str(qid),
+                context=context,
+                question=question,
+                options=[],
+                options_str="",
+                answer=answer,
+                md=md,
+                probing=probing,
+                argkv={
+                    "prompt": prompt,
                 }
             )
         )
@@ -741,6 +797,8 @@ elif args.data_name == "google_re_conflict":
     dataset_dict = load_google_re(args.local_path)
 elif args.data_name == "clasheval":
     dataset_dict = load_dataset("sagnikrayc/clasheval")
+elif args.data_name == "trivia_rc_context":
+    dataset_dict = load_dataset("mandarjoshi/trivia_qa", "rc")
 elif args.data_name == "nq_swap":
     dataset_dict = load_dataset("pminervini/NQ-Swap")
 elif args.data_name == "squad_v2":
@@ -812,6 +870,9 @@ for split, dataset in dataset_dict.items():
     elif args.data_name == "race":
         assert isinstance(dataset, Dataset)
         qa_data = generate_qa_data_from_race(dataset, args.markdown,  args.probing)
+    elif args.data_name == "trivia_rc_context":
+        assert isinstance(dataset, Dataset)
+        qa_data = generate_qa_data_from_trivia_rc_context(dataset, args.markdown, args.probing)
     else:
         raise ValueError(f"Unsupported dataset: {args.data_name}")
     output_file = Path(args.output_path) / f"{split}.json"
