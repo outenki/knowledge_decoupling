@@ -803,6 +803,8 @@ elif args.data_name == "nq_swap":
     dataset_dict = load_dataset("pminervini/NQ-Swap")
 elif args.data_name == "squad_v2":
     dataset_dict = load_dataset("rajpurkar/squad_v2")
+elif args.data_name == "boolq":
+    dataset_dict = load_dataset("google/boolq")
 else:
     dataset_dict = load_from_disk(args.local_path)
 
