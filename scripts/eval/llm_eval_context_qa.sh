@@ -40,6 +40,7 @@ uv run accelerate launch -m lm_eval \
     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
     --tasks boolq_local \
     --log_samples \
+    --output_path eval/context_qa/squad_v2
 
 echo "Evaluating boolq QA for: $MODEL_PATH"
 uv run accelerate launch -m lm_eval \
@@ -48,3 +49,4 @@ uv run accelerate launch -m lm_eval \
     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
     --tasks triviaqa_rc_context \
     --log_samples \
+    --output_path eval/context_qa/squad_v2
