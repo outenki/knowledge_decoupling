@@ -9,7 +9,7 @@ model:
   freeze_layers: 0
 
 data:
-  name: SmolLM2-135M-20B-bs1024
+  name: SmolLM2-135M-20B-core-bs1024
   paths:
     - ${base.path}/input/tokenized/${model.config}/train/${data.name}
   limits:
@@ -26,11 +26,11 @@ training:
   attn_implementation: "sdpa"
 
 wandb:
-  group: OLMo-2-0425-1B-sml
+  group: OLMo-2-0425-1B
   tags:
     - train
     - OLMo-2-0425-1B
-    - sml
+    - core
     - bs1024
 
 output:
