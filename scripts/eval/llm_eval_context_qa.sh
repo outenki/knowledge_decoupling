@@ -25,7 +25,8 @@ cd $MODEL_PATH
 #     --log_samples \
 #     --output_path eval/context_qa/race_local
 
-echo "Evaluating squad_v2 QA for: $MODEL_PATH"
+echo 
+echo ">>> Evaluating squad_v2 QA for: $MODEL_PATH"
 uv run accelerate launch -m lm_eval \
     --model hf \
     --model_args pretrained=. \
@@ -33,7 +34,8 @@ uv run accelerate launch -m lm_eval \
     --log_samples \
     --output_path eval/context_qa/squad_v2
 
-echo "Evaluating boolq QA for: $MODEL_PATH"
+echo 
+echo ">>> Evaluating boolq QA for: $MODEL_PATH"
 uv run accelerate launch -m lm_eval \
     --model hf \
     --model_args pretrained=. \
@@ -42,7 +44,8 @@ uv run accelerate launch -m lm_eval \
     --log_samples \
     --output_path eval/context_qa/squad_v2
 
-echo "Evaluating triviaqa_rc_context QA for: $MODEL_PATH"
+echo 
+echo ">>> Evaluating triviaqa_rc_context QA for: $MODEL_PATH"
 uv run accelerate launch -m lm_eval \
     --model hf \
     --model_args pretrained=. \
