@@ -4,14 +4,14 @@
 #PBS -l walltime=50:00:00
 #PBS -W group_list=c30897
 #PBS -j oe
-#PBS -o logs/lama_sft_sml.log
+#PBS -o logs/lama_sft_core.log
 
 
 source $HOME/.zshrc
 
 # export WANDB_MODE=offline
 MODEL_CONFIG="meta-llama/Llama-3.2-1B"
-MODEL_NAME=SmolLM2-135M-20B-bs1024
+MODEL_NAME=SmolLM2-135M-20B-core-bs1024
 INIT_MODEL="$PROJECT_BASE_PATH/output/$MODEL_CONFIG/$MODEL_NAME"
 
 
