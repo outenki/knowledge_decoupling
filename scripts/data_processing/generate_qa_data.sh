@@ -41,8 +41,8 @@ SFT_TRAINING_PATH=$PROJECT_BASE_PATH/data/sft
 # echo ">>> SquAD_v2"
 # uv run python generate_qa_data.py -dn squad_v2 -o $OUTPUT_PATH/squad_v2
 
-# echo ">>> BOOLQ"
-# uv run python generate_qa_data.py -dn boolq -p -o $OUTPUT_PATH/boolq
+echo ">>> BOOLQ"
+uv run python generate_qa_data.py -dn boolq -o $OUTPUT_PATH/boolq
 
 echo ">>> triviaqa_rc_context"
-uv run python generate_qa_data.py -dn triviaqa_rc_context -p -o $OUTPUT_PATH/triviaqa_rc_context
+uv run python generate_qa_data.py -dn triviaqa_rc_context -o $OUTPUT_PATH/triviaqa_rc_context
