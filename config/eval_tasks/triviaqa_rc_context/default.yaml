@@ -1,4 +1,4 @@
-task: triviaqa
+task: triviaqa_rc_context
 dataset_path: mandarjttoshi/trivia_qa
 dataset_name: rc
 output_type: generate_until
