@@ -1,10 +1,11 @@
 #!/bin/bash
-#PBS -q lg
+#PBS -q sg
 #PBS -l select=1:ngpus=4
 #PBS -l walltime=24:00:00
 #PBS -W group_list=c30897
 #PBS -j oe
 #PBS -o logs/qa.log
+#PBS -N qa_llama_core
 
 
 source $HOME/.zshrc

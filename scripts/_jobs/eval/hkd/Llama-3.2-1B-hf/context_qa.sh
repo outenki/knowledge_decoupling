@@ -5,6 +5,7 @@
 #PBS -W group_list=c30897
 #PBS -j oe
 #PBS -o logs/context_qa.log
+#PBS -N cqa_llama_hf
 
 
 source $HOME/.zshrc

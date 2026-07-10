@@ -5,6 +5,7 @@
 #PBS -W group_list=c30897
 #PBS -j oe
 #PBS -o logs/train_gpt2_core.log
+#PBS -N evl_gpt2_core
 
 
 source $HOME/.zshrc
