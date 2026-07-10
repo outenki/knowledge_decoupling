@@ -18,3 +18,4 @@ scripts/run/train/wandb/
 scripts/run/train/.d*
 scripts/run/mcq_linear_ft/wandb
 .codex
+config/eval_tasks/ewok/*.yaml
