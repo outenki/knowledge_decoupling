@@ -13,3 +13,11 @@ uv run accelerate launch -m lm_eval \
     --tasks arc_easy,arc_challenge,$PROJECT_BASE_PATH/config/eval_tasks/commonsense_qa_norm.yaml \
     --log_samples \
     --output_path eval/qa
+
+uv run accelerate launch -m lm_eval \
+    --model hf \
+    --model_args pretrained=. \
+    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+    --tasks ewok \
+    --log_samples \
+    --output_path eval/context_qa/boolq_local

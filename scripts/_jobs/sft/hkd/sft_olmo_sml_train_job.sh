@@ -4,10 +4,10 @@
 #PBS -l walltime=50:00:00
 #PBS -W group_list=c30897
 #PBS -j oe
-#PBS -o logs/gpt2_sft_hf.log
+#PBS -o logs/olmo_sft_sml.log
 
 
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/_jobs/sft/hkd
 
-sh sft_hf.sh openai-community/gpt2
+sh sft_sml.sh allenai/OLMo-2-0425-1B

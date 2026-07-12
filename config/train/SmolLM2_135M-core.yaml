@@ -5,7 +5,7 @@ base:
 model:
   config: HuggingFaceTB/SmolLM2-135M
   init_model: null
-  checkpoint: null
+  checkpoint: /lustre1/work/c30897/wtq/projects/knowledge_decoupling/output/HuggingFaceTB/SmolLM2-135M/SmolLM2-135M-20B-core-bs1024/checkpoint-413744
   freeze_layers: 0
 
 data:

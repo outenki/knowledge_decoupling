@@ -1,6 +1,6 @@
 # configs/train.yaml
 base:
-  path: /home/pj24001974/ku50001571/projects/knowledge_decoupling
+  path: null
 
 model:
   config: null
@@ -24,6 +24,11 @@ training:
   checkpoints_per_epoch: 1
   save_checkpoints_num: 1
   attn_implementation: "sdpa"
+
+wandb:
+  group: ${model.config}_sft
+  tags:
+    - sft
 
 output:
   path: ${model.init_model}-sft_${data.name}_train
