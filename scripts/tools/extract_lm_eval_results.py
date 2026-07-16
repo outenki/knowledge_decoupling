@@ -41,19 +41,34 @@ metrics = {
     "squad_completion": "contains,none",
     "boolq": "acc,none",
     "race": "acc,none",
+    "arc_easy": "acc_norm,none",
+    "boolq_local": "acc_norm,none",
+    "arc_challenge": "acc,none",
+    "commonsense_qa_norm": "acc,none",
+    "triviaqa_rc_context": "exact_match,remove_whitespace",
     "drop": "f1,none"
 }
 
 input_json = sys.argv[1]
 metric = sys.argv[2]
+avg = False
+if len(sys.argv) >= 4 and sys.argv[3] == "avg":
+    avg=True
 with open(input_json, 'r') as f:
     data = json.load(f)
 results = data['results']
+acc_list = []
 for key, value in results.items():
-    if metric and metric != "none":
-        acc = value[metric]
-        print(f'{key}: {acc}')
-    else:
+    _metric = metric
+    if metric == "none":
         _metric = metrics[key]
-        acc = value[_metric]
-        print(f'{key}: {acc}')
+    
+    acc = value.get(_metric, "N/A")
+    if acc != "N/A":
+        if acc > 1:
+            acc = acc / 100
+        acc_list.append(acc)
+    print(f'{key}: {acc}')
+
+if avg:
+    print(f"ewok: {sum(acc_list)/len(acc_list)}")

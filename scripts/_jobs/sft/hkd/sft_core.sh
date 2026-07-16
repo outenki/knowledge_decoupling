@@ -7,7 +7,8 @@ INIT_MODEL="$PROJECT_BASE_PATH/output/$MODEL_CONFIG/$MODEL_NAME"
 export WANDB_MODE=offline
 
 # SFT
-for SFT_DATA in squadv2 triviaqa_rc_context boolq_local mix; do
+# for SFT_DATA in squadv2 triviaqa_rc_context boolq_local mix; do
+for SFT_DATA in boolq_local; do
     cd $PROJECT_BASE_PATH/src/train
     echo ">>> SFT on $SFT_DATA"
     uv run python train.py --config-name sft_train \
@@ -18,23 +19,26 @@ for SFT_DATA in squadv2 triviaqa_rc_context boolq_local mix; do
 done
 
 # for SFT_DATA in squadv2 triviaqa_rc_context boolq_local; do
-#     cd $INIT_MODEL-sft_${SFT_DATA}_train
-#     echo 
-#     echo ">>> Evaluating $SFT_DATA QA for: $MODEL_PATH"
-#     uv run accelerate launch -m lm_eval \
-#         --model hf \
-#         --model_args pretrained=. \
-#         --tasks $SFT_DATA \
-#         --log_samples \
-#         --output_path eval/context_qa/$SFT_DATA
+for SFT_DATA in boolq_local; do
+    cd $INIT_MODEL-sft_${SFT_DATA}_train
+    echo 
+    echo ">>> Evaluating $SFT_DATA QA for: $MODEL_PATH"
+    uv run accelerate launch -m lm_eval \
+        --model hf \
+        --model_args pretrained=. \
+        --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+        --tasks $SFT_DATA \
+        --log_samples \
+        --output_path eval/context_qa/$SFT_DATA
 
-#     cd $INIT_MODEL-sft_mix_train
-#     echo 
-#     echo ">>> Evaluating $SFT_DATA QA for: $MODEL_PATH"
-#     uv run accelerate launch -m lm_eval \
-#         --model hf \
-#         --model_args pretrained=. \
-#         --tasks $SFT_DATA \
-#         --log_samples \
-#         --output_path eval/context_qa/$SFT_DATA
-# done
+    # cd $INIT_MODEL-sft_mix_train
+    # echo 
+    # echo ">>> Evaluating $SFT_DATA QA for: $MODEL_PATH"
+    # uv run accelerate launch -m lm_eval \
+    #     --model hf \
+    #     --model_args pretrained=. \
+    #     kkkk--include_path $PROJECT_BASE_PATH/config/eval_tasks \
+    #     --tasks $SFT_DATA \
+    #     --log_samples \
+    #     --output_path eval/context_qa/$SFT_DATA
+done
