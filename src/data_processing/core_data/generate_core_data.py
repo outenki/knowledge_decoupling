@@ -9,16 +9,18 @@ import pandas as pd
 from src.lib.dataset import load_custom_dataset, select_data_by_indices, maybe_shuffle_dataset
 from src.lib.dataset import slice_dataset
 from src.lib.utils import print_args
-from src.data_processing.core_data.lib import generate_core_dataset
+from src.data_processing.core_data.lib import generate_core_dataset, replace_column_with_core_data
 
 
 def read_args():
     
     parser = argparse.ArgumentParser()
-    parser.add_argument('--data', '-d', dest='data', type=str, help='Dataset path to load from.')
+    parser.add_argument('--dataset', '-d', dest='dataset', type=str, help='Dataset path to load from.')
+    parser.add_argument('--columns', '-c', dest='columns', type=str, nargs='+', help='Column names to process.')
     parser.add_argument('--split', '-sp', dest='split', type=str, default="train", help='Dataset split name to process.') 
     parser.add_argument("--kept-indices", "-ki", type=str, default=None, help="Path to json file")
     parser.add_argument('--shuffle', '-sd', dest='shuffle', action='store_true')
+    parser.add_argument('--inline-replace', '-ir', dest='inline_replace', action='store_true')
     parser.add_argument(
         '--load-from', '-lf', dest='load_from', choices=["hf", "local"],
         help='Load dataset from Hugging Face or local path.'
@@ -45,19 +47,27 @@ def read_args():
     return parser.parse_args()
 
 
-def _process_dataset(dataset: Dataset, aoa: dict,args):
+def _process_dataset(dataset: Dataset, column_names: list[str], aoa: dict, args ):
+    print(f"Dataset has {dataset.num_rows} samples before slicing.")
     dt = slice_dataset(dataset, args.start_from, args.data_limit)
     print(f"Dataset has {dt.num_rows} samples after slicing.")
     out_path = Path(args.out_path)
-    processed_dataset = generate_core_dataset(
-        dt, replace_ne=args.replace_ne, aoa=aoa, multi_process=args.multi_process,
-    )
-    processed_dataset.save_to_disk(str(out_path), max_shard_size="500MB")
+    if not column_names or len(column_names) == 0:
+        column_names = ["text"]
+    if args.inline_replace:
+        processed_dataset = replace_column_with_core_data(
+            dt, column_names=column_names, replace_ne=args.replace_ne, aoa=aoa, multi_process=args.multi_process
+        )
+    else:
+        processed_dataset = generate_core_dataset(
+            dt, replace_ne=args.replace_ne, aoa=aoa, multi_process=args.multi_process, column_name=column_names[0]
+        )
     print(f"Dataset has {processed_dataset.num_rows} core sentences.")
      
     processed_dataset.select(range(min(50, len(processed_dataset)))).to_json(
         out_path / "example_sentences.json"
     )
+    processed_dataset.save_to_disk(str(out_path), max_shard_size="500MB")
 
 
 def main():
@@ -72,17 +82,23 @@ def main():
 
     # ========  Load dataset ========
     print("**** Loading dataset...")
-    dataset = load_custom_dataset(
-        data_name=args.data,
+    dataset: Dataset | DatasetDict = load_custom_dataset(
+        data_name=args.dataset,
         data_type=None,
         load_from=args.load_from
     )
-    print(f"Dataset loaded with {dataset.num_rows} samples.")
+    print(f"Dataset loaded:")
+    print(dataset)
+
+
     if isinstance(dataset, DatasetDict):
         dataset = dataset[args.split]
-        dataset = select_data_by_indices(dataset, args.kept_indices)
-    dataset = maybe_shuffle_dataset(dataset, shuffle=args.shuffle, seed=42)
 
+    if args.kept_indices is not None:
+        print(f"Selecting kept indices from split {args.split}...")
+        dataset = select_data_by_indices(dataset, args.kept_indices)
+
+    dataset = maybe_shuffle_dataset(dataset, shuffle=args.shuffle, seed=42)
 
     # ========  Load aoa ========
     aoa = {}
@@ -103,7 +119,8 @@ def main():
 
     # ======== Generate nonce sentences ========
     print("**** Processing dataset ...")
-    _process_dataset(dataset, aoa, args)
+    assert isinstance(dataset, Dataset), "Dataset must be a Dataset object."
+    _process_dataset(dataset, aoa=aoa, args=args, column_names=args.columns)
 
 
 if __name__ == "__main__":

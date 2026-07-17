@@ -12,7 +12,7 @@ from datasets import concatenate_datasets
 from src.lib.text import split_text_to_sentences
 
 
-def load_custom_dataset(data_name: str, data_type: str | None, load_from: str) -> Dataset | DatasetDict | Any:
+def load_custom_dataset(data_name: str, data_type: str | None, load_from: str) -> Dataset | DatasetDict:
     # Load dataset from local path with default type
     if load_from == "local" and data_type is None:
         print(f"Loading dataset {data_name} from local disk...")

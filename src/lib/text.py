@@ -101,6 +101,7 @@ def inflect_candidate(lemma, target_tag):
 
 def safe_texts(texts, max_len):
     for t in texts:
+        print("safe texts: ", len(t))
         if len(t) <= max_len:
             yield t
         else:

@@ -93,28 +93,22 @@ def generate_core_doc(doc, doc_id: int, replace_ne: bool) -> tuple:
 
     text = "".join(texts)
     return text, content_word_num, rp_ne_num, rp_unk_num
-        
 
 
-def generate_core_for_examples(examples, replace_ne: bool, multi_process: bool):
+def generate_core_for_texts(texts: list[str], replace_ne: bool, multi_process: bool) -> dict:
     assert NLP is not None, "NLP should be initialized"
-    texts = examples["text"]
-    # sents = []
-    # for text in texts:
-    #     sents.extend(split_text_to_sentences(text))
-    # sents = examples["text"]
-
     if multi_process:
         docs = NLP.pipe(safe_texts(texts, NLP.max_length), batch_size=BATCH_SIZE, n_process=CPU_NUM)
     else:
         docs = NLP.pipe(safe_texts(texts, NLP.max_length), batch_size=BATCH_SIZE)
-    
+    import ipdb; ipdb.set_trace() 
     ori_texts = []
     core_texts = []
     content_words_num = []
     replaced_ne_num = []
     replaced_unk_num = []
     for d_id, doc in enumerate(docs):
+        print(doc)
         core_sentence , cn, nn, un= generate_core_doc(doc, doc_id=d_id, replace_ne=replace_ne)
         if core_sentence:
             ori_texts.append(doc.text)
@@ -122,7 +116,7 @@ def generate_core_for_examples(examples, replace_ne: bool, multi_process: bool):
             content_words_num.append(cn)
             replaced_ne_num.append(nn)
             replaced_unk_num.append(un)
-    return {
+        return {
         "text": ori_texts,
         "core": core_texts,
         "content_words_num": content_words_num,
@@ -131,8 +125,18 @@ def generate_core_for_examples(examples, replace_ne: bool, multi_process: bool):
     }
 
 
+def generate_core_for_examples(examples, replace_ne: bool, multi_process: bool, column_name: str = "text") -> dict:
+    texts = examples[column_name]
+    # sents = []
+    # for text in texts:
+    #     sents.extend(split_text_to_sentences(text))
+    # sents = examples["text"]
+    return generate_core_for_texts(texts, replace_ne=replace_ne, multi_process=multi_process)
+
+
 def generate_core_dataset(
     dataset: Dataset | Any,
+    column_name: str,
     replace_ne: bool,
     aoa: dict | None,
     multi_process: bool,
@@ -143,7 +147,7 @@ def generate_core_dataset(
     print(f"***Processing {dataset.num_rows} samples in {batch_number} batches of size {BATCH_SIZE}...")
 
     print("**** Preprocessing...")
-    process_fn = partial(generate_core_for_examples, replace_ne=replace_ne, multi_process=multi_process)
+    process_fn = partial(generate_core_for_examples, replace_ne=replace_ne, multi_process=multi_process, column_name=column_name)
     dataset = dataset.map(
         process_fn,
         num_proc=4,
@@ -155,4 +159,31 @@ def generate_core_dataset(
         load_from_cache_file=False,
     )
     print(dataset.num_rows)
+    return dataset
+
+
+def _replace_columns_with_core_data(examples, column_names: list[str], replace_ne: bool, aoa: dict | None, multi_process: bool):
+    global AOA
+    AOA = aoa
+    for column_name in column_names:
+        print(f"Processing column {column_name}/length {len(examples[column_name])}...")
+        texts = examples[column_name]
+        core_data = generate_core_for_texts(texts, replace_ne=replace_ne, multi_process=multi_process)
+        examples[column_name] = core_data["core"]
+    return examples
+
+def replace_column_with_core_data(dataset: Dataset, column_names: list[str], replace_ne: bool, aoa: dict | None, multi_process: bool):
+    global AOA
+    AOA = aoa
+    process_fn = partial(_replace_columns_with_core_data, column_names=column_names, replace_ne=replace_ne, aoa=aoa, multi_process=multi_process)
+    dataset = dataset.map(
+        process_fn,
+        num_proc=4,
+        batch_size=BATCH_SIZE,
+        batched=True,
+        remove_columns=dataset.column_names,
+        writer_batch_size=1000,
+        desc="Replacing column with core sentences",
+        load_from_cache_file=False,
+    )
     return dataset
