@@ -1,8 +1,10 @@
 # https://huggingface.co/datasets/google/boolq
-task: boolq_local
-# dataset_path: google/boolq
+task: google_boolq_core
+dataset_path: json
 dataset_kwargs:
-  path: /lustre1/work/c30897/wtq/projects/knowledge_decoupling/input/evaluate_data/dataset/google_boolq_core
+  data_files:
+    train: /lustre1/work/c30897/wtq/projects/knowledge_decoupling/input/evaluate_data/jsonl/google_boolq_core/train.jsonl
+    validation: /lustre1/work/c30897/wtq/projects/knowledge_decoupling/input/evaluate_data/jsonl/google_boolq_core/validation.jsonl
 output_type: multiple_choice
 training_split: train
 validation_split: validation
@@ -13,11 +15,6 @@ doc_to_target: target
 doc_to_choice: ["no", "yes"]
 should_decontaminate: true
 doc_to_decontamination_query: passage
-
-# dataset_kwargs:
-#   data_files:
-#     train: train.jsonl
-#     test: test.jsonl
 
 metric_list:
   - metric: acc

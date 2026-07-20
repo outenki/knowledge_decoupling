@@ -328,6 +328,7 @@ def generate_qa_data_from_triviaqa_rc_context(dataset: Dataset, md: bool, probin
                 lower_text=lower_text,
                 argkv={
                     "prompt": prompt,
+                    "answers": answer_list
                 }
             )
         )

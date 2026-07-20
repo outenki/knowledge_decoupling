@@ -49,18 +49,28 @@ def _squad_agg(key, items):
     return _squad_metric(predictions=predictions, references=references).get(key, 0)
 
 
-class SQuAD2(ConfigurableTask):
+class SQuAD2Core(ConfigurableTask):
     VERSION = 3
-    DATASET_PATH = "lighteval/squad_v2"
+    # DATASET_PATH = "lighteval/squad_v2"
+    DATASET_PATH = "json"
     DATASET_NAME = None
 
     def __init__(self, config=None):
         super().__init__(config={"metadata": {"version": self.VERSION}})
-
+    
     # HF changed squad on us so we have to make sure we aren't running the old one
     assert version.parse(datasets.__version__) >= version.parse("1.11.0"), (
         "datasets v1.11.0 or later required for SQuAD"
     )
+
+    def download(self, dataset_kwargs=None):
+        self.dataset = datasets.load_dataset(
+            "json",
+            data_files={
+                "train": "/lustre1/work/c30897/wtq/projects/knowledge_decoupling/input/evaluate_data/jsonl/squadv2_core/train.jsonl",
+                "validation": "/lustre1/work/c30897/wtq/projects/knowledge_decoupling/input/evaluate_data/jsonl/squadv2_core/validation.jsonl",
+            },
+        )
 
     def has_training_docs(self):
         return True
@@ -78,18 +88,7 @@ class SQuAD2(ConfigurableTask):
         return self.dataset["validation"]
 
     def doc_to_text(self, doc):
-        return (
-            "Title: "
-            + doc["title"]
-            + "\n\n"
-            + "Background: "
-            + doc["context"]
-            + "\n\n"
-            + "Question: "
-            + doc["question"]
-            + "\n\n"
-            + "Answer:"
-        )
+        return doc["prompt"]
 
     def should_decontaminate(self):
         return True
@@ -98,7 +97,7 @@ class SQuAD2(ConfigurableTask):
         return doc["context"]
 
     def doc_to_target(self, doc):
-        answer_list = doc["answers"]["text"]
+        answer_list = doc["answers"]
         if len(answer_list) > 0:
             answer = answer_list[0]
         else:
@@ -159,7 +158,10 @@ class SQuAD2(ConfigurableTask):
 
         references = {
             "id": doc["id"],
-            "answers": doc["answers"],
+            "answers": {
+                "text": doc["answers"],
+                "answer_start": [0] * len(doc["answers"])
+            }
         }
 
         return {

@@ -1,7 +1,7 @@
 from src.data_processing.core_data.lib import generate_core_for_texts
 def doc_to_text(doc):
     descriptions = [
-        generate_core_for_texts([d.strip()], replace_ne=True, multi_process=False)[0]
+        generate_core_for_texts([d.strip()], replace_ne=True, multi_process=False, lower_text=False)["core"][0]
         for d in doc["search_results"]["description"][:5]
         if d and d.strip()
     ]
