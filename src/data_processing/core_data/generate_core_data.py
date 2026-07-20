@@ -9,7 +9,7 @@ import pandas as pd
 from src.lib.dataset import load_custom_dataset, select_data_by_indices, maybe_shuffle_dataset
 from src.lib.dataset import slice_dataset
 from src.lib.utils import print_args
-from src.data_processing.core_data.lib import generate_core_dataset, replace_column_with_core_data
+from src.data_processing.core_data.lib import generate_core_dataset, replace_column_with_core_data, load_aoa
 
 
 def read_args():
@@ -20,6 +20,7 @@ def read_args():
     parser.add_argument('--split', '-sp', dest='split', type=str, default="train", help='Dataset split name to process.') 
     parser.add_argument("--kept-indices", "-ki", type=str, default=None, help="Path to json file")
     parser.add_argument('--shuffle', '-sd', dest='shuffle', action='store_true')
+    parser.add_argument('--lower-text', '-lower', dest='lower_text', action='store_true')
     parser.add_argument('--inline-replace', '-ir', dest='inline_replace', action='store_true')
     parser.add_argument(
         '--load-from', '-lf', dest='load_from', choices=["hf", "local"],
@@ -56,11 +57,11 @@ def _process_dataset(dataset: Dataset, column_names: list[str], aoa: dict, args 
         column_names = ["text"]
     if args.inline_replace:
         processed_dataset = replace_column_with_core_data(
-            dt, column_names=column_names, replace_ne=args.replace_ne, aoa=aoa, multi_process=args.multi_process
+            dt, column_names=column_names, replace_ne=args.replace_ne, aoa=aoa, multi_process=args.multi_process, lower_text=args.lower_text
         )
     else:
         processed_dataset = generate_core_dataset(
-            dt, replace_ne=args.replace_ne, aoa=aoa, multi_process=args.multi_process, column_name=column_names[0]
+            dt, replace_ne=args.replace_ne, aoa=aoa, multi_process=args.multi_process, column_name=column_names[0], lower_text=args.lower_text
         )
     print(f"Dataset has {processed_dataset.num_rows} core sentences.")
      
@@ -103,18 +104,7 @@ def main():
     # ========  Load aoa ========
     aoa = {}
     if args.aoa:
-        aoa_csv = pd.read_csv(args.aoa, usecols=["Word", "Alternative.spelling", "AoA_Kup_lem"])
-        for word, alt, age in aoa_csv.itertuples(index=False, name=None):
-            aoa[word] = age
-            if alt not in aoa:
-                aoa[alt] = age
-        print(f"Loaded AoA vocabulary with {len(aoa)} entries.")
-
-        if args.aoa_threshold > 0:
-            aoa = {k: v for k, v in aoa.items() if v <= args.aoa_threshold}
-            print(f"AOA threshold {args.aoa_threshold} kept {len(aoa)} entries.")
-        else:
-            print("AOA threshold is 0, so all loaded AoA entries are kept.")
+        aoa = load_aoa(args.aoa, args.aoa_threshold)
 
 
     # ======== Generate nonce sentences ========

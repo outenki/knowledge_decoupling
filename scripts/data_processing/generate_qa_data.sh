@@ -1,5 +1,5 @@
 #!/bin/bash
-OUTPUT_PATH=$PROJECT_BASE_PATH/input/evaluate_data/
+OUTPUT_PATH=$PROJECT_BASE_PATH/input/evaluate_data/json
 EXT_TRAINING_PATH=$PROJECT_BASE_PATH/data/ext
 SFT_TRAINING_PATH=$PROJECT_BASE_PATH/data/sft
 # echo ">>> ARC-Easy"
@@ -38,11 +38,18 @@ SFT_TRAINING_PATH=$PROJECT_BASE_PATH/data/sft
 # uv run python generate_qa_data.py -dn race -lp $PROJECT_BASE_PATH/data/race -o $OUTPUT_PATH/race -ck ""
 # echo ">>> SquAD_based"
 # uv run python generate_qa_data.py -dn based_squad -lp $PROJECT_BASE_PATH/data/based_squad -o $OUTPUT_PATH/based_squad -ck ""
-echo ">>> SquAD_v2"
-uv run python generate_qa_data.py -dn squadv2 -o $OUTPUT_PATH/squadv2
+# echo ">>> SquAD_v2"
+# uv run python generate_qa_data.py -dn squadv2 -o $OUTPUT_PATH/squadv2
 
-echo ">>> BOOLQ"
-uv run python generate_qa_data.py -dn boolq -o $OUTPUT_PATH/boolq
+# echo ">>> BOOLQ"
+# uv run python generate_qa_data.py -dn boolq -o $OUTPUT_PATH/boolq
 
 # echo ">>> triviaqa_rc_context"
 # uv run python generate_qa_data.py -dn triviaqa_rc_context -o $OUTPUT_PATH/triviaqa_rc_context
+
+echo ">>> google_boolq_core"
+uv run python generate_qa_data.py -dn google_boolq_core -lp /home/pj24001974/ku50001571/projects/knowledge_decoupling/input/evaluate_data/json/google_boolq_core -o $OUTPUT_PATH/google_boolq_core --aoa $PROJECT_BASE_PATH/data/core/AOA/aoa.csv -at 10
+# echo ">>> squadv2_core"
+# uv run python generate_qa_data.py -dn squadv2 -rc -o $OUTPUT_PATH/squadv2_core --aoa $PROJECT_BASE_PATH/data/core/AOA/aoa.csv -at 10
+# echo ">>> triviaqa_rc_core"
+# uv run python generate_qa_data.py -dn triviaqa_rc_context -rc -o $OUTPUT_PATH/triviaqa_rc_context_core --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv -at 10

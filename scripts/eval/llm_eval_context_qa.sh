@@ -6,7 +6,7 @@ MODEL_PATH=$1
 
 cd $MODEL_PATH
 
-for SFT_DATA in triviaqa_rc_context boolq_local squadv2; do
+for SFT_DATA in triviaqa_rc_context google_bool google_bool_core squadv2; do
     cd $MODEL_PATH
     echo 
     echo ">>> Evaluating $SFT_DATA QA for: $MODEL_PATH"
