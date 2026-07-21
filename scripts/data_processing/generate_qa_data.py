@@ -137,10 +137,17 @@ def construct_qa(
         for c in choices:
             _, core_c = generate_core_for_qa(qid, result["prompt"], c, True, AOA) 
             choices_core.append(core_c)
+        
+        answers = argkv.get("answers", [])
+        answers_core: list = []
+        for ans in answers:
+            _, ans_c = generate_core_for_qa(qid, result["prompt"], ans, True, AOA) 
+            answers_core.append(ans_c)
         result["context"] = context_core
         result["question"] = question_core
         result["choices"] = choices_core
         result["answer"] = answer_core
+        result["answers"] = answers_core
         result["prompt"] = prompt_core
 
     return result
