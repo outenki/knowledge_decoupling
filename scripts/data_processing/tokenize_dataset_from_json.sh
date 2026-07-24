@@ -1,10 +1,10 @@
 #! /bin/bash
 # For extensive pretraining
 # TOKENIZER=gpt2
-# TOKENIZER_NAME="meta-llama/Llama-3.2-1B"
+TOKENIZER_NAME="meta-llama/Llama-3.2-1B"
 # TOKENIZER_NAME="HuggingFaceTB/SmolLM2-135M"
 # TOKENIZER_NAME="allenai/OLMo-2-0425-1B"
-TOKENIZER_NAME="Qwen/Qwen2.5-0.5B"
+# TOKENIZER_NAME="Qwen/Qwen2.5-0.5B"
 # TOKENIZER_NAME="openai-community/gpt2"
 # TOKENIZER=$PROJECT_BASE_PATH/output/$TOKENIZER_NAME/hf_full
 TOKENIZER=$TOKENIZER_NAME
@@ -19,9 +19,7 @@ TOKENIZER=$TOKENIZER_NAME
 INPUT_PATH=$PROJECT_BASE_PATH/input/evaluate_data/json
 OUTPUT_PATH=$PROJECT_BASE_PATH/input/tokenized/$TOKENIZER_NAME/sft/concat
 for dn in \
-    triviaqa_rc_context \
-    squad_v2 \
-    boolq
+    triviaqa_rc_nocontext
 do
     echo
     echo ">>>>>> $dn sft concat train"

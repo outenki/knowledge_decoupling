@@ -283,7 +283,7 @@ def generate_qa_data_from_squad_v2(dataset: Dataset, md: bool, probing: bool, re
     return qa_data
 
 
-def generate_qa_data_from_triviaqa_rc_context(dataset: Dataset, md: bool, probing: bool, replace_core: bool, lower_text: bool) -> list[dict]:
+def generate_qa_data_from_triviaqa(dataset: Dataset, md: bool, probing: bool, replace_core: bool, lower_text: bool, context: bool) -> list[dict]:
     qa_data = []
     for qid, doc in tqdm(enumerate(dataset), total=len(dataset), desc="Generating QA data"):
         assert isinstance(doc, dict)
@@ -308,11 +308,18 @@ def generate_qa_data_from_triviaqa_rc_context(dataset: Dataset, md: bool, probin
         if not question.endswith("?"):
             question += "?"
 
-        prompt = (
-            f"Background: {background}\n\n"
-            f"Question: {question}\n\n"
-            "Answer:"
-        )
+        if context:
+            prompt = (
+                f"Background: {background}\n\n"
+                f"Question: {question}\n\n"
+                "Answer:"
+            )
+        else:
+            prompt = (
+                f"Question: {question}\n\n"
+                "Answer:"
+            )
+            
 
         answer_list = doc["answer"]["aliases"]
         if len(answer_list) > 0:
@@ -950,10 +957,10 @@ for split, dataset in dataset_dict.items():
         qa_data = generate_qa_data_from_race(dataset, args.markdown,  args.probing, args.replace_core, args.lower_text)
     elif args.data_name == "triviaqa_rc_nocontext":
         assert isinstance(dataset, Dataset)
-        qa_data = generate_qa_data_from_triviaqa_rc_context(dataset, args.markdown, args.probing, args.replace_core, args.lower_text)
+        qa_data = generate_qa_data_from_triviaqa(dataset, args.markdown, args.probing, args.replace_core, args.lower_text, context=False)
     elif args.data_name == "triviaqa_rc_context":
         assert isinstance(dataset, Dataset)
-        qa_data = generate_qa_data_from_triviaqa_rc_context(dataset, args.markdown, args.probing, args.replace_core, args.lower_text)
+        qa_data = generate_qa_data_from_triviaqa(dataset, args.markdown, args.probing, args.replace_core, args.lower_text, context=True)
     else:
         raise ValueError(f"Unsupported dataset: {args.data_name}")
     output_file = Path(args.output_path) / f"{split}.json"
