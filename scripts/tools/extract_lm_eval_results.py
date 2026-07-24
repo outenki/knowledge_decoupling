@@ -42,10 +42,14 @@ metrics = {
     "boolq": "acc,none",
     "race": "acc,none",
     "arc_easy": "acc_norm,none",
+    "squadv2_core": "f1,none",
     "boolq_local": "acc_norm,none",
+    "google_boolq_core": "acc_norm,none",
     "arc_challenge": "acc,none",
     "commonsense_qa_norm": "acc,none",
     "triviaqa_rc_context": "exact_match,remove_whitespace",
+    "triviaqa_rc_context_core": "exact_match,remove_whitespace",
+    "triviaqa": "exact_match,remove_whitespace",
     "drop": "f1,none"
 }
 

@@ -20,7 +20,8 @@ done
 
 # for SFT_DATA in squadv2 triviaqa_rc_context boolq_local; do
 for SFT_DATA in boolq_local; do
-    cd $INIT_MODEL-sft_${SFT_DATA}_train
+    MODEL_PATH=$INIT_MODEL-sft_${SFT_DATA}_train
+    cd $MODEL_PATH
     echo 
     echo ">>> Evaluating $SFT_DATA QA for: $MODEL_PATH"
     uv run accelerate launch -m lm_eval \
@@ -31,8 +32,8 @@ for SFT_DATA in boolq_local; do
         --log_samples \
         --output_path eval/context_qa/$SFT_DATA
 
-    # cd $INIT_MODEL-sft_mix_train
-    # echo 
+    # MODEL_PATH=$INIT_MODEL-sft_mix_train
+    # cd $MODEL_PATH
     # echo ">>> Evaluating $SFT_DATA QA for: $MODEL_PATH"
     # uv run accelerate launch -m lm_eval \
     #     --model hf \

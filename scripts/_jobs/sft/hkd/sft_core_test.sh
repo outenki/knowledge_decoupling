@@ -1,6 +1,6 @@
 #!/bin/bash
 
-MODEL_CONFIG=$1
+MODEL_CONFIG=allenai/OLMo-2-0425-1B
 MODEL_NAME=SmolLM2-135M-20B-core-bs1024
 INIT_MODEL="$PROJECT_BASE_PATH/output/$MODEL_CONFIG/$MODEL_NAME"
 
@@ -8,15 +8,14 @@ export WANDB_MODE=offline
 
 # SFT
 # for SFT_DATA in squadv2_core boolq_local_core triviaqa_rc_context_core; do
-for SFT_DATA in google_boolq_core; do
-    cd $PROJECT_BASE_PATH/src/train
-    echo ">>> SFT on $SFT_DATA"
-    uv run python train.py --config-name sft_train \
-        base.path=$PROJECT_BASE_PATH \
-        model.config="$MODEL_CONFIG" \
-        model.init_model="$INIT_MODEL" \
-        data.name=$SFT_DATA
-done
+#     cd $PROJECT_BASE_PATH/src/train
+#     echo ">>> SFT on $SFT_DATA"
+#     uv run python train.py --config-name sft_train \
+#         base.path=$PROJECT_BASE_PATH \
+#         model.config="$MODEL_CONFIG" \
+#         model.init_model="$INIT_MODEL" \
+#         data.name=$SFT_DATA
+# done
 
 # EVALUATE
 for SFT_DATA in squadv2_core google_boolq_core triviaqa_rc_context_core; do

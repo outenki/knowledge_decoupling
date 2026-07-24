@@ -6,21 +6,31 @@ MODEL_PATH=$1
 # export HF_HUB_OFFLINE=1
 
 cd $MODEL_PATH
+
 echo
 echo ">>>Evaluating QA for: $MODEL_PATH"
 uv run accelerate launch -m lm_eval \
     --model hf \
     --model_args pretrained=. \
-    --tasks arc_easy,arc_challenge,$PROJECT_BASE_PATH/config/eval_tasks/commonsense_qa_norm.yaml \
+    --tasks triviaqa \
     --log_samples \
-    --output_path eval/qa
+    --output_path eval/triviaqa_rc_nocontext
 
-echo
-echo ">>> Evaluating ewok for: $MODEL_PATH"
-uv run accelerate launch -m lm_eval \
-    --model hf \
-    --model_args pretrained=. \
-    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-    --tasks ewok \
-    --log_samples \
-    --output_path eval/context_qa/ewok
+# echo
+# echo ">>>Evaluating QA for: $MODEL_PATH"
+# uv run accelerate launch -m lm_eval \
+#     --model hf \
+#     --model_args pretrained=. \
+#     --tasks arc_easy,arc_challenge,$PROJECT_BASE_PATH/config/eval_tasks/commonsense_qa_norm.yaml \
+#     --log_samples \
+#     --output_path eval/qa
+
+# echo
+# echo ">>> Evaluating ewok for: $MODEL_PATH"
+# uv run accelerate launch -m lm_eval \
+#     --model hf \
+#     --model_args pretrained=. \
+#     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+#     --tasks ewok \
+#     --log_samples \
+#     --output_path eval/context_qa/ewok

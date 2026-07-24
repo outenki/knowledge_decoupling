@@ -26,7 +26,7 @@ def read_args():
         '--data-name', '-dn', dest='data_name', type=str, required=True,
         choices=[
             'ai2_arc', 'boolq', 'qasc', "squad_v2", "based_squad", "squadv2",
-            "mintaka", "cwq", "metaqa", "google_re", "commonsense_qa",
+            "mintaka", "cwq", "metaqa", "google_re", "commonsense_qa", "triviaqa_rc_nocontext",
             "clasheval", "nq_swap", "race", "triviaqa_rc_context", "google_boolq_core"],
         help='Name of the dataset to load from Hugging Face'
     )
@@ -867,6 +867,8 @@ elif args.data_name == "clasheval":
     dataset_dict = load_dataset("sagnikrayc/clasheval")
 elif args.data_name == "triviaqa_rc_context":
     dataset_dict = load_dataset("mandarjoshi/trivia_qa", "rc")
+elif args.data_name == "triviaqa_rc_nocontext":
+    dataset_dict = load_dataset("mandarjoshi/trivia_qa", "rc.nocontext")
 elif args.data_name == "nq_swap":
     dataset_dict = load_dataset("pminervini/NQ-Swap")
 elif args.data_name == "squad_v2":
@@ -946,6 +948,9 @@ for split, dataset in dataset_dict.items():
     elif args.data_name == "race":
         assert isinstance(dataset, Dataset)
         qa_data = generate_qa_data_from_race(dataset, args.markdown,  args.probing, args.replace_core, args.lower_text)
+    elif args.data_name == "triviaqa_rc_nocontext":
+        assert isinstance(dataset, Dataset)
+        qa_data = generate_qa_data_from_triviaqa_rc_context(dataset, args.markdown, args.probing, args.replace_core, args.lower_text)
     elif args.data_name == "triviaqa_rc_context":
         assert isinstance(dataset, Dataset)
         qa_data = generate_qa_data_from_triviaqa_rc_context(dataset, args.markdown, args.probing, args.replace_core, args.lower_text)
