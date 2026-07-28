@@ -1,9 +1,8 @@
 #!/bin/bash
 PART=$1
-TOKENIZER="meta-llama/Llama-3.2-1B"
 
 PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-$HOME/projects/knowledge_decoupling}"
-DATA_PATH=$PROJECT_BASE_PATH/data/SmolLM2-135M-20B/nonce/dataset
+DATA_PATH=$PROJECT_BASE_PATH/data/SmolLM2-135M-20B/core/dataset
 SIZE=1800000
 START=$(($PART * $SIZE))
 END=$(($(($PART + 1)) * $SIZE -1))
@@ -12,7 +11,7 @@ start_time=$(date +"%s")
 echo "start time: $(date -d @$start_time +"%D %T")"
 
 echo
-echo "====== tokenizing part$PART (from $START to $END) ======"
+echo "====== Generating core data part$PART (from $START to $END) ======"
 uv run python $PROJECT_BASE_PATH/src/data_processing/core_data/generate_core_data.py \
     -d SmolLM2-20B \
     -lf hf \

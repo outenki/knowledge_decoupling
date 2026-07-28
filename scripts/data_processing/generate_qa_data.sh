@@ -51,7 +51,7 @@ SFT_TRAINING_PATH=$PROJECT_BASE_PATH/data/sft
 # uv run python generate_qa_data.py -dn google_boolq_core -lp /home/pj24001974/ku50001571/projects/knowledge_decoupling/input/evaluate_data/json/google_boolq_core -o $OUTPUT_PATH/google_boolq_core --aoa $PROJECT_BASE_PATH/data/core/AOA/aoa.csv -at 10
 # echo ">>> squadv2_core"
 # uv run python generate_qa_data.py -dn squadv2 -rc -o $OUTPUT_PATH/squadv2_core --aoa $PROJECT_BASE_PATH/data/core/AOA/aoa.csv -at 10
-# echo ">>> triviaqa_rc_core"
-# uv run python generate_qa_data.py -dn triviaqa_rc_context -rc -o $OUTPUT_PATH/triviaqa_rc_context_core --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv -at 10
+echo ">>> triviaqa_rc_core"
+uv run python generate_qa_data.py -dn triviaqa_rc_context -rc -o $OUTPUT_PATH/triviaqa_rc_context_core --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv -at 10
 # echo ">>> triviaqa_rc_nocontext"
-uv run python generate_qa_data.py -dn triviaqa_rc_nocontext -o $OUTPUT_PATH/triviaqa_rc_nocontext
+# uv run python generate_qa_data.py -dn triviaqa_rc_nocontext -o $OUTPUT_PATH/triviaqa_rc_nocontext

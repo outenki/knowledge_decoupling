@@ -1,9 +1,9 @@
 #!/bin/bash
 OUTPUT_PATH=$PROJECT_BASE_PATH/input/evaluate_data/json
-EXT_TRAINING_PATH=$PROJECT_BASE_PATH/data/ext
-SFT_TRAINING_PATH=$PROJECT_BASE_PATH/data/sft
+dn=squadv2_core
+echo ">>> $dn"
+uv run python generate_qa_data.py -dn boolq -rc -o $OUTPUT_PATH/$dn --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv -at 10
 
-dn=google_boolq_core
 
 SFT_INPUT=$PROJECT_BASE_PATH/input/evaluate_data/json
 

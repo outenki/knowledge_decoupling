@@ -10,4 +10,4 @@
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/_jobs/core_data
 
-sh ./core_smolLM2_paralle_nonce.sh 5
+sh ./core_smolLM2_paralle_core.sh 5

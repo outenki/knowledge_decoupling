@@ -6,9 +6,9 @@ from typing import Any
 from math import ceil
 from functools import partial
 import pandas as pd
+import random
 
 import spacy
-import random
 from datasets.arrow_dataset import Dataset
 
 from src.lib.parser import is_content_word
@@ -39,7 +39,20 @@ def load_aoa(csv: str, aoa_threshold) -> dict:
     return aoa
 
 
-def generate_core_sentence(sent, doc_id: int, replace_ne: bool, rp_ids: dict[str, str]) -> tuple:
+def _new_core_word(prefix: str, core_words_for_prefix: list[str]) -> str:
+    # different prefix can have the same id
+    if len(core_words_for_prefix) > 1000:
+        raise ValueError(f"The number of ids for {prefix} exceeded 1000.")
+    core_words = tuple(core_words_for_prefix)
+    for _ in range(10):
+        word_id = random.randint(0, 1000)
+        new_core_word = f"{prefix}_{word_id}"
+        if new_core_word not in core_words:
+            return new_core_word
+    raise ValueError("Tried for 10 times but failed to assign new id to core word.")
+    
+
+def generate_core_sentence(sent, doc_id: int, replace_ne: bool, core_words_map: dict[str, str]) -> tuple:
     assert len(AOA) > 0
     """Generate a core sentence by replacing named entities with placeholders."""
     words: list[str] = []
@@ -61,10 +74,12 @@ def generate_core_sentence(sent, doc_id: int, replace_ne: bool, rp_ids: dict[str
 
         # Replace named entities.
         if replace_ne and token.ent_type_:
-            if token_text not in rp_ids:
-                rp_ids[token_text] = f"{doc_id}_{len(rp_ids)}"
-
-            word = f"{token.ent_type_.upper()}_{rp_ids[token_text]}"
+            prefix = token.ent_type_.upper() + "_" + str(doc_id)
+            if token_text not in core_words_map:
+                core_words_for_prefix = [v for v in core_words_map if v.startswith(prefix)]
+                core_words_map[token_text] = _new_core_word(prefix, core_words_for_prefix)
+            word = core_words_map[token_text]
+            word = f"<{word}>"
             if token.whitespace_:
                 word += token.whitespace_
 
@@ -74,19 +89,16 @@ def generate_core_sentence(sent, doc_id: int, replace_ne: bool, rp_ids: dict[str
 
         # Reject words outside AOA.
         if AOA and token_lower not in AOA and token_lemma not in AOA:
-            if token_text not in rp_ids:
-                rp_ids[token_text] = f"{doc_id}_{len(rp_ids)}"
-
-            word = f"UNK_{token.tag_.upper()}_{rp_ids[token_text]}"
+            prefix = f"UNK_{token.tag_.upper()}_{doc_id}"
+            if token_text not in core_words_map:
+                core_words_for_prefix = [v for v in core_words_map if v.startswith(prefix)]
+                core_words_map[token_text] = _new_core_word(prefix, core_words_for_prefix)
+            word = core_words_map[token_text]
+            word = f"<{word}>"
             if token.whitespace_:
                 word += token.whitespace_
             words.append(word)
             rp_unk_num += 1
-            # print("\n")
-            # print(f"===sent({token} -> {word})===\n")
-            # print(sent.text)
-            # print("".join(words))
-            # print("\n")
             continue
 
         words.append(token.text_with_ws)
@@ -96,14 +108,14 @@ def generate_core_sentence(sent, doc_id: int, replace_ne: bool, rp_ids: dict[str
 
 
 def generate_core_doc(doc, doc_id: int, replace_ne: bool) -> tuple:
-    rp_ids: dict[str, str] = {}
+    core_words_map: dict[str, str] = {}
     rp_ne_num = 0
     rp_unk_num = 0
     content_word_num = 0
     texts = []
 
     for sent in doc.sents:
-        t, cn, nn, un= generate_core_sentence(sent, doc_id, replace_ne, rp_ids)
+        t, cn, nn, un= generate_core_sentence(sent, doc_id, replace_ne, core_words_map)
         content_word_num += cn
         rp_ne_num += nn
         rp_unk_num += un

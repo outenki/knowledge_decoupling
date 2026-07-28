@@ -303,12 +303,11 @@ def generate_qa_data_from_triviaqa(dataset: Dataset, md: bool, probing: bool, re
             ]
             background = "\n".join(contexts[:1])
 
-        context = background
         question = doc["question"]
         if not question.endswith("?"):
             question += "?"
 
-        if context:
+        if context and background.strip():
             prompt = (
                 f"Background: {background}\n\n"
                 f"Question: {question}\n\n"
@@ -331,7 +330,7 @@ def generate_qa_data_from_triviaqa(dataset: Dataset, md: bool, probing: bool, re
         qa_data.append(
             construct_qa(
                 qid=str(qid),
-                context=context,
+                context=background,
                 question=question,
                 choices=[],
                 choices_str="",
@@ -882,7 +881,7 @@ elif args.data_name == "squad_v2":
     dataset_dict = load_dataset("rajpurkar/squad_v2")
 elif args.data_name == "squadv2":
     dataset_dict = load_dataset("lighteval/squad_v2")
-elif args.data_name == "boolq":
+elif args.data_name == "boolq" or args.data_name == "google_boolq_core":
     dataset_dict = load_dataset("google/boolq")
 else:
     dataset_dict = load_from_disk(args.local_path)
