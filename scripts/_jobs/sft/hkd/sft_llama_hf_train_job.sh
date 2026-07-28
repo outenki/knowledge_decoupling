@@ -5,9 +5,11 @@
 #PBS -W group_list=c30897
 #PBS -j oe
 #PBS -o logs/llama_sft_hf.log
+#PBS -N sft_llama_hf
 
 
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/_jobs/sft/hkd
 
-sh sft_hf.sh meta-llama/Llama-3.2-1B
+sh sft.sh meta-llama/Llama-3.2-1B hf_full
+sh sft_core.sh meta-llama/Llama-3.2-1B hf_full

@@ -1,5 +1,5 @@
 # https://huggingface.co/datasets/google/boolq
-task: boolq_local
+task: google_boolq
 dataset_path: google/boolq
 output_type: multiple_choice
 training_split: train

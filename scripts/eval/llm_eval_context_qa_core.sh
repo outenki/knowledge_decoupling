@@ -1,4 +1,9 @@
 #!/bin/bash
+
+# !!!
+# !!NOTE: bad_tokens should be unactivated
+# !!!
+
 MODEL_PATH=$1
 
 # export HF_DATASETS_OFFLINE=1
@@ -6,41 +11,28 @@ MODEL_PATH=$1
 
 cd $MODEL_PATH
 
-# for SFT_DATA in google_bool_core squadv2_core triviaqa_rc_context_core; do
-for SFT_DATA in squadv2_core; do
+# for TASK in google_boolq_core squadv2_core triviaqa_rc_context_core; do
+for TASK in squadv2_core; do
     cd $MODEL_PATH
     echo 
-    echo ">>> Evaluating $SFT_DATA QA for: $MODEL_PATH"
+    echo ">>> Evaluating $TASK QA for: $MODEL_PATH"
     uv run accelerate launch -m lm_eval \
         --model hf \
         --model_args pretrained=. \
         --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-        --tasks $SFT_DATA \
+        --tasks $TASK \
         --log_samples \
-        --output_path eval/context_qa/$SFT_DATA
+        --output_path eval/$TASK
 
- 
-    SFT_PATH=$MODEL_PATH-sft_${SFT_DATA}_train
+    SFT_PATH=$MODEL_PATH-sft_${TASK}_train
     cd $SFT_PATH
     echo 
-    echo ">>> Evaluating $SFT_DATA QA for: $SFT_PATH"
+    echo ">>> Evaluating $TASK QA for: $SFT_PATH"
     uv run accelerate launch -m lm_eval \
         --model hf \
         --model_args pretrained=. \
         --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-        --tasks $SFT_DATA \
+        --tasks $TASK \
         --log_samples \
-        --output_path eval/context_qa/$SFT_DATA
-
-    SFT_PATH=$MODEL_PATH-sft_mix_train
-    cd $SFT_PATH
-    echo 
-    echo ">>> Evaluating $SFT_DATA QA for: $SFT_PATH"
-    uv run accelerate launch -m lm_eval \
-        --model hf \
-        --model_args pretrained=. \
-        --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-        --tasks $SFT_DATA \
-        --log_samples \
-        --output_path eval/context_qa/$SFT_DATA
+        --output_path eval/$TASK
 done

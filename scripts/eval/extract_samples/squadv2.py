@@ -286,22 +286,22 @@ for spl in tqdm(samples, total=len(samples), desc="Extracting samples"):
     extracted.append({
         "doc_id": spl["doc_id"],
         "prompt": spl["arguments"]["gen_args_0"]["arg_0"],
+        "target": spl["target"],
         "response": spl["resps"][0][0],
-        "filtered_resps": spl["filtered_resps"][0],
-        "target": spl["target"]
+        "filtered_resps": spl["filtered_resps"][0]
     })
 
 
 # save json samples
-print("Saving json samples...")
 output_fn = output_path/f"simpled_{output_stem}.json"
+print(f"Saving json samples to {output_fn} ...")
 with open(output_fn, "w") as f:
   json.dump(extracted, f, indent=4)
 
 
 # save csv samples
-print("Saving csv samples...")
 output_fn = output_path/f"simpled_{output_stem}.csv"
+print(f"Saving csv samples to {output_fn} ...")
 df = pd.DataFrame(extracted)
 df.to_csv(output_fn, index=False)
 

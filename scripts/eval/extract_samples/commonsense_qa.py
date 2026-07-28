@@ -80,18 +80,16 @@ with open(in_json, "r") as f:
 
 extracted = []
 for spl in tqdm(samples, total=len(samples), desc="Extracting samples"):
-    prob_0 = spl["resps"][0][0][0]
-    prob_1 = spl["resps"][1][0][0]
-    if prob_1 > prob_0:
-        response = spl["arguments"]["gen_args_1"]["arg_1"]
-    else:
-        response = spl["arguments"]["gen_args_0"]["arg_1"]
+    probs = [p[0][0] for p in spl["resps"]]
+    max_idx = probs.index(max(probs))
+    response = spl["arguments"]["gen_args_" + str(max_idx)]["arg_1"]
+    target = spl["arguments"]["gen_args_" + spl["target"]]["arg_1"]
+    choices = "\n".join(spl["doc"]["choices"]["text"])
     extracted.append({
         "doc_id": spl["doc_id"],
         "prompt": spl["arguments"]["gen_args_0"]["arg_0"],
-        "target": spl["target"],
+        "target": target,
         "response": response,
-        "filtered_resps": spl["filtered_resps"][0]
     })
 
 

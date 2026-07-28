@@ -5,9 +5,11 @@
 #PBS -W group_list=c30897
 #PBS -j oe
 #PBS -o logs/gpt2_sft_core.log
+#PBS -N sft_gpt2_core
 
 
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/_jobs/sft/hkd
 
-sh sft_core.sh openai-community/gpt2
+sh sft.sh openai-community/gpt2 SmolLM2-135M-20B-core-bs1024
+sh sft_core.sh openai-community/gpt2 SmolLM2-135M-20B-core-bs1024
