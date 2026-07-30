@@ -3,8 +3,6 @@ from pathlib import Path
 import sys
 
 
-
-
 def main():
     input_path = Path(sys.argv[1])
     output_path = Path(sys.argv[2])

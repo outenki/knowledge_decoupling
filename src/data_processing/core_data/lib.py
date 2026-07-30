@@ -21,6 +21,9 @@ BATCH_SIZE = 64
 AOA = {}
 random.seed(42)
 
+UNK_PREFIX = "<"
+UNK_SUFFIX = ">"
+
 
 def load_aoa(csv: str, aoa_threshold) -> dict:
     aoa = {}
@@ -79,7 +82,7 @@ def generate_core_sentence(sent, doc_id: int, replace_ne: bool, core_words_map: 
                 core_words_for_prefix = [v for v in core_words_map if v.startswith(prefix)]
                 core_words_map[token_text] = _new_core_word(prefix, core_words_for_prefix)
             word = core_words_map[token_text]
-            word = f"<{word}>"
+            word = f"{UNK_PREFIX}{word}{UNK_SUFFIX}"
             if token.whitespace_:
                 word += token.whitespace_
 
@@ -94,7 +97,7 @@ def generate_core_sentence(sent, doc_id: int, replace_ne: bool, core_words_map: 
                 core_words_for_prefix = [v for v in core_words_map if v.startswith(prefix)]
                 core_words_map[token_text] = _new_core_word(prefix, core_words_for_prefix)
             word = core_words_map[token_text]
-            word = f"<{word}>"
+            word = f"{UNK_PREFIX}{word}{UNK_SUFFIX}"
             if token.whitespace_:
                 word += token.whitespace_
             words.append(word)

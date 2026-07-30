@@ -1,6 +1,6 @@
 #!/bin/bash
 OUTPUT_PATH=$PROJECT_BASE_PATH/input/evaluate_data/json
-dn=squadv2_core
+dn=google_boolq_core_angle
 echo ">>> $dn"
 uv run python generate_qa_data.py -dn boolq -rc -o $OUTPUT_PATH/$dn --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv -at 10
 
