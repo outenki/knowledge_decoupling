@@ -8,7 +8,8 @@ MODEL_PATH=$1
 # export HF_DATASETS_OFFLINE=1
 # export HF_HUB_OFFLINE=1
 
-for TASK in google_boolq squadv2 triviaqa_rc_context; do
+# for TASK in google_boolq squadv2 triviaqa_rc_context; do
+for TASK in triviaqa_rc_context; do
     cd $MODEL_PATH
     echo 
     echo ">>> Evaluating $TASK QA for: $MODEL_PATH"

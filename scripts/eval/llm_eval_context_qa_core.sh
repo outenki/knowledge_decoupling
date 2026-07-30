@@ -12,7 +12,7 @@ MODEL_PATH=$1
 cd $MODEL_PATH
 
 # for TASK in google_boolq_core squadv2_core triviaqa_rc_context_core; do
-for TASK in squadv2_core; do
+for TASK in triviaqa_rc_context_core; do
     cd $MODEL_PATH
     echo 
     echo ">>> Evaluating $TASK QA for: $MODEL_PATH"
