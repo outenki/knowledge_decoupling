@@ -7,6 +7,7 @@ from math import ceil
 from functools import partial
 import pandas as pd
 import random
+import string
 
 import spacy
 from datasets.arrow_dataset import Dataset
@@ -21,9 +22,11 @@ BATCH_SIZE = 64
 AOA = {}
 random.seed(42)
 
-UNK_PREFIX = "<"
-UNK_SUFFIX = ">"
+ID_RANGE = 10000
 
+
+def _random_chars() -> str:
+    return ''.join(random.choices(string.ascii_uppercase, k=6))
 
 def load_aoa(csv: str, aoa_threshold) -> dict:
     aoa = {}
@@ -44,20 +47,29 @@ def load_aoa(csv: str, aoa_threshold) -> dict:
 
 def _new_core_word(prefix: str, core_words_for_prefix: list[str]) -> str:
     # different prefix can have the same id
-    if len(core_words_for_prefix) > 1000:
+    if len(core_words_for_prefix) > 100:
         raise ValueError(f"The number of ids for {prefix} exceeded 1000.")
     core_words = tuple(core_words_for_prefix)
     for _ in range(10):
-        word_id = random.randint(0, 1000)
-        new_core_word = f"{prefix}_{word_id}"
+        word_id = random.randint(0, 100)
+        new_core_word = f"{prefix}-{word_id}"
         if new_core_word not in core_words:
             return new_core_word
     raise ValueError("Tried for 10 times but failed to assign new id to core word.")
     
 
-def generate_core_sentence(sent, doc_id: int, replace_ne: bool, core_words_map: dict[str, str]) -> tuple:
+def generate_core_sentence(sent, doc_id: int, unk_id: dict, ent_id: dict, id_candidates: list[int], **config) -> tuple:
+    ent_generator= config.get("ent_generator", "")
+    unk_generator= config.get("unk_generator", "")
+    delimiter = config.get("delimiter", "").strip()
+    if len(delimiter) == 2:
+        dl, dr = delimiter
+    else:
+        dl, dr = "", ""
+
     assert len(AOA) > 0
     """Generate a core sentence by replacing named entities with placeholders."""
+
     words: list[str] = []
     rp_ne_num = 0
     rp_unk_num = 0
@@ -76,49 +88,81 @@ def generate_core_sentence(sent, doc_id: int, replace_ne: bool, core_words_map: 
         token_lemma = token.lemma_.lower()
 
         # Replace named entities.
-        if replace_ne and token.ent_type_:
-            prefix = token.ent_type_.upper() + "_" + str(doc_id)
-            if token_text not in core_words_map:
-                core_words_for_prefix = [v for v in core_words_map if v.startswith(prefix)]
-                core_words_map[token_text] = _new_core_word(prefix, core_words_for_prefix)
-            word = core_words_map[token_text]
-            word = f"{UNK_PREFIX}{word}{UNK_SUFFIX}"
-            if token.whitespace_:
-                word += token.whitespace_
+        if ent_generator and token.ent_type_:
+            # for the processed NE word, get the cid from core_words_id
+            # for new NE words, get a new id from id_candidates
+            cid = ent_id.get(token_lower, id_candidates.pop())
+            id_candidates.insert(0, cid)  # put the used id back to the front of the list
+            if ent_generator == "NONE":
+                core_word = token.text
+            if ent_generator == "NE":
+                placeholder = token.ent_type_.upper()
+                core_word = f"{dl}{placeholder}-{doc_id}-{cid}{dr}"
+            elif ent_generator == "ENT":
+                placeholder = "ENT"
+                core_word = f"{dl}{placeholder}-{doc_id}-{cid}{dr}"
+            elif ent_generator == "RANDOM":
+                core_word = _random_chars()
+            else:
+                raise ValueError(f"Unknow ne_generator: {ent_generator}")
+            core_word += token.whitespace_
+            ent_id[token_lower] = cid
 
-            words.append(word)
+            words.append(core_word)
             rp_ne_num += 1
             continue
 
         # Reject words outside AOA.
         if AOA and token_lower not in AOA and token_lemma not in AOA:
-            prefix = f"UNK_{token.tag_.upper()}_{doc_id}"
-            if token_text not in core_words_map:
-                core_words_for_prefix = [v for v in core_words_map if v.startswith(prefix)]
-                core_words_map[token_text] = _new_core_word(prefix, core_words_for_prefix)
-            word = core_words_map[token_text]
-            word = f"{UNK_PREFIX}{word}{UNK_SUFFIX}"
-            if token.whitespace_:
-                word += token.whitespace_
-            words.append(word)
+            cid = unk_id.get(token_lower, id_candidates.pop())
+            if unk_generator == "NONE":
+                core_word = token.text
+            if unk_generator == "UNK":
+                placeholder = "UNK"
+                core_word = f"{dl}{placeholder}-{doc_id}-{cid}{dr}"
+            elif unk_generator == "UNK-TAG":
+                placeholder = "UNK-" + token.tag_.upper()
+                core_word = f"{dl}{placeholder}-{doc_id}-{cid}{dr}"
+            elif ent_generator == "RANDOM":
+                core_word = _random_chars()
+            else:
+                raise ValueError(f"Unknow unk_generator: {ent_generator}")
+            core_word += token.whitespace_
+            unk_id[token_lower] = cid
+
+            words.append(core_word)
             rp_unk_num += 1
             continue
 
+        # for content words that are not processed
         words.append(token.text_with_ws)
 
     text = "".join(words)
     return text, content_word_num, rp_ne_num, rp_unk_num
 
 
-def generate_core_doc(doc, doc_id: int, replace_ne: bool) -> tuple:
-    core_words_map: dict[str, str] = {}
+def generate_core_doc(doc, doc_id: int, config: dict) -> tuple:
     rp_ne_num = 0
     rp_unk_num = 0
     content_word_num = 0
     texts = []
+    unk_id = {}
+    ent_id = {}
+
+    id_candidates = list(range(ID_RANGE))
+    random.shuffle(id_candidates)
+
 
     for sent in doc.sents:
-        t, cn, nn, un= generate_core_sentence(sent, doc_id, replace_ne, core_words_map)
+        try:
+            t, cn, nn, un= generate_core_sentence(
+                sent, doc_id, unk_id, ent_id, id_candidates,
+                **config
+            )
+        except Exception as e:
+            print(doc)
+            print(texts)
+            raise e
         content_word_num += cn
         rp_ne_num += nn
         rp_unk_num += un
@@ -128,22 +172,22 @@ def generate_core_doc(doc, doc_id: int, replace_ne: bool) -> tuple:
     return text, content_word_num, rp_ne_num, rp_unk_num
 
 
-def generate_core_for_qa(doc_id, question: str, answer: str, replace_ne, aoa: dict) -> tuple:
+def generate_core_for_qa(doc_id, question: str, answer: str, aoa: dict, config: dict) -> tuple:
     global AOA
     if aoa and len(aoa) > 0:
         AOA = aoa
     core_q , core_a = question.strip(), answer.strip()
     if core_q:
         doc_q = NLP(question.strip())
-        core_q = generate_core_doc(doc_q, doc_id, replace_ne)[0]
+        core_q = generate_core_doc(doc_q, doc_id, config)[0]
     if core_a:
         doc_qa = NLP(question.strip() + " " + answer.strip())
-        core_qa = generate_core_doc(doc_qa, doc_id, replace_ne)[0]
+        core_qa = generate_core_doc(doc_qa, doc_id, config)[0]
         core_a = " ".join(core_qa.split()[len(core_q.split()):])
     return core_q, core_a
 
 
-def generate_core_for_texts(texts: list[str], replace_ne: bool, multi_process: bool, lower_text: bool) -> dict:
+def generate_core_for_texts(texts: list[str], multi_process: bool, lower_text: bool, config: dict) -> dict:
     assert NLP is not None, "NLP should be initialized"
     if lower_text:
         texts = [t.lower() for t in texts]
@@ -157,7 +201,7 @@ def generate_core_for_texts(texts: list[str], replace_ne: bool, multi_process: b
     replaced_ne_num = []
     replaced_unk_num = []
     for d_id, doc in enumerate(docs):
-        core_sentence , cn, nn, un= generate_core_doc(doc, doc_id=d_id, replace_ne=replace_ne)
+        core_sentence , cn, nn, un= generate_core_doc(doc, doc_id=d_id, config=config)
         if core_sentence:
             ori_texts.append(doc.text)
             core_texts.append(core_sentence)
@@ -173,22 +217,22 @@ def generate_core_for_texts(texts: list[str], replace_ne: bool, multi_process: b
 }
 
 
-def generate_core_for_examples(examples, replace_ne: bool, multi_process: bool, lower_text: bool, column_name: str = "text") -> dict:
+def generate_core_for_examples(examples, multi_process: bool, lower_text: bool, config: dict, column_name: str = "text") -> dict:
     texts = examples[column_name]
     # sents = []
     # for text in texts:
     #     sents.extend(split_text_to_sentences(text))
     # sents = examples["text"]
-    return generate_core_for_texts(texts, replace_ne=replace_ne, multi_process=multi_process, lower_text=lower_text)
+    return generate_core_for_texts(texts, multi_process=multi_process, lower_text=lower_text, config=config)
 
 
 def generate_core_dataset(
     dataset: Dataset | Any,
     column_name: str,
-    replace_ne: bool,
     aoa: dict | None,
     multi_process: bool,
-    lower_text: bool
+    lower_text: bool,
+    config: dict
 ):
     global AOA
     AOA = aoa
@@ -198,10 +242,10 @@ def generate_core_dataset(
     print("**** Preprocessing...")
     process_fn = partial(
         generate_core_for_examples,
-        replace_ne=replace_ne,
         multi_process=multi_process,
+        lower_text=lower_text,
+        config=config,
         column_name=column_name,
-        lower_text=lower_text
     )
     dataset = dataset.map(
         process_fn,
@@ -217,19 +261,19 @@ def generate_core_dataset(
     return dataset
 
 
-def _replace_columns_with_core_data(examples, column_names: list[str], replace_ne: bool, aoa: dict | None, multi_process: bool, lower_text: bool):
+def _replace_columns_with_core_data(examples, column_names: list[str], aoa: dict | None, multi_process: bool, lower_text: bool, config: dict):
     global AOA
     AOA = aoa
     for column_name in column_names:
         texts = examples[column_name]
-        core_data = generate_core_for_texts(texts, replace_ne=replace_ne, multi_process=multi_process, lower_text=lower_text)
+        core_data = generate_core_for_texts(texts, multi_process=multi_process, lower_text=lower_text, config=config)
         examples[column_name] = core_data["core"]
     return examples
 
-def replace_column_with_core_data(dataset: Dataset, column_names: list[str], replace_ne: bool, aoa: dict | None, multi_process: bool, lower_text: bool):
+def replace_column_with_core_data(dataset: Dataset, column_names: list[str], aoa: dict | None, multi_process: bool, lower_text: bool, config: dict):
     global AOA
     AOA = aoa
-    process_fn = partial(_replace_columns_with_core_data, column_names=column_names, replace_ne=replace_ne, aoa=aoa, multi_process=multi_process, lower_text=lower_text)
+    process_fn = partial(_replace_columns_with_core_data, column_names=column_names, aoa=aoa, multi_process=multi_process, lower_text=lower_text, config=config)
     dataset = dataset.map(
         process_fn,
         num_proc=4,

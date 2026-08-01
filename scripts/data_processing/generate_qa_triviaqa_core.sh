@@ -3,11 +3,17 @@ OUTPUT_PATH=$PROJECT_BASE_PATH/input/evaluate_data/json
 EXT_TRAINING_PATH=$PROJECT_BASE_PATH/data/ext
 SFT_TRAINING_PATH=$PROJECT_BASE_PATH/data/sft
 
-dn=triviaqa_rc_context_core
+dn=triviaqa_rc_context_ent
 echo ">>> $dn"
-uv run python generate_qa_data.py -dn triviaqa_rc_context -rc -o $OUTPUT_PATH/triviaqa_rc_context_core --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv -at 10
+uv run python generate_qa_data.py \
+    -dn triviaqa_rc_context \
+    -o $OUTPUT_PATH/$dn \
+    --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv -at 10 \
+    --core-delimiter "<>" \
+    --ent-generator "ENT" \
+    --unk-generator "UNK"
 
-Tokenize for SFT
+# Tokenize for SFT
 SFT_INPUT=$PROJECT_BASE_PATH/input/evaluate_data/json
 
 for TOKENIZER in  meta-llama/Llama-3.2-1B allenai/OLMo-2-0425-1B Qwen/Qwen2.5-0.5B
@@ -18,6 +24,7 @@ do
     uv run python ./tokenize_dataset_from_json.py \
         -mp \
         --tokenizer $TOKENIZER \
+        --max-length 4096 \
         --input-path $SFT_INPUT/$dn/train.json \
         --output-path $SFT_OUTPUT/$dn/train
     echo
@@ -26,6 +33,7 @@ do
     uv run python ./tokenize_dataset_from_json.py \
         -mp \
         --tokenizer $TOKENIZER \
+        --max-length 4096 \
         --input-path $SFT_INPUT/$dn/test.json \
         --output-path $SFT_OUTPUT/$dn/test
     echo
@@ -34,6 +42,7 @@ do
     uv run python ./tokenize_dataset_from_json.py \
         -mp \
         --tokenizer $TOKENIZER \
+        --max-length 4096 \
         --input-path $SFT_INPUT/$dn/validation.json \
         --output-path $SFT_OUTPUT/$dn/validation
     echo

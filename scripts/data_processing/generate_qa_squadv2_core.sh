@@ -1,8 +1,14 @@
 #!/bin/bash
 OUTPUT_PATH=$PROJECT_BASE_PATH/input/evaluate_data/json
-dn=squadv2_core_angle
+dn=squadv2_core_ent
 echo ">>> $dn"
-uv run python generate_qa_data.py -dn squadv2 -rc -o $OUTPUT_PATH/$dn --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv -at 10
+uv run python generate_qa_data.py  \
+    -dn squadv2 \
+    -o $OUTPUT_PATH/$dn \
+    --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv -at 10 \
+    --core-delimiter "<>" \
+    --ent-generator "ENT" \
+    --unk-generator "UNK"
 
 # Tokenize for SFT
 SFT_INPUT=$PROJECT_BASE_PATH/input/evaluate_data/json
@@ -11,7 +17,7 @@ for TOKENIZER in  meta-llama/Llama-3.2-1B allenai/OLMo-2-0425-1B Qwen/Qwen2.5-0.
 do
     SFT_OUTPUT=$PROJECT_BASE_PATH/input/tokenized/$TOKENIZER/sft/concat
     echo "============== $TOKENIZER ================"
-    echo ">>>>>> $dn sft concat train"
+    echo ">>>>>> tokenizing $dn sft concat train"
     uv run python ./tokenize_dataset_from_json.py \
         -mp \
         --tokenizer $TOKENIZER \
@@ -19,7 +25,7 @@ do
         --output-path $SFT_OUTPUT/$dn/train
     echo
 
-    echo ">>>>>> $dn sft concat test"
+    echo ">>>>>> tokenizing $dn sft concat test"
     uv run python ./tokenize_dataset_from_json.py \
         -mp \
         --tokenizer $TOKENIZER \
@@ -27,10 +33,11 @@ do
         --output-path $SFT_OUTPUT/$dn/test
     echo
 
-    echo ">>>>>> $dn sft concat validation"
+    echo ">>>>>> tokenizing $dn sft concat validation"
     uv run python ./tokenize_dataset_from_json.py \
         -mp \
         --tokenizer $TOKENIZER \
+        --max-length 4096 \
         --input-path $SFT_INPUT/$dn/validation.json \
         --output-path $SFT_OUTPUT/$dn/validation
     echo

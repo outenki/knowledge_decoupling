@@ -36,7 +36,9 @@ def read_args():
     )
     parser.add_argument('--aoa', '-aoa', dest='aoa', type=str, default="", help='Path to aoa data (csv)')
     parser.add_argument('--aoa-threshold', '-at', dest='aoa_threshold', type=float, default=0, help='AOA threshold')
-    parser.add_argument('--replace-ne', '-rne', dest='replace_ne', action='store_true')
+    parser.add_argument('--ent-generator', dest='ent_generator', choices={"ENT", "NE", "RANDOM"}) 
+    parser.add_argument('--unk-generator', dest='unk_generator', choices={"UNK", "UNK-TAG", "RANDOM"}) 
+    parser.add_argument('--core-delimiter', dest='core_delimiter') 
     parser.add_argument(
         '--multi-process', '-mp', dest='multi_process', action='store_true',
         help='Use multi-processing for nonce sentence generation.'
@@ -55,13 +57,18 @@ def _process_dataset(dataset: Dataset, column_names: list[str], aoa: dict, args 
     out_path = Path(args.out_path)
     if not column_names or len(column_names) == 0:
         column_names = ["text"]
+    config = {
+        "delimiter": args.core_delimiter,
+        "ent_generator": args.ent_generator,
+        "unk_generator": args.unk_generator,
+    }
     if args.inline_replace:
         processed_dataset = replace_column_with_core_data(
-            dt, column_names=column_names, replace_ne=args.replace_ne, aoa=aoa, multi_process=args.multi_process, lower_text=args.lower_text
+            dt, column_names=column_names, aoa=aoa, multi_process=args.multi_process, lower_text=args.lower_text, config=config
         )
     else:
         processed_dataset = generate_core_dataset(
-            dt, replace_ne=args.replace_ne, aoa=aoa, multi_process=args.multi_process, column_name=column_names[0], lower_text=args.lower_text
+            dt, aoa=aoa, multi_process=args.multi_process, column_name=column_names[0], lower_text=args.lower_text, config=config
         )
     print(f"Dataset has {processed_dataset.num_rows} core sentences.")
      
