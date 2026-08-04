@@ -1,4 +1,4 @@
-en_answer_mapping = {"true": "yes", "false": "no", True: "yes", False: "no"}
+en_answer_mapping = {"true": "yes", "false": "no", True: "yes", False: "no", "yes": "yes", "no": "no"}
 
 
 def process_docs(dataset):
@@ -11,7 +11,7 @@ def process_docs(dataset):
         return text
 
     def _helper(doc):
-        doc["question"] = remove_question_mark(doc["question"])
+        # doc["question"] = remove_question_mark(doc["question"])
         doc["target"] = en_answer_mapping[doc["answer"]]
         return doc
 

@@ -3,8 +3,8 @@ task: triviaqa_rc_context_core
 dataset_path: json
 dataset_kwargs:
   data_files:
-    train: /lustre1/work/c30897/wtq/projects/knowledge_decoupling/input/evaluate_data/jsonl/triviaqa_rc_context_core/train.jsonl
-    validation: /lustre1/work/c30897/wtq/projects/knowledge_decoupling/input/evaluate_data/jsonl/triviaqa_rc_context_core/validation.jsonl
+    train: /lustre1/work/c30897/wtq/projects/knowledge_decoupling/input/evaluate_data/jsonl/triviaqa_rc_context_core_angle/train.jsonl
+    validation: /lustre1/work/c30897/wtq/projects/knowledge_decoupling/input/evaluate_data/jsonl/triviaqa_rc_context_core_angle/validation.jsonl
 
 output_type: generate_until
 

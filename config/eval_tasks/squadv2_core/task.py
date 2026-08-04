@@ -67,8 +67,8 @@ class SQuAD2Core(ConfigurableTask):
         self.dataset = datasets.load_dataset(
             "json",
             data_files={
-                "train": "/lustre1/work/c30897/wtq/projects/knowledge_decoupling/input/evaluate_data/jsonl/squadv2_core/train.jsonl",
-                "validation": "/lustre1/work/c30897/wtq/projects/knowledge_decoupling/input/evaluate_data/jsonl/squadv2_core/validation.jsonl",
+                "train": "/lustre1/work/c30897/wtq/projects/knowledge_decoupling/input/evaluate_data/jsonl/squadv2_core_angle/train.jsonl",
+                "validation": "/lustre1/work/c30897/wtq/projects/knowledge_decoupling/input/evaluate_data/jsonl/squadv2_core_angle/validation.jsonl",
             },
         )
 
