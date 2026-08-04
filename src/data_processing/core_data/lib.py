@@ -93,14 +93,18 @@ def generate_core_sentence(sent, doc_id: int, unk_id: dict, ent_id: dict, id_can
             # for new NE words, get a new id from id_candidates
             cid = ent_id.get(token_lower, id_candidates.pop())
             id_candidates.insert(0, cid)  # put the used id back to the front of the list
+            assert len(id_candidates) > 0, "id_candidates is empty, please check the code."
             if ent_generator == "NONE":
                 core_word = token.text
-            if ent_generator == "NE":
+            if ent_generator == "TAG_ID":
                 placeholder = token.ent_type_.upper()
+                core_word = f"{dl}{placeholder}-{doc_id}-{cid}{dr}"
+            elif ent_generator == "ENT_ID":
+                placeholder = "ENT"
                 core_word = f"{dl}{placeholder}-{doc_id}-{cid}{dr}"
             elif ent_generator == "ENT":
                 placeholder = "ENT"
-                core_word = f"{dl}{placeholder}-{doc_id}-{cid}{dr}"
+                core_word = f"{dl}{placeholder}{dr}"
             elif ent_generator == "RANDOM":
                 core_word = _random_chars()
             else:
@@ -115,14 +119,18 @@ def generate_core_sentence(sent, doc_id: int, unk_id: dict, ent_id: dict, id_can
         # Reject words outside AOA.
         if AOA and token_lower not in AOA and token_lemma not in AOA:
             cid = unk_id.get(token_lower, id_candidates.pop())
+            id_candidates.insert(0, cid)  # put the used id back to the front of the list
             if unk_generator == "NONE":
                 core_word = token.text
-            if unk_generator == "UNK":
+            if unk_generator == "UNK_ID":
                 placeholder = "UNK"
                 core_word = f"{dl}{placeholder}-{doc_id}-{cid}{dr}"
-            elif unk_generator == "UNK-TAG":
+            elif unk_generator == "UNK_TAG_ID":
                 placeholder = "UNK-" + token.tag_.upper()
                 core_word = f"{dl}{placeholder}-{doc_id}-{cid}{dr}"
+            elif unk_generator == "UNK":
+                placeholder = "UNK"
+                core_word = f"{dl}{placeholder}{dr}"
             elif ent_generator == "RANDOM":
                 core_word = _random_chars()
             else:
