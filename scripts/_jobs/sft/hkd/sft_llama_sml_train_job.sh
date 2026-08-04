@@ -11,5 +11,5 @@
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/_jobs/sft/hkd
 
-sh sft.sh meta-llama/Llama-3.2-1B SmolLM2-135M-20B-bs1024
-# sh sft_core.sh meta-llama/Llama-3.2-1B SmolLM2-135M-20B-bs1024
+# sh sft.sh meta-llama/Llama-3.2-1B SmolLM2-135M-20B-bs1024
+sh sft_core.sh meta-llama/Llama-3.2-1B SmolLM2-135M-20B-bs1024

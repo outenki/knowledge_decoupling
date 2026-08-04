@@ -3,14 +3,15 @@ task: google_boolq_core
 dataset_path: json
 dataset_kwargs:
   data_files:
-    train: /lustre1/work/c30897/wtq/projects/knowledge_decoupling/input/evaluate_data/jsonl/google_boolq_core/train.jsonl
-    validation: /lustre1/work/c30897/wtq/projects/knowledge_decoupling/input/evaluate_data/jsonl/google_boolq_core/validation.jsonl
+    train: /lustre1/work/c30897/wtq/projects/knowledge_decoupling/input/evaluate_data/jsonl/google_boolq_core_angle/train.jsonl
+    validation: /lustre1/work/c30897/wtq/projects/knowledge_decoupling/input/evaluate_data/jsonl/google_boolq_core_angle/validation.jsonl
 output_type: multiple_choice
 training_split: train
 validation_split: validation
 test_split: null
 process_docs: !function utils.process_docs
-doc_to_text: "Background: {{passage}}\n\nQuestion: {{question}}?\n\nAnswer:"
+# doc_to_text: "Background: {{passage}}\n\nQuestion: {{question}}?\n\nAnswer:"
+doc_to_text: "{{prompt}}"
 doc_to_target: target
 doc_to_choice: ["no", "yes"]
 should_decontaminate: true
