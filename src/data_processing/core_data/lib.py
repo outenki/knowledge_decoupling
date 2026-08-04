@@ -17,7 +17,7 @@ from src.lib.text import safe_texts
 
 
 CPU_NUM = min(4, multiprocessing.cpu_count())
-NLP = spacy.load("en_core_web_sm")
+NLP = spacy.load("en_core_web_trf")
 BATCH_SIZE = 64
 AOA = {}
 random.seed(42)
@@ -160,7 +160,7 @@ def generate_core_doc(doc, doc_id: int, config: dict) -> tuple:
     id_candidates = list(range(ID_RANGE))
     random.shuffle(id_candidates)
 
-
+    token_num = len(doc)
     for sent in doc.sents:
         try:
             t, cn, nn, un= generate_core_sentence(
@@ -177,7 +177,7 @@ def generate_core_doc(doc, doc_id: int, config: dict) -> tuple:
         texts.append(t)
 
     text = "".join(texts)
-    return text, content_word_num, rp_ne_num, rp_unk_num
+    return text, token_num, content_word_num, rp_ne_num, rp_unk_num
 
 
 def generate_core_for_qa(doc_id, question: str, answer: str, aoa: dict, config: dict) -> tuple:
@@ -205,20 +205,23 @@ def generate_core_for_texts(texts: list[str], multi_process: bool, lower_text: b
         docs = NLP.pipe(safe_texts(texts, NLP.max_length), batch_size=BATCH_SIZE)
     ori_texts = []
     core_texts = []
+    token_num = []
     content_words_num = []
     replaced_ne_num = []
     replaced_unk_num = []
     for d_id, doc in enumerate(docs):
-        core_sentence , cn, nn, un= generate_core_doc(doc, doc_id=d_id, config=config)
+        core_sentence , tn, cn, nn, un= generate_core_doc(doc, doc_id=d_id, config=config)
         if core_sentence:
             ori_texts.append(doc.text)
             core_texts.append(core_sentence)
+            token_num.append(tn)
             content_words_num.append(cn)
             replaced_ne_num.append(nn)
             replaced_unk_num.append(un)
     return {
     "text": ori_texts,
     "core": core_texts,
+    "token_num": token_num,
     "content_words_num": content_words_num,
     "replaced_ne_num": replaced_ne_num,
     "replaced_unk_num": replaced_unk_num,
