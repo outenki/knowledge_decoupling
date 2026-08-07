@@ -1,10 +1,10 @@
 # !/bin/bash
 
-    # "meta-llama/Llama-3.2-1B" \
-    # "Qwen/Qwen2.5-0.5B"
+    # "HuggingFaceTB/SmolLM2-135M" \
 for tokenizer in \
-    "HuggingFaceTB/SmolLM2-135M" \
-    "allenai/OLMo-2-0425-1B"
+    "allenai/OLMo-2-0425-1B" \
+    "meta-llama/Llama-3.2-1B" \
+    "Qwen/Qwen2.5-0.5B"
 do
     echo
     echo ">>>>>> Merge dataset for $tokenizer"
