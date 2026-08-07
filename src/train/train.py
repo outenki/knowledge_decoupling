@@ -49,8 +49,10 @@ def main(cfg: DictConfig):
     else:
         assert cfg.model.config is not None, "model.config is required"
         model = load_model_from_config_random(cfg.model.config, cfg.training.attn_implementation)
-        tokenizer = AutoTokenizer.from_pretrained(cfg.model.config)
         print(">>> Randomly initialized model. Config:", model.config)
+        print(f"Loading tokenizer from: {cfg.model.tokenizer}")
+        tokenizer = AutoTokenizer.from_pretrained(cfg.model.tokenizer)
+
     
     if tokenizer.vocab_size is None or tokenizer.vocab_size == 0:
         print(">>> Tokenizer vocab size is 0 or None")
@@ -67,6 +69,11 @@ def main(cfg: DictConfig):
     if cfg.model.freeze_layers != 0:
         freeze_parameters(model, cfg.model.freeze_layers)
         print(f">>> Frozen the bottom {cfg.model.freeze_layers} layers.")
+    
+    if len(tokenizer) != model.get_input_embeddings().num_embeddings:
+        print(f">>> Resizing model embeddings from {model.get_input_embeddings().num_embeddings} to {len(tokenizer)}")
+        model.resize_token_embeddings(len(tokenizer))
+    
 
     # === train model
     train_dataset, eval_dataset = load_dataset_for_training(cfg.data.paths, cfg.data.limits, cfg.data.shuffle)
