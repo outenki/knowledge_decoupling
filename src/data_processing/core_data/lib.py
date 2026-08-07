@@ -17,7 +17,7 @@ from src.lib.text import safe_texts
 
 
 CPU_NUM = min(4, multiprocessing.cpu_count())
-NLP = spacy.load("en_core_web_trf")
+NLP = spacy.load("en_core_web_sm")
 BATCH_SIZE = 64
 AOA = {}
 random.seed(42)
@@ -44,19 +44,6 @@ def load_aoa(csv: str, aoa_threshold) -> dict:
         print("AOA threshold is 0, so all loaded AoA entries are kept.")
     return aoa
 
-
-def _new_core_word(prefix: str, core_words_for_prefix: list[str]) -> str:
-    # different prefix can have the same id
-    if len(core_words_for_prefix) > 100:
-        raise ValueError(f"The number of ids for {prefix} exceeded 1000.")
-    core_words = tuple(core_words_for_prefix)
-    for _ in range(10):
-        word_id = random.randint(0, 100)
-        new_core_word = f"{prefix}-{word_id}"
-        if new_core_word not in core_words:
-            return new_core_word
-    raise ValueError("Tried for 10 times but failed to assign new id to core word.")
-    
 
 def generate_core_sentence(sent, doc_id: int, unk_id: dict, ent_id: dict, id_candidates: list[int], **config) -> tuple:
     ent_generator= config.get("ent_generator", "")
@@ -279,6 +266,10 @@ def _replace_columns_with_core_data(examples, column_names: list[str], aoa: dict
         texts = examples[column_name]
         core_data = generate_core_for_texts(texts, multi_process=multi_process, lower_text=lower_text, config=config)
         examples[column_name] = core_data["core"]
+        examples["token_num"] = core_data["token_num"]
+        examples["content_words_num"] = core_data["content_words_num"]
+        examples["replaced_ne_num"] = core_data["replaced_ne_num"]
+        examples["replaced_unk_num"] = core_data["replaced_unk_num"]
     return examples
 
 def replace_column_with_core_data(dataset: Dataset, column_names: list[str], aoa: dict | None, multi_process: bool, lower_text: bool, config: dict):
@@ -292,7 +283,7 @@ def replace_column_with_core_data(dataset: Dataset, column_names: list[str], aoa
         batched=True,
         # remove_columns=dataset.column_names,
         writer_batch_size=1000,
-        desc="Replacing column with core sentences",
+        desc="Generating core sentences",
         load_from_cache_file=False,
     )
     print(dataset)

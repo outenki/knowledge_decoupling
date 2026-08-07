@@ -103,7 +103,7 @@ def tokenize_examples(examples, tokenizer, column_name: str, padding: bool, max_
     return result
 
 
-def group_texts_to_blocks(examples, block_size: int):
+def chunk_texts_to_blocks(examples, block_size: int):
     # 拼接为一个长序列后再切块
     concatenated = list(chain.from_iterable(examples["input_ids"]))
     total_length = (len(concatenated) // block_size) * block_size
@@ -149,6 +149,22 @@ def main():
         print(">>> Tokenizing ...")
         tokenizer = AutoTokenizer.from_pretrained(args.tokenizer)
 
+        # add special tokens if they are not already present
+        special_tokens_dict = {}
+        # new_tokens_list = ["<UNK>", "<ENT>" ]
+        if tokenizer.pad_token is None:
+            special_tokens_dict["pad_token"] = tokenizer.eos_token
+        if tokenizer.bos_token is None:
+            special_tokens_dict["bos_token"] = tokenizer.eos_token
+        if tokenizer.eos_token is None:
+            special_tokens_dict["eos_token"] = tokenizer.eos_token
+        if special_tokens_dict:
+            tokenizer.add_special_tokens(special_tokens_dict)
+            print(f"  -> Added special tokens: {special_tokens_dict}")
+        # if new_tokens_list:
+        #     tokenizer.add_tokens(new_tokens_list)
+        #     print(f"  -> Added new tokens: {new_tokens_list}")
+
         padding = True
         if args.slice:
             padding = False
@@ -180,7 +196,7 @@ def main():
     if args.slice:
         print(f">>> Concact and Slice to blocks with size {args.block_size}...")
         print(f"  -> block_size = {args.block_size}")
-        map_func = partial(group_texts_to_blocks, block_size=args.block_size)
+        map_func = partial(chunk_texts_to_blocks, block_size=args.block_size)
 
         lm_dataset = tokenized_dataset.map(
             map_func,

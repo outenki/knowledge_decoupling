@@ -4,8 +4,6 @@ from datasets.dataset_dict import DatasetDict
 from datasets.arrow_dataset import Dataset
 from pathlib import Path
 
-import pandas as pd
-
 from src.lib.dataset import load_custom_dataset, select_data_by_indices, maybe_shuffle_dataset
 from src.lib.dataset import slice_dataset
 from src.lib.utils import print_args
