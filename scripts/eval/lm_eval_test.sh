@@ -1,23 +1,10 @@
 #!/bin/bash
 PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-$HOME/projects/knowledge_decoupling}"
-MODEL_PATH=/lustre1/work/c30897/wtq/projects/knowledge_decoupling/output/openai-community/gpt2/hf_full
 
-# export HF_DATASETS_OFFLINE=1
-# export HF_HUB_OFFLINE=1
-
-cd $MODEL_PATH
-
-for SFT_DATA in squadv2_core; do
-    cd $MODEL_PATH
-    echo 
-    echo ">>> Evaluating $SFT_DATA QA for: $MODEL_PATH"
-    uv run accelerate launch -m lm_eval \
-        --model hf \
-        --model_args pretrained=. \
-        --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-        --tasks $SFT_DATA \
-        --log_samples \
-        --output_path eval/context_qa/$SFT_DATA
-
- 
+for MODEL in  \
+    "allenai/OLMo-2-0425-1B" \
+    "Qwen/Qwen2.5-0.5B"
+do
+    sh lm_eval_context_qa.sh $PROJECT_BASE_PATH/output/$MODEL/SmolLM2-135M-20B-bs1024
+    sh lm_eval_context_qa.sh $PROJECT_BASE_PATH/output/$MODEL/SmolLM2-135M-20B-core-bs1024
 done
