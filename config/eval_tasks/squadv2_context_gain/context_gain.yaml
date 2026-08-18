@@ -1,8 +1,8 @@
-task: context_gain
+task: squadv2_context_gain
 dataset_path: json
 dataset_kwargs:
   data_files:
-    test: /absolute/path/to/context_qa.jsonl
+    test: /lustre1/work/c30897/wtq/projects/knowledge_decoupling/input/evaluate_data/jsonl/squadv2/test.jsonl
 
 test_split: test
 

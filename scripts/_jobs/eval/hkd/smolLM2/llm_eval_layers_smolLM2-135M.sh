@@ -15,5 +15,5 @@ L1=2
 L2=30
 STEP=2
 
-sh llm_eval_layers_qa.sh $MODEL_PATH $L1 $L2 $STEP
-sh llm_eval_layers_blimp.sh $MODEL_PATH $L1 $L2 $STEP
+sh lm_eval_layers_qa.sh $MODEL_PATH $L1 $L2 $STEP
+sh lm_eval_layers_blimp.sh $MODEL_PATH $L1 $L2 $STEP

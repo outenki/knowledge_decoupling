@@ -14,5 +14,5 @@ MODEL_PATH=$PROJECT_BASE_PATH/output/"openai-community/gpt2"
 L1=1
 L2=12
 STEP=1
-sh llm_eval_layers_qa.sh $MODEL_NAME $L1 $L2 $STEP
-sh llm_eval_layers_blimp.sh $MODEL_NAME $L1 $L2 $STEP
+sh lm_eval_layers_qa.sh $MODEL_NAME $L1 $L2 $STEP
+sh lm_eval_layers_blimp.sh $MODEL_NAME $L1 $L2 $STEP

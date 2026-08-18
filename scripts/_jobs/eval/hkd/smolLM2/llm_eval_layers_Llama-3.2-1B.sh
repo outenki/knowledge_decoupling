@@ -12,5 +12,5 @@ cd $PROJECT_BASE_PATH/scripts/eval
 
 MODEL_PATH=$PROJECT_BASE_PATH/output/"meta-llama/Llama-3.2-1B"
 
-sh llm_eval_layers_qa.sh $MODEL_PATH $L1 $L2 $STEP
-sh llm_eval_layers_blimp.sh $MODEL_PATH $L1 $L2 $STEP
+sh lm_eval_layers_qa.sh $MODEL_PATH $L1 $L2 $STEP
+sh lm_eval_layers_blimp.sh $MODEL_PATH $L1 $L2 $STEP

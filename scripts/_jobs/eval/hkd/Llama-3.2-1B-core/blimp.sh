@@ -12,4 +12,4 @@ source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/eval
 
 MODEL_PATH=$PROJECT_BASE_PATH/output/meta-llama/Llama-3.2-1B/SmolLM2-135M-20B-core-bs1024
-sh llm_eval_blimp.sh $MODEL_PATH
+sh lm_eval_blimp.sh $MODEL_PATH

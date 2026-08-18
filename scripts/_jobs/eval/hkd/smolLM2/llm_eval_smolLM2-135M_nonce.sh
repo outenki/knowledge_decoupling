@@ -11,4 +11,4 @@ source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/eval
 
 MODEL_PATH=$PROJECT_BASE_PATH/output/HuggingFaceTB/SmolLM2-135M/SmolLM2-135M-20B-nonce-bs1024
-sh llm_eval.sh $MODEL_PATH
+sh lm_eval.sh $MODEL_PATH
