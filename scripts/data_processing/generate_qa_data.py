@@ -41,9 +41,9 @@ def read_args():
     parser.add_argument('--aoa-threshold', '-at', dest='aoa_threshold', type=float, default=0, help='AOA threshold')
     parser.add_argument('--markdown', '-f', dest='markdown', action='store_true')
     parser.add_argument('--lower-text', '-lower', dest='lower_text', action='store_true')
-    parser.add_argument('--ent-generator', dest='ent_generator', choices={"ENT", "NE", "RANDOM"}) 
-    parser.add_argument('--unk-generator', dest='unk_generator', choices={"UNK", "UNK-TAG", "RANDOM"}) 
-    parser.add_argument('--core-delimiter', dest='core_delimiter') 
+    parser.add_argument('--ent-generator', dest='ent_generator', choices={"ENT", "NE", "RANDOM", "NONE"}, default="NONE") 
+    parser.add_argument('--unk-generator', dest='unk_generator', choices={"UNK", "UNK-TAG", "RANDOM", "NONE"}, default="NONE") 
+    parser.add_argument('--core-delimiter', dest='core_delimiter', default="NONE", help='Delimiter for core generation') 
     parser.add_argument('--probing', '-p', dest='probing', action='store_true')
     parser.add_argument(
         '--context-conflict', '-cc', dest='context_conflict', type=str, choices=['ori', 'mod'], default='none',
@@ -56,6 +56,9 @@ def read_args():
     parser.add_argument(
         '--output-path', '-o', dest='output_path', type=str, required=True,
         help='Path to save results.'
+    )
+    parser.add_argument(
+        '--output-type', '-ot', dest='output_type', type=str, required=True, choices=['json', 'jsonl'],
     )
     return parser.parse_args()
 
@@ -131,7 +134,7 @@ def construct_qa(
             else:
                 raise ValueError(f"Failed to lower result: result")
 
-    if core_replace_config["ent_generator"] != "NONE" and core_replace_config["unk_generator"] != "NONE":
+    if core_replace_config and core_replace_config["ent_generator"] != "NONE" and core_replace_config["unk_generator"] != "NONE":
         context_core, _ = generate_core_for_qa(qid, result["context"], "", AOA, core_replace_config)
         _, question_core = generate_core_for_qa(qid, result["context"], result["question"], AOA, core_replace_config)
         prompt_core, answer_core = generate_core_for_qa(qid, result["prompt"], result["answer"], AOA, core_replace_config)
@@ -896,11 +899,13 @@ assert isinstance(dataset_dict, dict)
 for split, dataset in dataset_dict.items():
     if args.split and args.split != split:
         continue
-    core_config = {
-        "unk_generator": args.unk_generator,
-        "ent_generator": args.ent_generator,
-        "delimiter": args.core_delimiter
-    }
+    core_config = {}
+    if args.unk_generator and args.ent_generator and args.core_delimiter:
+        core_config = {
+            "unk_generator": args.unk_generator,
+            "ent_generator": args.ent_generator,
+            "delimiter": args.core_delimiter
+        }
     print(f"Processing sub dataset: {split} with {len(dataset)} samples")
     if args.data_name == "ai2_arc":
         assert isinstance(dataset, Dataset)
@@ -961,7 +966,16 @@ for split, dataset in dataset_dict.items():
         qa_data = generate_qa_data_from_triviaqa(dataset, args.markdown, args.probing, args.lower_text, context=True, core_replace_config=core_config)
     else:
         raise ValueError(f"Unsupported dataset: {args.data_name}")
-    output_file = Path(args.output_path) / f"{split}.json"
-    with open(output_file, 'w') as f:
-        json.dump(qa_data, f, indent=2)
-    print(f"Saved {len(qa_data)} samples to {output_file}")
+
+    if args.output_type == "jsonl":
+        output_file = Path(args.output_path) / f"{split}.jsonl"
+        with open(output_file, 'w') as f:
+            for sample in qa_data:
+                f.write(json.dumps(sample) + "\n")
+        print(f"Saved {len(qa_data)} samples to {output_file}")
+
+    elif args.output_type == "json":
+        output_file = Path(args.output_path) / f"{split}.json"
+        with open(output_file, 'w') as f:
+            json.dump(qa_data, f, indent=2)
+        print(f"Saved {len(qa_data)} samples to {output_file}")

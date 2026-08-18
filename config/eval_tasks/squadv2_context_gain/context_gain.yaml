@@ -1,0 +1,25 @@
+task: context_gain
+dataset_path: json
+dataset_kwargs:
+  data_files:
+    test: /absolute/path/to/context_qa.jsonl
+
+test_split: test
+
+output_type: loglikelihood
+
+metric_list:
+  - metric: lp_context
+    aggregation: mean
+    higher_is_better: true
+
+  - metric: lp_no_context
+    aggregation: mean
+    higher_is_better: true
+
+  - metric: context_gain
+    aggregation: mean
+    higher_is_better: true
+
+metadata:
+  version: 1.0
