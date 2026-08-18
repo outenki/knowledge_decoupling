@@ -1,4 +1,6 @@
 task: squadv2_context_gain
+class: !function context_gain.ContextGain
+
 dataset_path: json
 dataset_kwargs:
   data_files:
@@ -7,19 +9,6 @@ dataset_kwargs:
 test_split: test
 
 output_type: loglikelihood
-
-metric_list:
-  - metric: lp_context
-    aggregation: mean
-    higher_is_better: true
-
-  - metric: lp_no_context
-    aggregation: mean
-    higher_is_better: true
-
-  - metric: context_gain
-    aggregation: mean
-    higher_is_better: true
 
 metadata:
   version: 1.0
