@@ -1,3 +1,4 @@
+import math
 from copy import deepcopy
 from statistics import mean
 
@@ -48,7 +49,9 @@ class ContextGain(ConfigurableTask):
         question = doc["question"]
         title = doc["title"]
         background = doc["context"]
-        answer = doc["answer"]
+        answer = str(doc.get("answer", "")).strip()
+        if answer == "":
+            answer = "unanswerable"
 
         context_prompt = (
             f"Title:\n{title}\n\n"
@@ -91,9 +94,14 @@ class ContextGain(ConfigurableTask):
             return 1
         return max(1, len(answer.split()))
 
+    def _safe_logprob(self, value):
+        if value is None or not math.isfinite(value):
+            return -1e3
+        return float(value)
+
     def process_results(self, doc, results):
-        lp_context_total = results[0][0]
-        lp_no_context_total = results[1][0]
+        lp_context_total = self._safe_logprob(results[0][0])
+        lp_no_context_total = self._safe_logprob(results[1][0])
 
         answer = str(doc.get("answer", "")).strip()
         n_tokens = self._answer_token_count(answer)
