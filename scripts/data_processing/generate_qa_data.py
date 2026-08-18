@@ -8,7 +8,7 @@ from pathlib import Path
 import random
 
 from datasets import load_dataset, Dataset, load_from_disk
-from src.data_processing.core_data.lib import generate_core_for_qa, load_aoa
+from src.data_processing.core_data.lib import generate_core_for_qa, load_aoa, generate_core_for_texts
 
 # client = OpenAI(api_key=GPT_API_KEY)
 AOA = {}
@@ -41,9 +41,11 @@ def read_args():
     parser.add_argument('--aoa-threshold', '-at', dest='aoa_threshold', type=float, default=0, help='AOA threshold')
     parser.add_argument('--markdown', '-f', dest='markdown', action='store_true')
     parser.add_argument('--lower-text', '-lower', dest='lower_text', action='store_true')
-    parser.add_argument('--ent-generator', dest='ent_generator', choices={"ENT", "NE", "RANDOM", "NONE"}, default="NONE") 
-    parser.add_argument('--unk-generator', dest='unk_generator', choices={"UNK", "UNK-TAG", "RANDOM", "NONE"}, default="NONE") 
-    parser.add_argument('--core-delimiter', dest='core_delimiter', default="NONE", help='Delimiter for core generation') 
+    parser.add_argument('--core-replace', action='store_true')
+    parser.add_argument('--core-count', action='store_true')
+    parser.add_argument('--ent-generator', dest='ent_generator', choices={"ENT", "NE", "RANDOM", "NONE"}, default="ENT") 
+    parser.add_argument('--unk-generator', dest='unk_generator', choices={"UNK", "UNK-TAG", "RANDOM", "NONE"}, default="UNK") 
+    parser.add_argument('--core-delimiter', dest='core_delimiter', default="<>", help='Delimiter for core generation') 
     parser.add_argument('--probing', '-p', dest='probing', action='store_true')
     parser.add_argument(
         '--context-conflict', '-cc', dest='context_conflict', type=str, choices=['ori', 'mod'], default='none',
@@ -134,7 +136,14 @@ def construct_qa(
             else:
                 raise ValueError(f"Failed to lower result: result")
 
-    if core_replace_config and core_replace_config["ent_generator"] != "NONE" and core_replace_config["unk_generator"] != "NONE":
+    if core_replace_config["count"]:
+        prompt_core  = generate_core_for_texts([result["prompt"]], multi_process=False, lower_text=False, config=core_replace_config, aoa=AOA)
+        result["token_num"] = prompt_core["token_num"][0]
+        result["content_words_num"] = prompt_core["content_words_num"][0]
+        result["replaced_ent_num"] = prompt_core["replaced_ent_num"][0]
+        result["replaced_unk_num"] = prompt_core["replaced_unk_num"][0]
+
+    if core_replace_config["replace"] and core_replace_config["ent_generator"] != "NONE" and core_replace_config["unk_generator"] != "NONE":
         context_core, _ = generate_core_for_qa(qid, result["context"], "", AOA, core_replace_config)
         _, question_core = generate_core_for_qa(qid, result["context"], result["question"], AOA, core_replace_config)
         prompt_core, answer_core = generate_core_for_qa(qid, result["prompt"], result["answer"], AOA, core_replace_config)
@@ -899,13 +908,13 @@ assert isinstance(dataset_dict, dict)
 for split, dataset in dataset_dict.items():
     if args.split and args.split != split:
         continue
-    core_config = {}
-    if args.unk_generator and args.ent_generator and args.core_delimiter:
-        core_config = {
-            "unk_generator": args.unk_generator,
-            "ent_generator": args.ent_generator,
-            "delimiter": args.core_delimiter
-        }
+    core_config = {
+        "replace": args.core_replace,
+        "count": args.core_count,
+        "unk_generator": args.unk_generator,
+        "ent_generator": args.ent_generator,
+        "delimiter": args.core_delimiter
+    }
     print(f"Processing sub dataset: {split} with {len(dataset)} samples")
     if args.data_name == "ai2_arc":
         assert isinstance(dataset, Dataset)

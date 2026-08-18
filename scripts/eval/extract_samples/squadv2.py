@@ -269,6 +269,17 @@ import pandas as pd
 from pathlib import Path
 from tqdm import tqdm
 
+def f1(target, pred):
+    target_tokens = target.split()
+    pred_tokens = pred.split()
+    common = set(target_tokens) & set(pred_tokens)
+    num_same = len(common)
+    if num_same == 0:
+        return 0
+    precision = num_same / len(pred_tokens)
+    recall = num_same / len(target_tokens)
+    f1_score = (2 * precision * recall) / (precision + recall)
+    return f1_score
 
 in_json = sys.argv[1]
 
@@ -282,13 +293,15 @@ with open(in_json, "r") as f:
       samples.append(json.loads(line))
 
 extracted = []
+
 for spl in tqdm(samples, total=len(samples), desc="Extracting samples"):
     extracted.append({
         "doc_id": spl["doc_id"],
         "prompt": spl["arguments"]["gen_args_0"]["arg_0"],
         "target": spl["target"],
         "response": spl["resps"][0][0],
-        "filtered_resps": spl["filtered_resps"][0]
+        # "filtered_resps": spl["filtered_resps"][0],
+        "f1": f1(spl["target"], spl["resps"][0][0])
     })
 
 

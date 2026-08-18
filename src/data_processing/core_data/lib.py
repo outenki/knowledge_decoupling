@@ -58,7 +58,7 @@ def generate_core_sentence(sent, doc_id: int, unk_id: dict, ent_id: dict, id_can
     """Generate a core sentence by replacing named entities with placeholders."""
 
     words: list[str] = []
-    rp_ne_num = 0
+    rp_ent_num = 0
     rp_unk_num = 0
     content_word_num = 0
 
@@ -100,7 +100,7 @@ def generate_core_sentence(sent, doc_id: int, unk_id: dict, ent_id: dict, id_can
             ent_id[token_lower] = cid
 
             words.append(core_word)
-            rp_ne_num += 1
+            rp_ent_num += 1
             continue
 
         # Reject words outside AOA.
@@ -133,11 +133,11 @@ def generate_core_sentence(sent, doc_id: int, unk_id: dict, ent_id: dict, id_can
         words.append(token.text_with_ws)
 
     text = "".join(words)
-    return text, content_word_num, rp_ne_num, rp_unk_num
+    return text, content_word_num, rp_ent_num, rp_unk_num
 
 
 def generate_core_doc(doc, doc_id: int, config: dict) -> tuple:
-    rp_ne_num = 0
+    rp_ent_num = 0
     rp_unk_num = 0
     content_word_num = 0
     texts = []
@@ -159,12 +159,12 @@ def generate_core_doc(doc, doc_id: int, config: dict) -> tuple:
             print(texts)
             raise e
         content_word_num += cn
-        rp_ne_num += nn
+        rp_ent_num += nn
         rp_unk_num += un
         texts.append(t)
 
     text = "".join(texts)
-    return text, token_num, content_word_num, rp_ne_num, rp_unk_num
+    return text, token_num, content_word_num, rp_ent_num, rp_unk_num
 
 
 def generate_core_for_qa(doc_id, question: str, answer: str, aoa: dict, config: dict) -> tuple:
@@ -182,8 +182,11 @@ def generate_core_for_qa(doc_id, question: str, answer: str, aoa: dict, config: 
     return core_q, core_a
 
 
-def generate_core_for_texts(texts: list[str], multi_process: bool, lower_text: bool, config: dict) -> dict:
+def generate_core_for_texts(texts: list[str], multi_process: bool, lower_text: bool, config: dict, aoa={}) -> dict:
     assert NLP is not None, "NLP should be initialized"
+    global AOA
+    if aoa and len(aoa) > 0:
+        AOA = aoa
     if lower_text:
         texts = [t.lower() for t in texts]
     if multi_process:
@@ -194,7 +197,7 @@ def generate_core_for_texts(texts: list[str], multi_process: bool, lower_text: b
     core_texts = []
     token_num = []
     content_words_num = []
-    replaced_ne_num = []
+    replaced_ent_num = []
     replaced_unk_num = []
     for d_id, doc in enumerate(docs):
         core_sentence , tn, cn, nn, un= generate_core_doc(doc, doc_id=d_id, config=config)
@@ -203,14 +206,14 @@ def generate_core_for_texts(texts: list[str], multi_process: bool, lower_text: b
             core_texts.append(core_sentence)
             token_num.append(tn)
             content_words_num.append(cn)
-            replaced_ne_num.append(nn)
+            replaced_ent_num.append(nn)
             replaced_unk_num.append(un)
     return {
     "text": ori_texts,
     "core": core_texts,
     "token_num": token_num,
     "content_words_num": content_words_num,
-    "replaced_ne_num": replaced_ne_num,
+    "replaced_ent_num": replaced_ent_num,
     "replaced_unk_num": replaced_unk_num,
 }
 
@@ -268,7 +271,7 @@ def _replace_columns_with_core_data(examples, column_names: list[str], aoa: dict
         examples[column_name] = core_data["core"]
         examples["token_num"] = core_data["token_num"]
         examples["content_words_num"] = core_data["content_words_num"]
-        examples["replaced_ne_num"] = core_data["replaced_ne_num"]
+        examples["replaced_ent_num"] = core_data["replaced_ent_num"]
         examples["replaced_unk_num"] = core_data["replaced_unk_num"]
     return examples
 

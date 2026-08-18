@@ -95,7 +95,7 @@ class ContextGain(ConfigurableTask):
         return max(1, len(answer.split()))
 
     def _safe_logprob(self, value):
-        if value is None or not math.isfinite(value):
+        if value is None or not math.isfinite(value) or value < -1e3:
             return -1e3
         return float(value)
 

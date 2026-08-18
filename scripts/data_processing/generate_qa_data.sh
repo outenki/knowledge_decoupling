@@ -39,7 +39,7 @@ SFT_TRAINING_PATH=$PROJECT_BASE_PATH/data/sft
 # echo ">>> SquAD_based"
 # uv run python generate_qa_data.py -dn based_squad -lp $PROJECT_BASE_PATH/data/based_squad -o $OUTPUT_PATH/based_squad -ck ""
 echo ">>> SquAD_v2"
-uv run python generate_qa_data.py -dn squadv2 -o $OUTPUT_PATH/jsonl/squadv2 -ot jsonl
+uv run python generate_qa_data.py -dn squadv2 --core-count -o $OUTPUT_PATH/jsonl/squadv2 -ot jsonl --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv -at 10 --split validation
 
 # echo ">>> BOOLQ"
 # uv run python generate_qa_data.py -dn boolq -o $OUTPUT_PATH/boolq
@@ -50,7 +50,7 @@ uv run python generate_qa_data.py -dn squadv2 -o $OUTPUT_PATH/jsonl/squadv2 -ot 
 # echo ">>> google_boolq_core"
 # uv run python generate_qa_data.py -dn google_boolq_core -lp /home/pj24001974/ku50001571/projects/knowledge_decoupling/input/evaluate_data/json/google_boolq_core -o $OUTPUT_PATH/google_boolq_core --aoa $PROJECT_BASE_PATH/data/core/AOA/aoa.csv -at 10
 # echo ">>> squadv2_core"
-# uv run python generate_qa_data.py -dn squadv2 -rc -o $OUTPUT_PATH/squadv2_core --aoa $PROJECT_BASE_PATH/data/core/AOA/aoa.csv -at 10
+# uv run python generate_qa_data.py -dn squadv2 --core-count -o $OUTPUT_PATH/squadv2_core --aoa $PROJECT_BASE_PATH/data/core/AOA/aoa.csv -at 10
 # echo ">>> triviaqa_rc_core"
 # uv run python generate_qa_data.py -dn triviaqa_rc_context -rc -o $OUTPUT_PATH/triviaqa_rc_context_core --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv -at 10
 # echo ">>> triviaqa_rc_nocontext"
