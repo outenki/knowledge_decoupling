@@ -2,8 +2,8 @@
 #PJM -L "rscgrp=a-batch"
 #PJM -L "elapse=10:00:00"
 #PJM -L "vnode-core=10"
-#PJM -e logs/llama_1024_1.out
-#PJM -o logs/llama_1024_1.out
+#PJM -e logs/llama_1.out
+#PJM -o logs/llama_1.out
 #PJM -N "tk_llama_1"
 
 

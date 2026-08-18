@@ -151,7 +151,7 @@ def main():
 
         # add special tokens if they are not already present
         special_tokens_dict = {}
-        # new_tokens_list = ["<UNK>", "<ENT>" ]
+        new_tokens_list = ["<UNK>", "<ENT>" ]
         if tokenizer.pad_token is None:
             special_tokens_dict["pad_token"] = tokenizer.eos_token
         if tokenizer.bos_token is None:
@@ -161,9 +161,9 @@ def main():
         if special_tokens_dict:
             tokenizer.add_special_tokens(special_tokens_dict)
             print(f"  -> Added special tokens: {special_tokens_dict}")
-        # if new_tokens_list:
-        #     tokenizer.add_tokens(new_tokens_list)
-        #     print(f"  -> Added new tokens: {new_tokens_list}")
+        if new_tokens_list:
+            tokenizer.add_tokens(new_tokens_list)
+            print(f"  -> Added new tokens: {new_tokens_list}")
 
         padding = True
         if args.slice:

@@ -33,10 +33,10 @@ def main():
     print(f"Loaded dataset with {len(dataset)} samples.")
 
 
-    filtered = dataset.filter(filter, num_proc=NUM_CPU, desc="Filtering dataset by replace ratio")
+    filtered = dataset.filter(filter, num_proc=CPU_NUM, desc="Filtering dataset by replace ratio")
     num_after = len(filtered)
 
-    print(f"Samples after filtering:  {num_after} ({num_after / num_before * 100}%)")
+    print(f"Samples after filtering:  {num_after} ({num_after / num_before * 100:.2f}%)")
 
     print(f"Saving dataset to {output_path}")
     filtered.save_to_disk(output_path)

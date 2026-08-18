@@ -2,8 +2,8 @@
 #PJM -L "rscgrp=a-batch"
 #PJM -L "elapse=10:00:00"
 #PJM -L "vnode-core=10"
-#PJM -e logs/qwen2.5_1024_1.out
-#PJM -o logs/qwen2.5_1024_1.out
+#PJM -e logs/qwen2.5_1.out
+#PJM -o logs/qwen2.5_1.out
 #PJM -N "tk_qw_1"
 
 

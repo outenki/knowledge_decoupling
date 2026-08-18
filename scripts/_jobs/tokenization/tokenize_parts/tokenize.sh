@@ -2,10 +2,11 @@
 TOKENIZER=$1
 PART=$2
 
+BLOCK_SIZE=4096
+COLUMN=text
 PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-$HOME/projects/knowledge_decoupling}"
-INPUT_PATH=$PROJECT_BASE_PATH/data/SmolLM2-135M-20B/core/parts/part_$PART
-OUTPUT_PATH=$PROJECT_BASE_PATH/data/SmolLM2-135M-20B/core/tokenized/$TOKENIZER/part_$PART
-BLOCK_SIZE=1024
+INPUT_PATH=$PROJECT_BASE_PATH/data/SmolLM2-135M-20B/core_ent/parts/part_$PART
+OUTPUT_PATH=$PROJECT_BASE_PATH/data/SmolLM2-135M-20B/core_ent/tokenized/$COLUMN/$TOKENIZER/part_$PART
 
 start_time=$(date +"%s")
 echo "start time: $(date -d @$start_time +"%D %T")"
@@ -14,7 +15,7 @@ uv run python $PROJECT_BASE_PATH/src/data_processing/tokenize_and_slice_data.py 
     --tokenizer $TOKENIZER \
     -dp $INPUT_PATH \
     -lf local \
-    -dc core \
+    -dc $COLUMN \
     -sp train \
     -s \
     -bs $BLOCK_SIZE \

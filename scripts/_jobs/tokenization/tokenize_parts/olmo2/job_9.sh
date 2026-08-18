@@ -2,8 +2,8 @@
 #PJM -L "rscgrp=a-batch"
 #PJM -L "elapse=10:00:00"
 #PJM -L "vnode-core=10"
-#PJM -e logs/olmo2_1024_9.out
-#PJM -o logs/olmo2_1024_9.out
+#PJM -e logs/olmo2_9.out
+#PJM -o logs/olmo2_9.out
 #PJM -N "tk_ol_9"
 
 

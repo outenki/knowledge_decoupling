@@ -41,7 +41,6 @@ def main():
             continue
         try:
             dataset = load_from_disk(str(data_path))
-            print(f"Loaded dataset from {data_path}")
             datasets.append(dataset)
         except Exception as e:
             print(f"Failed to load dataset from {data_path}: {e}")
