@@ -49,6 +49,7 @@ metrics = {
     "triviaqa_rc_context": "exact_match,remove_whitespace",
     "triviaqa_rc_context_core": "exact_match,remove_whitespace",
     "triviaqa": "exact_match,remove_whitespace",
+    "ewok": "acc,none",
     "drop": "f1,none"
 }
 

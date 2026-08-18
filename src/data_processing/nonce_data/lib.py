@@ -23,7 +23,7 @@ from src.lib.text import safe_texts
 from src.lib.text import split_text_to_sentences
 
 
-CPU_NUM = min(4, multiprocessing.cpu_count())
+CPU_NUM: int = min(4, multiprocessing.cpu_count())
 NLP = spacy.load("en_core_web_sm")
 BATCH_SIZE = 64
 NONCE_WORD_BANK = {}
