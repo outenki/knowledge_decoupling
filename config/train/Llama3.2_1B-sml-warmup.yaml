@@ -3,14 +3,14 @@ base:
   path: null
 
 model:
-  config: Qwen/Qwen2.5-0.5B
+  config: meta-llama/Llama-3.2-1B
   tokenizer: ${base.path}/input/tokenized/${model.config}/train/${data.name}/tokenizer
-  init_model: ${base.path}/output/${model.config}/SmolLM2-135M-20B-core_ent_rp5-bs4096
+  init_model: null
   checkpoint: null
   freeze_layers: 0
 
 data:
-  name: SmolLM2-135M-20B-core_ent-bs4096
+  name: SmolLM2-135M-20B-sml_rp5-bs4096
   paths:
     - ${base.path}/input/tokenized/${model.config}/train/${data.name}
   limits:
@@ -18,24 +18,25 @@ data:
   shuffle: true
 
 training:
-  epochs: 1
-  batch_size: 4
+  epochs: 3
+  batch_size: 8
   learning_rate: 2e-4
   eval_strategy: "no"
   checkpoints_per_epoch: 10
   save_checkpoints_num: 10
-  attn_implementation: "sdpa"
+  attn_implementation: "flash_attention_3"
 
 wandb:
-  group: Qwen2.5-0.5B-core
+  group: Llama-3.2-1B-sml
   tags:
     - train
-    - Qwen2.5-0.5B
-    - core
+    - Llama-3.2-1B
+    - sml
     - bs4096
+    - warmup
 
 output:
-  path: ${base.path}/output/${model.config}/${data.name}/
+  path: ${base.path}/output/${model.config}/${data.name}
 
 hydra:
   run:

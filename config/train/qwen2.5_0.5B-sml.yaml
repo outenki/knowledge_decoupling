@@ -4,12 +4,13 @@ base:
 
 model:
   config: Qwen/Qwen2.5-0.5B
-  init_model: null
+  tokenizer: ${base.path}/input/tokenized/${model.config}/train/${data.name}/tokenizer
+  init_model: ${base.path}/output/${model.config}/SmolLM2-135M-20B-sml_rp5-bs4096
   checkpoint: null
   freeze_layers: 0
 
 data:
-  name: SmolLM2-135M-20B-bs1024
+  name: SmolLM2-135M-20B-sml-bs4096
   paths:
     - ${base.path}/input/tokenized/${model.config}/train/${data.name}
   limits:
@@ -31,7 +32,7 @@ wandb:
     - train
     - Qwen2.5-0.5B
     - sml
-    - bs1024
+    - bs4096
 
 output:
   path: ${base.path}/output/${model.config}/${data.name}/
