@@ -4,9 +4,9 @@
 #PJM -L "gpu=4"
 #PJM -e logs/train_qwen2.5_0.5B_core.log
 #PJM -o logs/train_qwen2.5_0.5B_core.log
-#PJM -N "tr_qwen_core"
+#PJM -N "tr_qc"
 
-
+module load cuda/12.8
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/src/train
 

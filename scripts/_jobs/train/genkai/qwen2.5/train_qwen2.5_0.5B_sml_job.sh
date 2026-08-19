@@ -4,7 +4,7 @@
 #PJM -L "gpu=4"
 #PJM -e logs/train_qwen2.5_0.5B_sml.log
 #PJM -o logs/train_qwen2.5_0.5B_sml.log
-#PJM -N "tr_qwen_sml"
+#PJM -N "tr_qs"
 
 
 module load cuda/12.8

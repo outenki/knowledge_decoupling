@@ -4,7 +4,8 @@
 #PBS -l walltime=160:00:00
 #PBS -W group_list=c30897
 #PBS -j oe
-#PBS -o logs/train_Llama3.2_1B_core.log
+#PBS -o "logs/train_llama3.2_1B_core.log"
+#PBS -N "tr_lc"
 
 module load cuda/12.8
 source $HOME/.zshrc

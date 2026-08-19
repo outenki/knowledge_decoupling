@@ -4,7 +4,7 @@
 #PJM -L "gpu=4"
 #PJM -e logs/train_Llama3.2_1B_sml.log
 #PJM -o logs/train_Llama3.2_1B_sml.log
-#PJM -N "tr_lama_s"
+#PJM -N "tr_la_s"
 
 
 module load cuda/12.8

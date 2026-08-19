@@ -4,7 +4,7 @@
 #PJM -L "gpu=4"
 #PJM -e logs/train_olmo2_1B_sml.log
 #PJM -o logs/train_olmo2_1B_sml.log
-#PJM -N "tr_olmo_sml"
+#PJM -N "tr_os"
 
 
 module load cuda/12.8

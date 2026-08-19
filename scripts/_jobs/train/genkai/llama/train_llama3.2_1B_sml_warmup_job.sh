@@ -4,7 +4,7 @@
 #PJM -L "gpu=4"
 #PJM -e logs/train_Llama3.2_1B_sml_warmup.log
 #PJM -o logs/train_Llama3.2_1B_sml_warmup.log
-#PJM -N "tr_lama_sml"
+#PJM -N "tr_la_sw"
 
 module load cuda/12.8
 source $HOME/.zshrc
