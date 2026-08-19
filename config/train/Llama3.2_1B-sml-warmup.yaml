@@ -24,7 +24,7 @@ training:
   eval_strategy: "no"
   checkpoints_per_epoch: 10
   save_checkpoints_num: 10
-  attn_implementation: "flash_attention_3"
+  attn_implementation: "sdpa"
 
 wandb:
   group: Llama-3.2-1B-sml
