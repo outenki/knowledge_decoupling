@@ -5,7 +5,7 @@
 #PBS -W group_list=c30897
 #PBS -j oe
 #PBS -o "logs/train_olmo2_1B_core_warmup.log"
-#PBS -N "tr_lo_w"
+#PBS -N "tr_oc_w"
 
 module load cuda/12.8
 source $HOME/.zshrc
