@@ -18,7 +18,8 @@ export WANDB_MODE=offline
 # done
 
 # EVALUATE
-for SFT_DATA in squadv2_core google_boolq_core triviaqa_rc_context_core; do
+# for SFT_DATA in squadv2_core google_boolq_core triviaqa_rc_context_core; do
+for SFT_DATA in squadv2 google_boolq triviaqa_rc_context triviaqa_rc_nocontext; do
     MODEL_PATH=$INIT_MODEL
     cd $MODEL_PATH
     echo 

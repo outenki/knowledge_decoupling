@@ -9,7 +9,7 @@
 
 
 source $HOME/.zshrc
-cd $PROJECT_BASE_PATH/scripts/_jobs/sft/hkd
+cd $PROJECT_BASE_PATH/scripts/_jobs/sft
 
-# sh sft.sh Qwen/Qwen2.5-0.5B SmolLM2-135M-20B-bs1024
-sh sft_core.sh Qwen/Qwen2.5-0.5B SmolLM2-135M-20B-bs1024
+# sh sft_core.sh Qwen/Qwen2.5-0.5B SmolLM2-135M-20B-sml-bs4096
+sh sft.sh Qwen/Qwen2.5-0.5B SmolLM2-135M-20B-sml-bs4096

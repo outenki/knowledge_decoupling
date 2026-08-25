@@ -11,5 +11,5 @@
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/eval
 
-MODEL_PATH=$PROJECT_BASE_PATH/output/allenai/OLMo-2-0425-1B/SmolLM2-135M-20B-core-bs1024
+MODEL_PATH=$PROJECT_BASE_PATH/output/allenai/OLMo-2-0425-1B/warmup/core_ent/SmolLM2-135M-20B-core_ent-bs4096
 sh lm_eval_blimp.sh $MODEL_PATH

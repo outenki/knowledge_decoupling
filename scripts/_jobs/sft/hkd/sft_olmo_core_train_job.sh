@@ -9,7 +9,7 @@
 
 
 source $HOME/.zshrc
-cd $PROJECT_BASE_PATH/scripts/_jobs/sft/hkd
+cd $PROJECT_BASE_PATH/scripts/_jobs/sft
 
-# sh sft.sh allenai/OLMo-2-0425-1B SmolLM2-135M-20B-core-bs1024
-sh sft_core.sh allenai/OLMo-2-0425-1B SmolLM2-135M-20B-core-bs1024
+# sh sft_core.sh allenai/OLMo-2-0425-1B SmolLM2-135M-20B-core_ent-bs4096
+sh sft.sh allenai/OLMo-2-0425-1B warmup/core_ent/SmolLM2-135M-20B-core_ent-bs4096
