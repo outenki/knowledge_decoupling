@@ -225,7 +225,7 @@ def main():
             padding = False
         
         known_words = {}
-        if args.known_words:
+        if args.aoa:
             with open(args.aoa, "r") as f:
                 known_words = load_aoa(f, 10)
 

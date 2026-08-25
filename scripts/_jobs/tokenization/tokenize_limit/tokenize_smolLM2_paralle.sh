@@ -6,8 +6,8 @@ BLOCK_SIZE=4096
 PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-$HOME/projects/knowledge_decoupling}"
 DATA_NAME="SmolLM2-135M-20B"
 DATA_PATH=$PROJECT_BASE_PATH/data/$DATA_NAME/
-AOA_PATH=$PROJECT_BASE_PATH/data/AOA/aoa.csv
-OUTPUT_PATH=$PROJECT_BASE_PATH/input/tokenized/$TOKENIZER/train/$DATA_NAME-sml_mask-bs$BLOCK_SIZE
+# AOA_PATH=$PROJECT_BASE_PATH/data/AOA/aoa.csv
+OUTPUT_PATH=$PROJECT_BASE_PATH/input/tokenized/$TOKENIZER/train/$DATA_NAME-sml-bs$BLOCK_SIZE
 # SIZE=18564598
 SIZE=2000000
 START=$(($PART * $SIZE))
@@ -26,7 +26,6 @@ uv run python $PROJECT_BASE_PATH/src/data_processing/tokenize_and_slice_data.py 
     -sp train \
     --start-from $START \
     -ki $DATA_PATH/kept_indices.json \
-    -aoa $AOA_PATH \
     --limit $SIZE \
     -s \
     -bs $BLOCK_SIZE \

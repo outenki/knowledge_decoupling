@@ -1,13 +1,15 @@
 #!/bin/bash
 TOKENIZER=$1
 PART=$2
-BLOCK_SIZE=1024
+BLOCK_SIZE=4096
 
 PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-$HOME/projects/knowledge_decoupling}"
-DATA_PATH=$PROJECT_BASE_PATH/data/SmolLM2-135M-20B/nonce/dataset
-OUTPUT_PATH=$PROJECT_BASE_PATH/input/tokenized/$TOKENIZER/train/SmolLM2-135M-20B-nonce-bs$BLOCK_SIZE
-# SIZE=814692133
-SIZE=80000000
+DATA_NAME="SmolLM2-135M-20B"
+DATA_PATH=$PROJECT_BASE_PATH/data/$DATA_NAME/
+AOA_PATH=$PROJECT_BASE_PATH/data/AOA/aoa.csv
+OUTPUT_PATH=$PROJECT_BASE_PATH/input/tokenized/$TOKENIZER/train/$DATA_NAME-sml_mask-bs$BLOCK_SIZE
+# SIZE=18564598
+SIZE=2000000
 START=$(($PART * $SIZE))
 END=$(($(($PART + 1)) * $SIZE -1))
 
@@ -18,12 +20,13 @@ echo
 echo "====== tokenizing part$PART (from $START to $END) ======"
 uv run python $PROJECT_BASE_PATH/src/data_processing/tokenize_and_slice_data.py \
     --tokenizer $TOKENIZER \
-    -dp $DATA_PATH \
-    -lf local \
-    -dc text\
+    -dp $DATA_NAME \
+    -lf hf \
+    -dc text \
     -sp train \
-    --no-shuffle \
     --start-from $START \
+    -ki $DATA_PATH/kept_indices.json \
+    -aoa $AOA_PATH \
     --limit $SIZE \
     -s \
     -bs $BLOCK_SIZE \
