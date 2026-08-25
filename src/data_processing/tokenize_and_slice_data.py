@@ -3,10 +3,12 @@ from itertools import chain
 from functools import partial
 from pathlib import Path
 import json
+import re
 
 from transformers import AutoTokenizer
 
 from src.lib.dataset import load_custom_dataset, slice_dataset, maybe_shuffle_dataset
+from src.data_processing.core_data.lib import load_aoa
 
 
 def read_args():
@@ -21,6 +23,7 @@ def read_args():
     parser.add_argument("--slice", "-s", action="store_true")
     parser.add_argument("--block-size", "-bs", type=int, required=True)
     parser.add_argument( "--kept-indices", "-ki", type=str, default=None, help="Path to json file")
+    parser.add_argument( "--aoa", "-aoa", type=str, default=None, help="Path to aoa csv file")
     parser.add_argument(
         '--start-from', '-sf', dest='start_from', type=int, default=0, required=False,
         help='Start offset before shuffling.'
@@ -72,7 +75,7 @@ def ensure_tokenizer_padding(tokenizer):
     tokenizer.padding_side = "right"
 
 
-def tokenize_examples(examples, tokenizer, column_name: str, padding: bool, max_length: int):
+def tokenize_examples(examples, tokenizer, column_name: str, padding: bool, max_length: int, known_words: dict = {}):
     ensure_tokenizer_padding(tokenizer)
     if padding:
         result = tokenizer(
@@ -100,6 +103,58 @@ def tokenize_examples(examples, tokenizer, column_name: str, padding: bool, max_
                 for ids in result["input_ids"]
             ]
         result["labels"] = [ids[:] for ids in result["input_ids"]]
+    
+    all_labels = []
+    all_attention_masks = []
+    texts = examples[column_name]
+    for input_ids, attention_mask, offsets, text in zip(
+        result["labels"],
+        result["attention_mask"],
+        result["offset_mapping"],
+        texts 
+    ):
+        labels = input_ids.copy()
+        new_attention_mask = attention_mask.copy()
+        if not known_words:
+            all_labels.append(labels)
+            all_attention_masks.append(new_attention_mask)
+            continue
+
+        # 找出原文中的 word
+        words = []
+        word_spans = []
+
+        for match in re.finditer(r"\S+", text):
+            word = match.group()
+            start = match.start()
+            end = match.end()
+            words.append(word)
+            word_spans.append((start, end))
+
+        for token_idx, (token_start, token_end) in enumerate(offsets):
+            # special token 通常 offset=(0, 0)
+            if token_start == token_end:
+                continue
+
+            # 找到这个 subword 属于哪个 word
+            for word, (word_start, word_end) in zip(words, word_spans):
+                overlap = (
+                    token_start < word_end
+                    and token_end > word_start
+                )
+
+                if overlap:
+                    if word not in known_words:
+                        labels[token_idx] = -100
+                        new_attention_mask[token_idx] = 0
+                    break
+
+        all_labels.append(labels)
+        all_attention_masks.append(new_attention_mask)
+
+    result["labels"] = all_labels
+    result["attention_mask"] = all_attention_masks
+    del result["offset_mapping"]
     return result
 
 
@@ -168,13 +223,19 @@ def main():
         padding = True
         if args.slice:
             padding = False
+        
+        known_words = {}
+        if args.known_words:
+            with open(args.aoa, "r") as f:
+                known_words = load_aoa(f, 10)
 
         map_func = partial(
             tokenize_examples,
             tokenizer=tokenizer,
             column_name=args.data_column,
             padding=padding,
-            max_length=args.block_size
+            max_length=args.block_size,
+            known_words=known_words
         )
         tokenized_dataset = dataset.map(
             map_func,
