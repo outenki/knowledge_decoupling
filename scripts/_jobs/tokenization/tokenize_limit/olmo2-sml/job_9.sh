@@ -4,7 +4,7 @@
 #PJM -L "vnode-core=10"
 #PJM -e logs/olmo2-sml-job_9.out
 #PJM -o logs/olmo2-sml-job_9.out
-#PJM -N "ol_sml_09"
+#PJM -N "ol_sml_9"
 
 
 source $HOME/.zshrc

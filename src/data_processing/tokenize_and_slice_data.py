@@ -83,7 +83,9 @@ def tokenize_examples(examples, tokenizer, column_name: str, padding: bool, max_
             padding="max_length",
             max_length=max_length,
             truncation=True,
+            return_offsets_mapping=True,
             return_attention_mask=True,
+            add_special_tokens=False,
         )
         result["labels"] = [
             [(l if l != tokenizer.pad_token_id else -100) for l in ids]
@@ -94,7 +96,8 @@ def tokenize_examples(examples, tokenizer, column_name: str, padding: bool, max_
             examples[column_name],
             padding=False,
             truncation=False,
-            return_attention_mask=False,
+            return_offsets_mapping=True,
+            return_attention_mask=True,
             add_special_tokens=False,
         )
         if tokenizer.eos_token_id is not None:

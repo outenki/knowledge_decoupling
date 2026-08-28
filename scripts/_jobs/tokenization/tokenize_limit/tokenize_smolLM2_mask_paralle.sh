@@ -7,7 +7,7 @@ PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-$HOME/projects/knowledge_decoupling}"
 DATA_NAME="SmolLM2-135M-20B"
 DATA_PATH=$PROJECT_BASE_PATH/data/$DATA_NAME/
 AOA_PATH=$PROJECT_BASE_PATH/data/AOA/aoa.csv
-OUTPUT_PATH=$PROJECT_BASE_PATH/input/tokenized/$TOKENIZER/train/$DATA_NAME-sml_mask-bs$BLOCK_SIZE
+OUTPUT_PATH=$PROJECT_BASE_PATH/input/tokenized/$TOKENIZER/train/parts/$DATA_NAME-sml_mask-bs$BLOCK_SIZE
 # SIZE=18564598
 SIZE=2000000
 START=$(($PART * $SIZE))
@@ -31,7 +31,7 @@ uv run python $PROJECT_BASE_PATH/src/data_processing/tokenize_and_slice_data.py 
     -s \
     -bs $BLOCK_SIZE \
     -t \
-    -o $OUTPUT_PATH/parts/part_$PART
+    -o $OUTPUT_PATH/part_$PART
 
 end_time=$(date +"%s")
 echo "end time: $(date -d @$end_time +"%D %T")"

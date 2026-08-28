@@ -4,7 +4,7 @@ class: !function context_gain.ContextGain
 dataset_path: json
 dataset_kwargs:
   data_files:
-    test: /lustre1/work/c30897/wtq/projects/knowledge_decoupling/input/evaluate_data/jsonl/squadv2/test.jsonl
+    test: /home/pj24001974/ku50001571/projects/knowledge_decoupling/input/evaluate_data/jsonl/squadv2/test.jsonl
 
 test_split: test
 

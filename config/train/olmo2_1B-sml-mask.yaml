@@ -10,7 +10,7 @@ model:
   freeze_layers: 0
 
 data:
-  name: SmolLM2-135M-20B-sml-bs4096
+  name: SmolLM2-135M-20B-sml_mask-bs4096
   paths:
     - ${base.path}/input/tokenized/${model.config}/train/${data.name}
   limits:
