@@ -8,8 +8,7 @@ MODEL_PATH=$1
 # export HF_DATASETS_OFFLINE=1
 # export HF_HUB_OFFLINE=1
 
-# for TASK in google_boolq squadv2 triviaqa triviaqa_rc_context; do
-for TASK in google_boolq ; do
+for TASK in google_boolq squadv2 triviaqa triviaqa_rc_context; do
     # cd $MODEL_PATH
     # echo 
     # echo ">>> Evaluating $TASK QA for: $MODEL_PATH"
@@ -47,16 +46,16 @@ for TASK in google_boolq ; do
     #     --output_path eval/$TASK
 done
 
-# for TASK in squadv2 ; do
-#     SFT_PATH=$MODEL_PATH-sft_${TASK}_train
-#     cd $SFT_PATH
-#     echo 
-#     echo ">>> Evaluating $TASK QA for: $SFT_PATH"
-#     uv run accelerate launch -m lm_eval \
-#         --model hf \
-#         --model_args pretrained=. \
-#         --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-#         --tasks ${TASK}_context_gain \
-#         --log_samples \
-#         --output_path eval/${TASK}_context_gain
-# done
+for TASK in squadv2 ; do
+    SFT_PATH=$MODEL_PATH-sft_${TASK}_train
+    cd $SFT_PATH
+    echo 
+    echo ">>> Evaluating $TASK QA for: $SFT_PATH"
+    uv run accelerate launch -m lm_eval \
+        --model hf \
+        --model_args pretrained=. \
+        --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+        --tasks ${TASK}_context_gain \
+        --log_samples \
+        --output_path eval/${TASK}_context_gain
+done
