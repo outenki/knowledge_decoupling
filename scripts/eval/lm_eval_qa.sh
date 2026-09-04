@@ -31,13 +31,13 @@ cd $MODEL_PATH
 #     --output_path eval/arc_challenge
 
 echo
-echo ">>>Evaluating commonsense_qa_norm for: $MODEL_PATH"
+echo ">>>Evaluating commonsense_qa for: $MODEL_PATH"
 uv run accelerate launch -m lm_eval \
     --model hf \
     --model_args pretrained=. \
-    --tasks $PROJECT_BASE_PATH/config/eval_tasks/commonsense_qa_norm.yaml \
+    --tasks commonsense_qa \
     --log_samples \
-    --output_path eval/commonsense_qa_norm
+    --output_path eval/commonsense_qa
 echo
 
 # echo ">>> Evaluating ewok for: $MODEL_PATH"

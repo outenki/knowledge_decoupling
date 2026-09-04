@@ -4,12 +4,122 @@ from functools import partial
 from pathlib import Path
 import json
 import re
+import string
 
 from transformers import AutoTokenizer
 
 from src.lib.dataset import load_custom_dataset, slice_dataset, maybe_shuffle_dataset
 from src.data_processing.core_data.lib import load_aoa
 
+
+AOA_THRESHOLD = 10
+CONTRACTIONS = {
+    # be
+    "I'm",
+    "you're",
+    "he's",
+    "she's",
+    "it's",
+    "we're",
+    "they're",
+
+    # have
+    "I've",
+    "you've",
+    "he's",
+    "she's",
+    "it's",
+    "we've",
+    "they've",
+
+    # will
+    "I'll",
+    "you'll",
+    "he'll",
+    "she'll",
+    "it'll",
+    "we'll",
+    "they'll",
+
+    # would
+    "I'd",
+    "you'd",
+    "he'd",
+    "she'd",
+    "it'd",
+    "we'd",
+    "they'd",
+
+    # negative
+    "isn't",
+    "aren't",
+    "wasn't",
+    "weren't",
+
+    "haven't",
+    "hasn't",
+    "hadn't",
+
+    "don't",
+    "doesn't",
+    "didn't",
+
+    "can't",
+    "couldn't",
+    "won't",
+    "wouldn't",
+    "shan't",
+    "shouldn't",
+    "mustn't",
+    "mightn't",
+    "needn't",
+    "daren't",
+    "oughtn't",
+
+    # let us
+    "let's",
+
+    # common pronoun / question-word contractions
+    "that's",
+    "that's",
+    "what's",
+    "who's",
+    "where's",
+    "when's",
+    "why's",
+    "how's",
+
+    "there's",
+    "here's",
+
+    # other common contractions
+    "what're",
+    "who're",
+    "where're",
+    "when're",
+    "how're",
+
+    "what've",
+    "who've",
+    "where've",
+    "how've",
+
+    "what'll",
+    "who'll",
+    "where'll",
+    "when'll",
+    "how'll",
+
+    "what'd",
+    "who'd",
+    "where'd",
+    "when'd",
+    "why'd",
+    "how'd",
+
+    # informal/common forms
+    "ain't",
+}
 
 def read_args():
     parser = argparse.ArgumentParser()
@@ -105,6 +215,11 @@ def tokenize_examples(examples, tokenizer, column_name: str, padding: bool, max_
                 ids + [tokenizer.eos_token_id]
                 for ids in result["input_ids"]
             ]
+
+            result["attention_mask"] = [
+                mask + [1]
+                for mask in result["attention_mask"]
+            ]
         result["labels"] = [ids[:] for ids in result["input_ids"]]
     
     all_labels = []
@@ -116,10 +231,10 @@ def tokenize_examples(examples, tokenizer, column_name: str, padding: bool, max_
         result["offset_mapping"],
         texts 
     ):
-        labels = input_ids.copy()
+        new_labels = input_ids.copy()
         new_attention_mask = attention_mask.copy()
         if not known_words:
-            all_labels.append(labels)
+            all_labels.append(new_labels)
             all_attention_masks.append(new_attention_mask)
             continue
 
@@ -147,12 +262,21 @@ def tokenize_examples(examples, tokenizer, column_name: str, padding: bool, max_
                 )
 
                 if overlap:
-                    if word not in known_words:
-                        labels[token_idx] = -100
+                    # stripped_word: str = re.sub(r'[^a-zA-Z]', '', word).lower()
+                    stripped_word = word.strip(string.punctuation).lower()
+                    token_text = text[token_start:token_end]
+                    # check if the token contains any alphabetic characters
+                    is_token_containing_alpha = re.search(r'[a-zA-Z]', token_text) is not None
+                    # check if the stripped word is not empty and not in known_words
+                    word_not_in_known_words = stripped_word and stripped_word not in known_words
+                    if is_token_containing_alpha and word_not_in_known_words:
+                        # token_str = tokenizer.decode([input_ids[token_idx]])
+                        # print(f"token: '{token_str}', word: '{word}', stripped_word: '{stripped_word}' not in known_words")
+                        new_labels[token_idx] = -100
                         new_attention_mask[token_idx] = 0
                     break
 
-        all_labels.append(labels)
+        all_labels.append(new_labels)
         all_attention_masks.append(new_attention_mask)
 
     result["labels"] = all_labels
@@ -162,16 +286,31 @@ def tokenize_examples(examples, tokenizer, column_name: str, padding: bool, max_
 
 
 def chunk_texts_to_blocks(examples, block_size: int):
-    # 拼接为一个长序列后再切块
-    concatenated = list(chain.from_iterable(examples["input_ids"]))
-    total_length = (len(concatenated) // block_size) * block_size
-    input_blocks = [concatenated[i:i + block_size] for i in range(0, total_length, block_size)]
-    attention_blocks = [[1] * block_size for _ in input_blocks]
+    input_ids = list(chain.from_iterable(examples["input_ids"]))
+    labels = list(chain.from_iterable(examples["labels"]))
+    attention_mask = list(chain.from_iterable(examples["attention_mask"]))
+    assert len(input_ids) == len(labels) == len(attention_mask)
+    total_length = (len(input_ids) // block_size) * block_size
+
+    input_blocks = [
+        input_ids[i:i + block_size]
+        for i in range(0, total_length, block_size)
+    ]
+
+    label_blocks = [
+        labels[i:i + block_size]
+        for i in range(0, total_length, block_size)
+    ]
+
+    attention_mask_blocks = [
+        attention_mask[i:i + block_size]
+        for i in range(0, total_length, block_size)
+    ]
 
     return {
         "input_ids": input_blocks,
-        "attention_mask": attention_blocks,
-        "labels": [ids[:] for ids in input_blocks],
+        "attention_mask": attention_mask_blocks,
+        "labels": label_blocks,
     }
 
 
@@ -230,7 +369,9 @@ def main():
         known_words = {}
         if args.aoa:
             with open(args.aoa, "r") as f:
-                known_words = load_aoa(f, 10)
+                known_words = load_aoa(f, AOA_THRESHOLD)
+            for word in CONTRACTIONS:
+                known_words[word.lower()] = "0.0"  # Add contractions to known words with a dummy AoA value
 
         map_func = partial(
             tokenize_examples,

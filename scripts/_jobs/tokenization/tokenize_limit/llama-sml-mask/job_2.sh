@@ -4,7 +4,7 @@
 #PJM -L "vnode-core=10"
 #PJM -e logs/llama-sml-mask-job_2.out
 #PJM -o logs/llama-sml-mask-job_2.out
-#PJM -N "lama-mask-2"
+#PJM -N "lm-mask-2"
 
 
 source $HOME/.zshrc

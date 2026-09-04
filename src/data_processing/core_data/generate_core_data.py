@@ -34,8 +34,8 @@ def read_args():
     )
     parser.add_argument('--aoa', '-aoa', dest='aoa', type=str, default="", help='Path to aoa data (csv)')
     parser.add_argument('--aoa-threshold', '-at', dest='aoa_threshold', type=float, default=0, help='AOA threshold')
-    parser.add_argument('--ent-generator', dest='ent_generator', choices={"ENT", "NE", "RANDOM"}) 
-    parser.add_argument('--unk-generator', dest='unk_generator', choices={"UNK", "UNK-TAG", "RANDOM"}) 
+    parser.add_argument('--ent-generator', dest='ent_generator', choices={"ENT", "ENT_ID","NE", "RANDOM"}) 
+    parser.add_argument('--unk-generator', dest='unk_generator', choices={"UNK", "UNK_ID", "UNK-TAG", "RANDOM"}) 
     parser.add_argument('--core-delimiter', dest='core_delimiter') 
     parser.add_argument(
         '--multi-process', '-mp', dest='multi_process', action='store_true',

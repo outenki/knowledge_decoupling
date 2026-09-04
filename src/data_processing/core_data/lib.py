@@ -38,7 +38,7 @@ def load_aoa(csv: str, aoa_threshold) -> dict:
     print(f"Loaded AoA vocabulary with {len(aoa)} entries.")
 
     if aoa_threshold > 0:
-        aoa = {k: v for k, v in aoa.items() if v <= aoa_threshold}
+        aoa = {k.lower(): v for k, v in aoa.items() if v <= aoa_threshold}
         print(f"AOA threshold {aoa_threshold} kept {len(aoa)} entries.")
     else:
         print("AOA threshold is 0, so all loaded AoA entries are kept.")
