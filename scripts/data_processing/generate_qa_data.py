@@ -43,8 +43,8 @@ def read_args():
     parser.add_argument('--lower-text', '-lower', dest='lower_text', action='store_true')
     parser.add_argument('--core-replace', action='store_true')
     parser.add_argument('--core-count', action='store_true')
-    parser.add_argument('--ent-generator', dest='ent_generator', choices={"ENT", "NE", "RANDOM", "NONE"}, default="ENT") 
-    parser.add_argument('--unk-generator', dest='unk_generator', choices={"UNK", "UNK-TAG", "RANDOM", "NONE"}, default="UNK") 
+    parser.add_argument('--ent-generator', dest='ent_generator', choices={"ENT", "NE", "RANDOM", "NONE", "ENT_ID"}, default="ENT") 
+    parser.add_argument('--unk-generator', dest='unk_generator', choices={"UNK", "UNK-TAG", "RANDOM", "NONE", "UNK_ID"}, default="UNK") 
     parser.add_argument('--core-delimiter', dest='core_delimiter', default="<>", help='Delimiter for core generation') 
     parser.add_argument('--probing', '-p', dest='probing', action='store_true')
     parser.add_argument(

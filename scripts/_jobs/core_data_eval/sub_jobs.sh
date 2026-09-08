@@ -1,0 +1,4 @@
+pjsub generate_boolq.sh
+pjsub generate_squadv2.sh
+pjsub generate_trivia_rc_ctx.sh
+pjsub generate_trivia_rc.sh

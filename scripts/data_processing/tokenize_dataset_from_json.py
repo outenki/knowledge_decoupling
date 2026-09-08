@@ -154,10 +154,19 @@ if input_path.is_dir():
         print(f"Loading train.json from {json_file}")
         with open(json_file, "r") as f:
             train_js += json.load(f)
-else:
-    print(f"Loading train.json from {input_path}")
+
+elif input_path.suffix == ".json":
+    print(f"Loading JSON from {input_path}")
     with open(input_path, "r") as f:
         train_js += json.load(f)
+
+elif input_path.suffix == ".jsonl":
+    print(f"Loading JSONL from {input_path}")
+    with open(input_path, "r") as f:
+        for line in f:
+            line = line.strip()
+            if line:
+                train_js.append(json.loads(line))
 
 # --- load data ---
 train_ds = Dataset.from_list(train_js)

@@ -6,7 +6,7 @@ model:
   config: meta-llama/Llama-3.2-1B
   tokenizer: ${base.path}/input/tokenized/${model.config}/train/${data.name}/tokenizer
   init_model: null
-  checkpoint: null
+  checkpoint: ${base.path}/output/meta-llama/Llama-3.2-1B/SmolLM2-135M-20B-core_ent_id-bs4096/checkpoint-77497
   freeze_layers: 0
 
 data:

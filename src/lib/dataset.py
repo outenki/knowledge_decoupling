@@ -136,7 +136,7 @@ def format_qa_prompt(example):
     prompt = ""
     context = example.get("context", "").strip()
     if context:
-        prompt += "Context:\n" + context + "\n\n" 
+        prompt += "Background:\n" + context + "\n\n" 
 
     question = example["question"]
     prompt += "Question: " + question + "\n\n"

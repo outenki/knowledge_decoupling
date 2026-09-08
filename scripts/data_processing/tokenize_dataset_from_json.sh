@@ -8,14 +8,21 @@
 # TOKENIZER_NAME="openai-community/gpt2"
 # TOKENIZER=$PROJECT_BASE_PATH/output/$TOKENIZER_NAME/hf_full
 
-INPUT_PATH=$PROJECT_BASE_PATH/input/evaluate_data/json
-for TOKENIZER_NAME in meta-llama/Llama-3.2-1B Qwen/Qwen2.5-0.5B allenai/OLMo-2-0425-1B; do
+# for TOKENIZER_NAME in meta-llama/Llama-3.2-1B Qwen/Qwen2.5-0.5B allenai/OLMo-2-0425-1B; do
+INPUT_PATH=$PROJECT_BASE_PATH/input/evaluate_data/jsonl
+for TOKENIZER_NAME in meta-llama/Llama-3.2-1B; do
     TOKENIZER=$TOKENIZER_NAME
     OUTPUT_PATH=$PROJECT_BASE_PATH/input/tokenized/$TOKENIZER_NAME/sft/concat
+        # google_boolq \
+        # google_boolq_ent_id \
+        # triviaqa_rc_nocontext \
+        # triviaqa_rc_nocontext_ent_id
+
+        # squadv2
+        # squadv2_ent_id
+        # triviaqa_rc_context
     for dn in \
-        google_boolq_core_rnd \
-        squadv2_core_rnd \
-        triviaqa_rc_context_core_rnd
+        triviaqa_rc_context_ent_id
     do
         echo
         echo ">>>>>> $dn sft concat train"
@@ -23,17 +30,17 @@ for TOKENIZER_NAME in meta-llama/Llama-3.2-1B Qwen/Qwen2.5-0.5B allenai/OLMo-2-0
             -mp \
             --max-length 4096 \
             --tokenizer $TOKENIZER \
-            --input-path $INPUT_PATH/$dn/train.json \
+            --input-path $INPUT_PATH/$dn/train.jsonl \
             --output-path $OUTPUT_PATH/$dn/train
 
-        echo
-        echo ">>>>>> $dn sft concat test"
-        uv run python ./tokenize_dataset_from_json.py \
-            -mp \
-            --max-length 4096 \
-            --tokenizer $TOKENIZER \
-            --input-path $INPUT_PATH/$dn/test.json \
-            --output-path $OUTPUT_PATH/$dn/test
+        # echo
+        # echo ">>>>>> $dn sft concat test"
+        # uv run python ./tokenize_dataset_from_json.py \
+        #     -mp \
+        #     --max-length 4096 \
+        #     --tokenizer $TOKENIZER \
+        #     --input-path $INPUT_PATH/$dn/test.json \
+        #     --output-path $OUTPUT_PATH/$dn/test
     done
 done
 
