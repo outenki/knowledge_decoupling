@@ -1,0 +1,2 @@
+task: squadv2_ent_id
+class: !function task.SQuAD2Core

@@ -1,0 +1,53 @@
+#!/bin/bash
+
+# !!!
+# !!NOTE: bad_tokens should be activated
+# !!!
+
+PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-$HOME/projects/knowledge_decoupling}"
+MODEL_PATH=$1
+
+# export HF_DATASETS_OFFLINE=1
+# export HF_HUB_OFFLINE=1
+
+TASK=squadv2_ent_id
+SFT_PATH=$MODEL_PATH-sft_${TASK}_train
+cd $SFT_PATH
+echo 
+echo ">>> Evaluating $TASK QA for: $SFT_PATH"
+uv run accelerate launch -m lm_eval \
+    --model hf \
+    --model_args pretrained=. \
+    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+    --tasks $TASK \
+    --log_samples \
+    --output_path eval/$TASK
+
+
+TASK=triviaqa_rc_nocontext_ent_id
+SFT_PATH=$MODEL_PATH-sft_${TASK}_train
+cd $SFT_PATH
+echo 
+echo ">>> Evaluating $TASK QA for: $SFT_PATH"
+uv run accelerate launch -m lm_eval \
+    --model hf \
+    --model_args pretrained=. \
+    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+    --tasks $TASK \
+    --log_samples \
+    --output_path eval/$TASK
+
+
+TASK=triviaqa_rc_context_ent_id
+SFT_PATH=$MODEL_PATH-sft_${TASK}_train
+cd $SFT_PATH
+echo 
+echo ">>> Evaluating $TASK QA for: $SFT_PATH"
+uv run accelerate launch -m lm_eval \
+    --model hf \
+    --model_args pretrained=. \
+    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+    --tasks $TASK \
+    --log_samples \
+    --output_path eval/$TASK
+

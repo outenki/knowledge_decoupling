@@ -45,7 +45,7 @@ def load_aoa(csv: str, aoa_threshold) -> dict:
     return aoa
 
 
-def generate_core_sentence(sent, doc_id: int, unk_id: dict, ent_id: dict, id_candidates: list[int], **config) -> tuple:
+def generate_core_sentence(sent, doc_id: int, unk_id: dict, id_candidates: list[int], **config) -> tuple:
     ent_generator= config.get("ent_generator", "")
     unk_generator= config.get("unk_generator", "")
     delimiter = config.get("delimiter", "").strip()
@@ -75,10 +75,10 @@ def generate_core_sentence(sent, doc_id: int, unk_id: dict, ent_id: dict, id_can
         token_lemma = token.lemma_.lower()
 
         # Replace named entities.
-        if ent_generator and token.ent_type_:
+        if ent_generator and (token.ent_type_ or token_lower in unk_id):
             # for the processed NE word, get the cid from core_words_id
             # for new NE words, get a new id from id_candidates
-            cid = ent_id.get(token_lower, id_candidates.pop())
+            cid = unk_id.get(token_lower, id_candidates.pop())
             id_candidates.insert(0, cid)  # put the used id back to the front of the list
             assert len(id_candidates) > 0, "id_candidates is empty, please check the code."
             if ent_generator == "NONE":
@@ -92,12 +92,14 @@ def generate_core_sentence(sent, doc_id: int, unk_id: dict, ent_id: dict, id_can
             elif ent_generator == "ENT":
                 placeholder = "ENT"
                 core_word = f"{dl}{placeholder}{dr}"
+            elif ent_generator == "ID":
+                core_word = f"{dl}{cid}{dr}"
             elif ent_generator == "RANDOM":
                 core_word = _random_chars()
             else:
                 raise ValueError(f"Unknow ne_generator: {ent_generator}")
             core_word += token.whitespace_
-            ent_id[token_lower] = cid
+            unk_id[token_lower] = cid
 
             words.append(core_word)
             rp_ent_num += 1
@@ -118,6 +120,8 @@ def generate_core_sentence(sent, doc_id: int, unk_id: dict, ent_id: dict, id_can
             elif unk_generator == "UNK":
                 placeholder = "UNK"
                 core_word = f"{dl}{placeholder}{dr}"
+            elif ent_generator == "ID":
+                core_word = f"{dl}{cid}{dr}"
             elif ent_generator == "RANDOM":
                 core_word = _random_chars()
             else:
@@ -133,16 +137,14 @@ def generate_core_sentence(sent, doc_id: int, unk_id: dict, ent_id: dict, id_can
         words.append(token.text_with_ws)
 
     text = "".join(words)
-    return text, content_word_num, rp_ent_num, rp_unk_num
+    return text, content_word_num, rp_ent_num, rp_unk_num, unk_id
 
 
-def generate_core_doc(doc, doc_id: int, config: dict) -> tuple:
+def generate_core_doc(doc, doc_id: int, config: dict, unk_id: dict = {}) -> tuple:
     rp_ent_num = 0
     rp_unk_num = 0
     content_word_num = 0
     texts = []
-    unk_id = {}
-    ent_id = {}
 
     id_candidates = list(range(ID_RANGE))
     random.shuffle(id_candidates)
@@ -150,8 +152,8 @@ def generate_core_doc(doc, doc_id: int, config: dict) -> tuple:
     token_num = len(doc)
     for sent in doc.sents:
         try:
-            t, cn, nn, un= generate_core_sentence(
-                sent, doc_id, unk_id, ent_id, id_candidates,
+            t, cn, nn, un, unk_id = generate_core_sentence(
+                sent, doc_id, unk_id, id_candidates,
                 **config
             )
         except Exception as e:
@@ -164,22 +166,23 @@ def generate_core_doc(doc, doc_id: int, config: dict) -> tuple:
         texts.append(t)
 
     text = "".join(texts)
-    return text, token_num, content_word_num, rp_ent_num, rp_unk_num
+    return text, token_num, content_word_num, rp_ent_num, rp_unk_num, unk_id
 
 
-def generate_core_for_qa(doc_id, question: str, answer: str, aoa: dict, config: dict) -> tuple:
+def generate_core_for_qa(doc_id, question: str, answer: str, aoa: dict, config: dict, unk_id: dict = {}) -> tuple:
     global AOA
     if aoa and len(aoa) > 0:
         AOA = aoa
     core_q , core_a = question.strip(), answer.strip()
-    if core_q:
-        doc_q = NLP(question.strip())
-        core_q = generate_core_doc(doc_q, doc_id, config)[0]
+    doc_q = NLP(question.strip())
+    core_q = generate_core_doc(doc_q, doc_id, config)
+    unk_id = core_q[-1]
+    core_q = core_q[0]
     if core_a:
         doc_qa = NLP(question.strip() + " " + answer.strip())
-        core_qa = generate_core_doc(doc_qa, doc_id, config)[0]
+        core_qa = generate_core_doc(doc_qa, doc_id, config, unk_id)[0]
         core_a = " ".join(core_qa.split()[len(core_q.split()):])
-    return core_q, core_a
+    return core_q, core_a, unk_id
 
 
 def generate_core_for_texts(texts: list[str], multi_process: bool, lower_text: bool, config: dict, aoa={}) -> dict:
@@ -200,7 +203,7 @@ def generate_core_for_texts(texts: list[str], multi_process: bool, lower_text: b
     replaced_ent_num = []
     replaced_unk_num = []
     for d_id, doc in enumerate(docs):
-        core_sentence , tn, cn, nn, un= generate_core_doc(doc, doc_id=d_id, config=config)
+        core_sentence , tn, cn, nn, un, unk_id= generate_core_doc(doc, doc_id=d_id, config=config)
         if core_sentence:
             ori_texts.append(doc.text)
             core_texts.append(core_sentence)

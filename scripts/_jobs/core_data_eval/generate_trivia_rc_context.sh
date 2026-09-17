@@ -17,12 +17,12 @@ SFT_TRAINING_PATH=$PROJECT_BASE_PATH/data/sft
 echo ">>> triviaqa_rc_core"
 uv run python generate_qa_data.py \
     -dn triviaqa_rc_context \
-    -o $OUTPUT_PATH/jsonl/triviaqa_rc_ent_id \
+    -o $OUTPUT_PATH/jsonl/triviaqa_rc_context_rnd_id \
     --core-replace \
     --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv \
     -at 10 \
-    --ent-generator "ENT_ID" \
-    --unk-generator "UNK_ID" \
+    --ent-generator "ID" \
+    --unk-generator "ID" \
     --core-count \
     --core-delimiter "<>" \
     -ot jsonl

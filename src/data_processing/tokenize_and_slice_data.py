@@ -349,6 +349,8 @@ def main():
         # add special tokens if they are not already present
         special_tokens_dict = {}
         new_tokens_list = ["<UNK>", "<ENT>" ]
+        for i in range(10000):
+            new_tokens_list.append(f"<{i}>")
         if tokenizer.pad_token is None:
             special_tokens_dict["pad_token"] = tokenizer.eos_token
         if tokenizer.bos_token is None:

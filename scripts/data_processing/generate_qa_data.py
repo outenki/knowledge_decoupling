@@ -26,7 +26,7 @@ def read_args():
         '--data-name', '-dn', dest='data_name', type=str, required=True,
         choices=[
             'ai2_arc', 'boolq', 'qasc', "squad_v2", "based_squad", "squadv2",
-            "mintaka", "cwq", "metaqa", "google_re", "commonsense_qa", "triviaqa_rc_nocontext",
+            "mintaka", "cwq", "metaqa", "google_re", "commonsense_qa", "triviaqa_rc_nocontext", "winogrande",
             "clasheval", "nq_swap", "race", "triviaqa_rc_context", "google_boolq_core"],
         help='Name of the dataset to load from Hugging Face'
     )
@@ -43,8 +43,8 @@ def read_args():
     parser.add_argument('--lower-text', '-lower', dest='lower_text', action='store_true')
     parser.add_argument('--core-replace', action='store_true')
     parser.add_argument('--core-count', action='store_true')
-    parser.add_argument('--ent-generator', dest='ent_generator', choices={"ENT", "NE", "RANDOM", "NONE", "ENT_ID"}, default="ENT") 
-    parser.add_argument('--unk-generator', dest='unk_generator', choices={"UNK", "UNK-TAG", "RANDOM", "NONE", "UNK_ID"}, default="UNK") 
+    parser.add_argument('--ent-generator', dest='ent_generator', choices={"ENT", "NE", "RANDOM", "NONE", "ENT_ID", "ID"}, default="ENT") 
+    parser.add_argument('--unk-generator', dest='unk_generator', choices={"UNK", "UNK-TAG", "RANDOM", "NONE", "UNK_ID", "ID"}, default="UNK") 
     parser.add_argument('--core-delimiter', dest='core_delimiter', default="<>", help='Delimiter for core generation') 
     parser.add_argument('--probing', '-p', dest='probing', action='store_true')
     parser.add_argument(
@@ -144,18 +144,18 @@ def construct_qa(
         result["replaced_unk_num"] = prompt_core["replaced_unk_num"][0]
 
     if core_replace_config["replace"] and core_replace_config["ent_generator"] != "NONE" and core_replace_config["unk_generator"] != "NONE":
-        context_core, _ = generate_core_for_qa(qid, result["context"], "", AOA, core_replace_config)
-        _, question_core = generate_core_for_qa(qid, result["context"], result["question"], AOA, core_replace_config)
-        prompt_core, answer_core = generate_core_for_qa(qid, result["prompt"], result["answer"], AOA, core_replace_config)
+        context_core, _ , unk_id= generate_core_for_qa(qid, result["context"], "", AOA, core_replace_config)
+        question_core, _, unk_id = generate_core_for_qa(qid, result["question"], "", AOA, core_replace_config, unk_id=unk_id)
+        prompt_core, answer_core , unk_id= generate_core_for_qa(qid, result["prompt"], result["answer"], AOA, core_replace_config, unk_id=unk_id)
         choices_core = []
         for c in choices:
-            _, core_c = generate_core_for_qa(qid, result["prompt"], c, AOA, core_replace_config) 
+            _, core_c , unk_id= generate_core_for_qa(qid, result["prompt"], c, AOA, core_replace_config, unk_id=unk_id) 
             choices_core.append(core_c)
         
         answers = argkv.get("answers", [])
         answers_core: list = []
         for ans in answers:
-            _, ans_c = generate_core_for_qa(qid, result["prompt"], ans, AOA, core_replace_config) 
+            ans_c, _, _ = generate_core_for_qa(qid, ans, "", AOA, core_replace_config) 
             answers_core.append(ans_c)
         result["context"] = context_core
         result["question"] = question_core
@@ -214,6 +214,34 @@ def generate_qa_data_from_boolq(dataset: Dataset, md: bool, probing: bool, lower
             construct_qa(
                 qid=str(qid),
                 context=context,
+                question=question,
+                choices=choices,
+                choices_str="",
+                answer=answer,
+                md=md,
+                probing=probing,
+                lower_text=lower_text,
+                argkv={"prompt": prompt},
+                core_replace_config=core_replace_config
+            )
+        )
+    return qa_data
+
+def generate_qa_data_from_winogrande(dataset: Dataset, md: bool, probing: bool, lower_text: bool, core_replace_config: dict) -> list[dict]:
+    qa_data = []
+    for qid, sample in tqdm(enumerate(dataset), total=len(dataset), desc="Generating QA data"):
+        assert isinstance(sample, dict)
+        question = sample["sentence"]
+        opt_1 = sample["option1"]
+        opt_2 = sample["option2"]
+        choices = [opt_1, opt_2]
+        answer = opt_1 if sample["answer"] == 1 else opt_2
+
+        prompt = f"Question: {question}"
+        qa_data.append(
+            construct_qa(
+                qid=str(qid),
+                context="",
                 question=question,
                 choices=choices,
                 choices_str="",
@@ -893,6 +921,8 @@ elif args.data_name == "nq_swap":
     dataset_dict = load_dataset("pminervini/NQ-Swap")
 elif args.data_name == "squad_v2":
     dataset_dict = load_dataset("rajpurkar/squad_v2")
+elif args.data_name == "winogrande":
+    dataset_dict = load_dataset("allenai/winogrande", "winogrande_xl")
 elif args.data_name == "squadv2":
     dataset_dict = load_dataset("lighteval/squad_v2")
 elif args.data_name == "boolq" or args.data_name == "google_boolq_core":
@@ -973,6 +1003,9 @@ for split, dataset in dataset_dict.items():
     elif args.data_name == "triviaqa_rc_context":
         assert isinstance(dataset, Dataset)
         qa_data = generate_qa_data_from_triviaqa(dataset, args.markdown, args.probing, args.lower_text, context=True, core_replace_config=core_config)
+    elif args.data_name == "winogrande":
+        assert isinstance(dataset, Dataset)
+        qa_data = generate_qa_data_from_winogrande(dataset, args.markdown, args.probing, lower_text=args.lower_text, core_replace_config=core_config)
     else:
         raise ValueError(f"Unsupported dataset: {args.data_name}")
 

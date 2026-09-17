@@ -21,8 +21,9 @@ for TOKENIZER_NAME in meta-llama/Llama-3.2-1B; do
         # squadv2
         # squadv2_ent_id
         # triviaqa_rc_context
+        # triviaqa_rc_context_ent_id
     for dn in \
-        triviaqa_rc_context_ent_id
+        winogrande
     do
         echo
         echo ">>>>>> $dn sft concat train"

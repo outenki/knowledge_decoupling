@@ -2,7 +2,7 @@
 PART=$1
 
 PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-$HOME/projects/knowledge_decoupling}"
-DATA_PATH=$PROJECT_BASE_PATH/data/SmolLM2-135M-20B/core_ent_id
+DATA_PATH=$PROJECT_BASE_PATH/data/SmolLM2-135M-20B/core_rnd_id
 SIZE=1800000
 START=$(($PART * $SIZE))
 END=$(($(($PART + 1)) * $SIZE -1))
@@ -13,23 +13,25 @@ echo "start time: $(date -d @$start_time +"%D %T")"
 # echo
 # echo "====== Generating core data part$PART (from $START to $END) ======"
 PART_PATH=$DATA_PATH/parts/part_$PART
-uv run python $PROJECT_BASE_PATH/src/data_processing/core_data/generate_core_data.py \
-    -d SmolLM2-20B \
-    -ki $PROJECT_BASE_PATH/data/SmolLM2-135M-20B/kept_indices.json \
-    -lf hf \
-    --start-from $START \
-    --limit $SIZE \
-    -aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv \
-    -at 10 \
-    --multi-process \
-    -o $PART_PATH \
-    -sp train \
-    --core-delimiter "<>" \
-    --ent-generator "ENT_ID" \
-    --unk-generator "UNK_ID"
+# uv run python $PROJECT_BASE_PATH/src/data_processing/core_data/generate_core_data.py \
+#     -d SmolLM2-20B \
+#     -ki $PROJECT_BASE_PATH/data/SmolLM2-135M-20B/kept_indices.json \
+#     -lf hf \
+#     --start-from $START \
+#     --limit $SIZE \
+#     -aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv \
+#     -at 10 \
+#     --multi-process \
+#     -o $PART_PATH \
+#     -sp train \
+#     --core-delimiter "<>" \
+#     --ent-generator "ID" \
+#     --unk-generator "ID"
 
 BLOCK_SIZE=4096
-for TOKENIZER in  meta-llama/Llama-3.2-1B allenai/OLMo-2-0425-1B Qwen/Qwen2.5-0.5B
+#  allenai/OLMo-2-0425-1B Qwen/Qwen2.5-0.5B
+for TOKENIZER in\
+    meta-llama/Llama-3.2-1B
 do
     echo ">>> Tokenizing with $TOKENIZER"
     # TOKENIZER_PATH=$DATA_PATH/tokenized/$TOKENIZER/tokenizer
