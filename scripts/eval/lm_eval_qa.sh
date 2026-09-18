@@ -12,8 +12,10 @@ MODEL_PATH=$1
 
 cd $MODEL_PATH
 
+SFT_PATH=$MODEL_PATH-sft_arc_easy_train
 echo
-echo ">>>Evaluating arc_easy for: $MODEL_PATH"
+echo ">>>Evaluating arc_easy for: $SFT_PATH"
+cd $SFT_PATH
 uv run accelerate launch -m lm_eval \
     --model hf \
     --model_args pretrained=. \
@@ -21,8 +23,9 @@ uv run accelerate launch -m lm_eval \
     --log_samples \
     --output_path eval/arc_easy
 
+SFT_PATH=$MODEL_PATH-sft_arc_challenge_train
 echo
-echo ">>>Evaluating arc_challenge for: $MODEL_PATH"
+echo ">>>Evaluating arc_challenge for: $SFT_PATH"
 uv run accelerate launch -m lm_eval \
     --model hf \
     --model_args pretrained=. \
@@ -30,16 +33,17 @@ uv run accelerate launch -m lm_eval \
     --log_samples \
     --output_path eval/arc_challenge
 
+SFT_PATH=$MODEL_PATH-sft_commonsense_qa_train
 echo
-echo ">>>Evaluating commonsense_qa for: $MODEL_PATH"
+echo ">>>Evaluating commonsense_qa for: $SFT_PATH"
 uv run accelerate launch -m lm_eval \
     --model hf \
     --model_args pretrained=. \
     --tasks commonsense_qa \
     --log_samples \
     --output_path eval/commonsense_qa
-echo
 
+echo
 echo ">>> Evaluating ewok for: $MODEL_PATH"
 uv run accelerate launch -m lm_eval \
     --model hf \
@@ -50,7 +54,9 @@ uv run accelerate launch -m lm_eval \
     --output_path eval/ewok
 
 
-echo ">>> Evaluating ewok for: $MODEL_PATH"
+SFT_PATH=$MODEL_PATH-sft_winogrande_train
+echo
+echo ">>> Evaluating winogrande for: $SFT_PATH"
 uv run accelerate launch -m lm_eval \
     --model hf \
     --model_args pretrained=. \
@@ -58,3 +64,15 @@ uv run accelerate launch -m lm_eval \
     --tasks  winogrande\
     --log_samples \
     --output_path eval/winogrande
+
+
+SFT_PATH=$MODEL_PATH-sft_piqa_train
+echo
+echo ">>> Evaluating piqa for: $SFT_PATH"
+uv run accelerate launch -m lm_eval \
+    --model hf \
+    --model_args pretrained=. \
+    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+    --tasks  piqa\
+    --log_samples \
+    --output_path eval/piqa

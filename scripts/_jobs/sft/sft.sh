@@ -7,13 +7,27 @@ INIT_MODEL="$PROJECT_BASE_PATH/output/$MODEL_CONFIG/$MODEL_NAME"
 export WANDB_MODE=offline
 
 
+    # google_boolq \
+    # google_boolq_ent_id \
+    # squadv2 \
+    # squadv2_ent_id \
+    # triviaqa_rc_nocontext \
+    # triviaqa_rc_nocontext_ent_id  \
+    # triviaqa_rc_context \
+    # triviaqa_rc_context_ent_id
 for SFT_DATA in \
-    google_boolq \
-    google_boolq_ent_id \
-    squadv2 \
-    squadv2_ent_id \
-    triviaqa_rc_nocontext \
-    triviaqa_rc_nocontext_ent_id  \
+    arc_easy \
+    arc_challenge \
+    commonsense_qa \
+    winogrande \
+    piqa \
+    cnn_dailymail \
+    xsum \
+    samsum \
+    gigaword \
+    mrpc \
+    paws_en
+do
     triviaqa_rc_context \
     triviaqa_rc_context_ent_id
 do

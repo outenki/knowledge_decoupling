@@ -25,18 +25,14 @@ def read_args():
     parser.add_argument(
         '--data-name', '-dn', dest='data_name', type=str, required=True,
         choices=[
-            'ai2_arc', 'boolq', 'qasc', "squad_v2", "based_squad", "squadv2",
-            "mintaka", "cwq", "metaqa", "google_re", "commonsense_qa", "triviaqa_rc_nocontext", "winogrande",
-            "clasheval", "nq_swap", "race", "triviaqa_rc_context", "google_boolq_core"],
+            'arc_easy', 'arc_challenge', 'boolq', 'qasc', "squad_v2", "based_squad", "squadv2",
+            "cnn_dailymail", "mintaka", "cwq", "metaqa", "google_re", "commonsense_qa",
+            "triviaqa_rc_nocontext", "piqa", "winogrande", "clasheval", "nq_swap", "race",
+            "triviaqa_rc_context", "google_boolq_core", "xsum", "samsum", "gigaword", "mrpc", "paws_en"],
         help='Name of the dataset to load from Hugging Face'
     )
     parser.add_argument('--local-path', '-lp', dest='local_path', type=str)
     parser.add_argument('--split', '-sp', dest='split', type=str)
-    parser.add_argument(
-        '--subset-name', '-sn', dest='subset_name', type=str, required=False,
-        default=None,
-        help='Name of the subset'
-    )
     parser.add_argument('--aoa', '-aoa', dest='aoa', type=str, default="", help='Path to aoa data (csv)')
     parser.add_argument('--aoa-threshold', '-at', dest='aoa_threshold', type=float, default=0, help='AOA threshold')
     parser.add_argument('--markdown', '-f', dest='markdown', action='store_true')
@@ -123,7 +119,7 @@ def construct_qa(
         "question": question,
         "choices": choices,
         "answer": answer,
-        "prompt": prompt,
+        "prompt": prompt.lstrip(),
     }
     if argkv:
         result.update(argkv)
@@ -167,19 +163,271 @@ def construct_qa(
     return result
 
 
+def generate_qa_data_from_piqa(dataset: Dataset, md: bool, probing: bool, lower_text: bool, core_replace_config: dict) -> list[dict]:
+    qa_data = []
+    for qid, sample in tqdm(enumerate(dataset), total=len(dataset), desc="Generating QA data"):
+        assert isinstance(sample, dict)
+        question = sample["goal"]
+
+        answer = sample["sol1"] if sample["label"] == 0 else sample["sol2"]
+        choices = [sample["sol1"], sample["sol2"]]
+
+        prompt = f"Question: {question}\nAnswer:"
+        qa_data.append(
+            construct_qa(
+                qid=str(qid),
+                context="",
+                question=question,
+                choices=choices,
+                choices_str="",
+                answer=answer,
+                md=md,
+                probing=probing,
+                lower_text=lower_text,
+                argkv={"prompt": prompt},
+                core_replace_config=core_replace_config
+            )
+        )
+    return qa_data
+
+
+def generate_qa_data_from_cnn_dailymail(dataset: Dataset, md: bool, probing: bool, lower_text: bool, core_replace_config: dict) -> list[dict]:
+    qa_data = []
+    for qid, sample in tqdm(enumerate(dataset), total=len(dataset), desc="Generating QA data"):
+        assert isinstance(sample, dict)
+        qid = sample["id"]
+
+        question = sample["article"]
+        answer = sample["highlights"]
+        choices = []
+
+        prompt = f"Summarize the following article:\n\n{question}\n\nSummary::"
+        qa_data.append(
+            construct_qa(
+                qid=str(qid),
+                context="",
+                question=question,
+                choices=choices,
+                choices_str="",
+                answer=answer,
+                md=md,
+                probing=probing,
+                lower_text=lower_text,
+                argkv={"prompt": prompt},
+                core_replace_config=core_replace_config
+            )
+        )
+    return qa_data
+
+
+def generate_qa_data_from_xsum(dataset: Dataset, md: bool, probing: bool, lower_text: bool, core_replace_config: dict) -> list[dict]:
+    qa_data = []
+    for qid, sample in tqdm(enumerate(dataset), total=len(dataset), desc="Generating QA data"):
+        assert isinstance(sample, dict)
+        qid = sample["id"]
+
+        question = sample["document"]
+        answer = sample["summary"]
+        choices = []
+
+        prompt = f"Summarize the following article:\n\n{question}\n\nSummary::"
+        qa_data.append(
+            construct_qa(
+                qid=str(qid),
+                context="",
+                question=question,
+                choices=choices,
+                choices_str="",
+                answer=answer,
+                md=md,
+                probing=probing,
+                lower_text=lower_text,
+                argkv={"prompt": prompt},
+                core_replace_config=core_replace_config
+            )
+        )
+    return qa_data
+
+
+
+def generate_qa_data_from_samsum(dataset: Dataset, md: bool, probing: bool, lower_text: bool, core_replace_config: dict) -> list[dict]:
+    qa_data = []
+    for qid, sample in tqdm(enumerate(dataset), total=len(dataset), desc="Generating QA data"):
+        assert isinstance(sample, dict)
+        qid = sample["id"]
+
+        question = sample["dialogue"]
+        answer = sample["summary"]
+        choices = []
+
+        prompt = f"Summarize the following article:\n\n{question}\n\nSummary::"
+        qa_data.append(
+            construct_qa(
+                qid=str(qid),
+                context="",
+                question=question,
+                choices=choices,
+                choices_str="",
+                answer=answer,
+                md=md,
+                probing=probing,
+                lower_text=lower_text,
+                argkv={"prompt": prompt},
+                core_replace_config=core_replace_config
+            )
+        )
+    return qa_data
+
+
+def generate_qa_data_from_gigaword(dataset: Dataset, md: bool, probing: bool, lower_text: bool, core_replace_config: dict) -> list[dict]:
+    qa_data = []
+    for qid, sample in tqdm(enumerate(dataset), total=len(dataset), desc="Generating QA data"):
+        assert isinstance(sample, dict)
+
+        question = sample["article"]
+        answer = sample["summary"]
+        choices = []
+
+        prompt = f"Summarize the following article:\n\n{question}\n\nSummary::"
+        qa_data.append(
+            construct_qa(
+                qid=str(qid),
+                context="",
+                question=question,
+                choices=choices,
+                choices_str="",
+                answer=answer,
+                md=md,
+                probing=probing,
+                lower_text=lower_text,
+                argkv={"prompt": prompt},
+                core_replace_config=core_replace_config
+            )
+        )
+    return qa_data
+
+
+def generate_qa_data_from_paws_en(dataset: Dataset, md: bool, probing: bool, lower_text: bool, core_replace_config: dict) -> list[dict]:
+    def general_detokenize(string):
+        string = string.replace(" n't", "n't")
+        string = string.replace(" )", ")")
+        string = string.replace("( ", "(")
+        string = string.replace('" ', '"')
+        string = string.replace(' "', '"')
+        string = re.sub(r" (['.,])", r"\1", string)
+        return string
+    
+    def lowercase_first_letter(text):
+        return text[0].lower() + text[1:]
+
+    qa_data = []
+    for qid, sample in tqdm(enumerate(dataset), total=len(dataset), desc="Generating QA data"):
+        assert isinstance(sample, dict)
+
+        question = ""
+        sent1 = sample["sentence1"]
+        sent2 = sample["sentence2"]
+        if sent1 in (None, "") or sent2 in (None, ""):
+            print(f"Skipping sample {qid} due to empty sentence1 or sentence2.")
+            continue
+        sent1 = general_detokenize(sent1).strip()
+        sent2 = general_detokenize(sent2).strip()
+        if sent1.endswith((".", ",", ";")):
+            sent1 = sent1[:-1].strip()
+        sent2 = lowercase_first_letter(sent2)
+
+        choices = [
+            f"{sent1}, right? No, {sent2}",
+            f"{sent1}, right? Yes, {sent2}",
+        ]
+        answer = choices[sample["label"]]
+
+        prompt = f""
+        qa_data.append(
+            construct_qa(
+                qid=str(qid),
+                context="",
+                question=question,
+                choices=choices,
+                choices_str="",
+                answer=answer,
+                md=md,
+                probing=probing,
+                lower_text=lower_text,
+                argkv={"prompt": prompt},
+                core_replace_config=core_replace_config
+            )
+        )
+    return qa_data
+
+def generate_qa_data_from_mrpc(dataset: Dataset, md: bool, probing: bool, lower_text: bool, core_replace_config: dict) -> list[dict]:
+    def general_detokenize(string):
+        string = string.replace(" n't", "n't")
+        string = string.replace(" )", ")")
+        string = string.replace("( ", "(")
+        string = string.replace('" ', '"')
+        string = string.replace(' "', '"')
+        string = re.sub(r" (['.,])", r"\1", string)
+        return string
+    
+    def lowercase_first_letter(text):
+        return text[0].lower() + text[1:]
+
+    qa_data = []
+    for qid, sample in tqdm(enumerate(dataset), total=len(dataset), desc="Generating QA data"):
+        assert isinstance(sample, dict)
+
+        question = ""
+        sent1 = sample["text1"]
+        sent2 = sample["text2"]
+        if sent1 in (None, "") or sent2 in (None, ""):
+            print(f"Skipping sample {qid} due to empty sentence1 or sentence2.")
+            continue
+        sent1 = general_detokenize(sent1).strip()
+        sent2 = general_detokenize(sent2).strip()
+        if sent1.endswith((".", ",", ";")):
+            sent1 = sent1[:-1].strip()
+        sent2 = lowercase_first_letter(sent2)
+
+        choices = [
+            f"{sent1}, right? No, {sent2}",
+            f"{sent1}, right? Yes, {sent2}",
+        ]
+        answer = choices[sample["label"]]
+
+        prompt = f""
+        qa_data.append(
+            construct_qa(
+                qid=str(qid),
+                context="",
+                question=question,
+                choices=choices,
+                choices_str="",
+                answer=answer,
+                md=md,
+                probing=probing,
+                lower_text=lower_text,
+                argkv={"prompt": prompt},
+                core_replace_config=core_replace_config
+            )
+        )
+    return qa_data
+
+
 def generate_qa_data_from_ai2_arc(dataset: Dataset, md: bool, probing: bool, lower_text: bool, core_replace_config: dict) -> list[dict]:
     qa_data = []
     for qid, sample in tqdm(enumerate(dataset), total=len(dataset), desc="Generating QA data"):
         assert isinstance(sample, dict)
+        qid = sample["id"]
         question = sample["question"]
-        if not question.endswith("?") and not question.endswith("."):
-            question += "?"
 
         labels = sample["choices"]["label"]
         answer_key = sample["answerKey"]
         choices = sample["choices"]["text"]
         answer = choices[labels.index(answer_key)]
         context = ""
+
+        prompt = f"Question: {question}\nAnswer:"
         qa_data.append(
             construct_qa(
                 qid=str(qid),
@@ -191,7 +439,7 @@ def generate_qa_data_from_ai2_arc(dataset: Dataset, md: bool, probing: bool, low
                 md=md,
                 probing=probing,
                 lower_text=lower_text,
-                argkv={},
+                argkv={"prompt": prompt},
                 core_replace_config=core_replace_config
             )
         )
@@ -237,7 +485,7 @@ def generate_qa_data_from_winogrande(dataset: Dataset, md: bool, probing: bool, 
         choices = [opt_1, opt_2]
         answer = opt_1 if sample["answer"] == 1 else opt_2
 
-        prompt = f"Question: {question}"
+        prompt = f"Question: {question}\nAnswer:"
         qa_data.append(
             construct_qa(
                 qid=str(qid),
@@ -601,11 +849,15 @@ def generate_qa_data_from_commonsense_qa(dataset: list, md: bool, probing: bool,
         labels = sample["choices"]["label"]
         answer_key = sample["answerKey"]
         choices = sample["choices"]["text"]
+        c_a, c_b, c_c, c_d, c_e = choices
         if answer_key not in labels:
+            print("Warning: answer_key not in labels for sample id:", qid)
             continue
-        answer = choices[labels.index(answer_key)]
+        answer = answer_key
         context = ""
         choices_str = ""
+
+        prompt = f"Question: {question}\nA. {c_a}\nB. {c_b}\nC. {c_c}\nD. {c_d}\nE. {c_e}\nAnswer:"
         qa_data.append(
             construct_qa(
                 qid=str(qid),
@@ -617,7 +869,7 @@ def generate_qa_data_from_commonsense_qa(dataset: list, md: bool, probing: bool,
                 md=md,
                 probing=probing,
                 lower_text=lower_text,
-                argkv={},
+                argkv={"prompt": prompt},
                 core_replace_config=core_replace_config
             )
         )
@@ -898,8 +1150,16 @@ print("")
 print(f"making dirs: {args.output_path}")
 Path(args.output_path).mkdir(parents=True, exist_ok=True)
 
-print("Loading data...")
-if args.data_name == "metaqa":
+print(f"Loading data {args.data_name}...")
+if args.data_name == "arc_easy":
+    dataset_dict = load_dataset("allenai/ai2_arc", "ARC-Easy")
+elif args.data_name == "arc_challenge":
+    dataset_dict = load_dataset("allenai/ai2_arc", "ARC-Challenge")
+elif args.data_name == "commonsense_qa":
+    dataset_dict = load_dataset("tau/commonsense_qa")
+elif args.data_name == "piqa":
+    dataset_dict = load_dataset("baber/piqa")
+elif args.data_name == "metaqa":
     dataset_dict = load_metaqa(args.local_path)
 elif args.data_name == "mintaka":
     dataset_dict = load_mintaka(args.local_path)
@@ -925,9 +1185,22 @@ elif args.data_name == "winogrande":
     dataset_dict = load_dataset("allenai/winogrande", "winogrande_xl")
 elif args.data_name == "squadv2":
     dataset_dict = load_dataset("lighteval/squad_v2")
+elif args.data_name == "cnn_dailymail":
+    dataset_dict = load_dataset("abisee/cnn_dailymail", "3.0.0")
+elif args.data_name == "xsum":
+    dataset_dict = load_dataset("EdinburghNLP/xsum")
+elif args.data_name == "samsum":
+    dataset_dict = load_dataset("knkarthick/samsum")
+elif args.data_name == "gigaword":
+    dataset_dict = load_dataset("SalmanFaroz/gigaword")
+elif args.data_name == "paws_en":
+    dataset_dict = load_dataset("google-research-datasets/paws-x", "en")
+elif args.data_name == "mrpc":
+    dataset_dict = load_dataset("SetFit/mrpc")
 elif args.data_name == "boolq" or args.data_name == "google_boolq_core":
     dataset_dict = load_dataset("google/boolq")
 else:
+    print(f"Loading dataset {args.data_name} from local path: {args.local_path}")
     dataset_dict = load_from_disk(args.local_path)
 
 AOA = {}
@@ -946,9 +1219,12 @@ for split, dataset in dataset_dict.items():
         "delimiter": args.core_delimiter
     }
     print(f"Processing sub dataset: {split} with {len(dataset)} samples")
-    if args.data_name == "ai2_arc":
+    if args.data_name == "arc_easy" or args.data_name == "arc_challenge":
         assert isinstance(dataset, Dataset)
         qa_data = generate_qa_data_from_ai2_arc(dataset, args.markdown, args.probing, args.lower_text, core_config)
+    elif args.data_name == "piqa":
+        assert isinstance(dataset, Dataset)
+        qa_data = generate_qa_data_from_piqa(dataset, args.markdown, args.probing, args.lower_text, core_config)
     elif args.data_name == "boolq" or args.data_name == "google_boolq_core":
         assert isinstance(dataset, Dataset)
         qa_data = generate_qa_data_from_boolq(dataset, args.markdown, args.probing, args.lower_text, core_config)
@@ -1006,6 +1282,24 @@ for split, dataset in dataset_dict.items():
     elif args.data_name == "winogrande":
         assert isinstance(dataset, Dataset)
         qa_data = generate_qa_data_from_winogrande(dataset, args.markdown, args.probing, lower_text=args.lower_text, core_replace_config=core_config)
+    elif args.data_name == "cnn_dailymail":
+        assert isinstance(dataset, Dataset)
+        qa_data = generate_qa_data_from_cnn_dailymail(dataset, args.markdown, args.probing, args.lower_text, core_config)
+    elif args.data_name == "xsum":
+        assert isinstance(dataset, Dataset)
+        qa_data = generate_qa_data_from_xsum(dataset, args.markdown, args.probing, args.lower_text, core_config)
+    elif args.data_name == "samsum":
+        assert isinstance(dataset, Dataset)
+        qa_data = generate_qa_data_from_samsum(dataset, args.markdown, args.probing, args.lower_text, core_config)
+    elif args.data_name == "gigaword":
+        assert isinstance(dataset, Dataset)
+        qa_data = generate_qa_data_from_gigaword(dataset, args.markdown, args.probing, args.lower_text, core_config)
+    elif args.data_name == "paws_en":
+        assert isinstance(dataset, Dataset)
+        qa_data = generate_qa_data_from_paws_en(dataset, args.markdown, args.probing, args.lower_text, core_config)
+    elif args.data_name == "mrpc":
+        assert isinstance(dataset, Dataset)
+        qa_data = generate_qa_data_from_mrpc(dataset, args.markdown, args.probing, args.lower_text, core_config)
     else:
         raise ValueError(f"Unsupported dataset: {args.data_name}")
 

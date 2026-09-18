@@ -1,0 +1,33 @@
+task: gigaword
+dataset_path: SalmanFaroz/gigaword
+output_type: generate_until
+test_split: test
+doc_to_text: "Summarize the following article:\n\n{{article}}\n\nSummary:"
+doc_to_target: "{{summary}}"
+process_results: !function utils.process_results
+metric_list:
+  - metric: rouge1
+    aggregation: mean
+    higher_is_better: true
+  - metric: rouge2
+    aggregation: mean
+    higher_is_better: true
+  - metric: rougeL
+    aggregation: mean
+    higher_is_better: true
+  - metric: bertscore_precision
+    aggregation: mean
+    higher_is_better: true
+  - metric: bertscore_recall
+    aggregation: mean
+    higher_is_better: true
+  - metric: bertscore_f1
+    aggregation: mean
+    higher_is_better: true
+generation_kwargs:
+  max_gen_toks: 128
+  do_sample: false
+num_fewshot: 0
+metadata:
+  version: 1.0
+  description: "gigaword dataset for abstractive summarization"

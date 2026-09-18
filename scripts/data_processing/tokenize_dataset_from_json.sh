@@ -23,7 +23,17 @@ for TOKENIZER_NAME in meta-llama/Llama-3.2-1B; do
         # triviaqa_rc_context
         # triviaqa_rc_context_ent_id
     for dn in \
-        winogrande
+        arc_easy \
+        arc_challenge \
+        commonsense_qa \
+        winogrande \
+        piqa \
+        cnn_dailymail \
+        samsum \
+        gigaword \
+        mrpc \
+        paws_en \
+        xsum
     do
         echo
         echo ">>>>>> $dn sft concat train"

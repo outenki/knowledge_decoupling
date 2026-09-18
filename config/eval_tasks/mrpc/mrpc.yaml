@@ -1,0 +1,5 @@
+doc_to_choice: '{{[text1+", right? No, "+sentence2, text1+", right? Yes, "+text2]}}'
+doc_to_text: ''
+include: pawsx_template_yaml
+process_docs: !function utils.process_docs_paraphrases
+task: mrpc
