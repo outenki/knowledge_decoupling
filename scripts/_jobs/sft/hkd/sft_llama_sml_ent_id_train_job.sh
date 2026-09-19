@@ -1,7 +1,7 @@
 #!/bin/bash
-#PBS -q sg
+#PBS -q lg
 #PBS -l select=1:ngpus=4
-#PBS -l walltime=50:00:00
+#PBS -l walltime=24:00:00
 #PBS -W group_list=c30897
 #PBS -j oe
 #PBS -o logs/sft_Llama3.2_1B_sml_ent_id.log
