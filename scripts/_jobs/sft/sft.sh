@@ -16,6 +16,10 @@ export WANDB_MODE=offline
     # triviaqa_rc_context \
     # triviaqa_rc_context_ent_id
 for SFT_DATA in \
+    google_boolq_rnd_id \
+    squadv2_rnd_id \
+    triviaqa_rc_context_rnd_id \
+    triviaqa_rc_nocontext_rnd_id \
     arc_easy \
     arc_challenge \
     commonsense_qa \
@@ -27,9 +31,6 @@ for SFT_DATA in \
     gigaword \
     mrpc \
     paws_en
-do
-    triviaqa_rc_context \
-    triviaqa_rc_context_ent_id
 do
     # sft
     cd $PROJECT_BASE_PATH/src/train
