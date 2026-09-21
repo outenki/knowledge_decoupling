@@ -24,7 +24,20 @@ uv run accelerate launch -m lm_eval \
     --output_path eval/$TASK
 
 
-TASK=google_boolq_ent_id
+# TASK=google_boolq_ent_id
+# SFT_PATH=$MODEL_PATH-sft_${TASK}_train
+# cd $SFT_PATH
+# echo 
+# echo ">>> Evaluating $TASK QA for: $SFT_PATH"
+# uv run accelerate launch -m lm_eval \
+#     --model hf \
+#     --model_args pretrained=. \
+#     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+#     --tasks $TASK \
+#     --log_samples \
+#     --output_path eval/$TASK
+
+TASK=google_boolq_rnd_id
 SFT_PATH=$MODEL_PATH-sft_${TASK}_train
 cd $SFT_PATH
 echo 

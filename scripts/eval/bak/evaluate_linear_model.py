@@ -16,6 +16,7 @@ from transformers import AutoModel
 
 from src.lib.utils import get_device, print_args
 from src.lib.linear_model import MCQModel
+from src.lib.utils import add_tokens
 
 
 random.seed(42)
@@ -81,6 +82,7 @@ def main():
     # ======== Load model and tokenizer ========
     tokenizer = AutoTokenizer.from_pretrained(args.model_path)
     tokenizer.pad_token = tokenizer.eos_token
+    tokenizer = add_tokens(tokenizer)
     print(f"Tokenizer loaded from {args.model_path}")
     init_model = AutoModel.from_pretrained(args.model_path)
     checkpoint = torch.load(f"{args.model_path}/model.pt", map_location="cpu")

@@ -20,7 +20,7 @@ from transformers.training_args import TrainingArguments
 
 
 from src.lib.dataset import load_custom_dataset
-from src.lib.utils import print_args, training_args_to_dict
+from src.lib.utils import print_args, training_args_to_dict, add_tokens
 
 
 DECAY_RATE = 0.9  # for WSD
@@ -268,6 +268,7 @@ def main():
 
 
     tokenizer = AutoTokenizer.from_pretrained(args.config_name)
+    tokenizer = add_tokens(tokenizer)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token  # 👈 先设！
     model.config.pad_token_id = tokenizer.pad_token_id

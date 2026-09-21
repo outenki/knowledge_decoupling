@@ -5,7 +5,7 @@
 #PBS -W group_list=c30897
 #PBS -j oe
 #PBS -o logs/sft_Llama3.2_1B_sml_rnd_id.log
-#PBS -N sft_lsmr
+#PBS -N sft_lsri
 
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/_jobs/sft

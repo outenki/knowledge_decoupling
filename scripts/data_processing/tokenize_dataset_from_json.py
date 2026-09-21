@@ -6,6 +6,7 @@ from datasets import DatasetDict, Dataset
 from transformers import AutoTokenizer
 
 from src.lib.dataset import generate_qa_message, format_qa_prompt
+from src.lib.utils import add_tokens
 
 parser = argparse.ArgumentParser()
 parser.add_argument(
@@ -40,6 +41,7 @@ TOKENIZER = AutoTokenizer.from_pretrained(args.tokenizer)
 TOKENIZER.padding_side = "left"
 if TOKENIZER.pad_token_id is None:
     TOKENIZER.pad_token = TOKENIZER.eos_token
+TOKENIZER = add_tokens(TOKENIZER)
 
 # TOKENIZER.add_special_tokens({'pad_token': '[PAD]'})
 

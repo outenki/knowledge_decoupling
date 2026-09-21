@@ -18,6 +18,7 @@ from src.lib.dataset import load_dataset_for_training
 from src.lib.model import load_model_from_pretrained, load_model_from_config_random
 from src.lib.model import get_layers, set_new_layers, get_num_layers, set_num_layers, freeze_parameters 
 from src.lib.trainer import train_model_with_data, init_wandb_run
+from src.lib.utils import add_tokens
 
 random.seed(42)
 
@@ -51,6 +52,7 @@ def main(cfg: DictConfig):
         print(">>> Init model loaded. Config:", model.config)
         
     tokenizer = AutoTokenizer.from_pretrained(cfg.model.tokenizer if cfg.model.tokenizer is not None else cfg.model.config)
+    tokenizer = add_tokens(tokenizer)
     if tokenizer.pad_token is None:
         tokenizer.pad_token = tokenizer.eos_token
     model.config.pad_token_id = tokenizer.pad_token_id

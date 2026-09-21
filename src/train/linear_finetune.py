@@ -16,6 +16,7 @@ from datasets import concatenate_datasets
 from src.lib.dataset import load_custom_dataset
 from src.lib.utils import print_args, training_args_to_dict
 from src.lib.linear_model import MCQModel, MCQCollator
+from src.lib.utils import add_tokens
 
 
 def load_dataset_dict(data_path: str) -> DatasetDict:
@@ -159,6 +160,7 @@ def main():
             args.speedup
         )
     tokenizer = AutoTokenizer.from_pretrained(args.config_name)
+    tokenizer = add_tokens(tokenizer)
     if args.custom_pad:
         print(">>> Adding custom PAD token to the tokenizer and model.")
         tokenizer.add_special_tokens({'pad_token': '[PAD]'})

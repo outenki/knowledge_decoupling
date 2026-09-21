@@ -22,12 +22,12 @@ uv run accelerate launch -m lm_eval \
     --log_samples \
     --output_path eval/paws_en
 
-SFT_PATH=$MODEL_PATH-sft_mrpc_train
-echo
-echo ">>>Evaluating mrpc for: $SFT_PATH"
-uv run accelerate launch -m lm_eval \
-    --model hf \
-    --model_args pretrained=. \
-    --tasks mrpc \
-    --log_samples \
-    --output_path eval/mrpc
+# SFT_PATH=$MODEL_PATH-sft_mrpc_train
+# echo
+# echo ">>>Evaluating mrpc for: $SFT_PATH"
+# uv run accelerate launch -m lm_eval \
+#     --model hf \
+#     --model_args pretrained=. \
+#     --tasks mrpc \
+#     --log_samples \
+#     --output_path eval/mrpc

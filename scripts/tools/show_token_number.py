@@ -4,7 +4,8 @@ from datasets import DatasetDict
 from transformers import AutoTokenizer
 import tqdm
 
-from src.lib.dataset import load_custom_dataset, select_data_by_indices
+from src.lib.dataset import load_custom_dataset
+from src.lib.utils import add_tokens
 
 
 def read_args():
@@ -18,6 +19,7 @@ def read_args():
 
 args = read_args()
 tokenizer = AutoTokenizer.from_pretrained("gpt2")
+tokenizer = add_token(tokenizer)
 # ========  Load dataset ========
 print("**** Loading dataset...")
 dataset = load_custom_dataset(

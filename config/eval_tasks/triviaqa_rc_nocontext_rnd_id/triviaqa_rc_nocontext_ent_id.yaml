@@ -1,0 +1,44 @@
+task: triviaqa_rc_nocontext_rnd_id
+
+dataset_path: json
+dataset_kwargs:
+  data_files:
+    train: /home/pj24001974/ku50001571/projects/knowledge_decoupling/input/evaluate_data/jsonl/triviaqa_rc_nocontext_rnd_id/train.jsonl
+    validation: /home/pj24001974/ku50001571/projects/knowledge_decoupling/input/evaluate_data/jsonl/triviaqa_rc_nocontext_rnd_id/validation.jsonl
+
+output_type: generate_until
+
+training_split: train
+validation_split: validation
+
+process_docs: !function task.process_docs
+doc_to_text: "{{prompt}}"
+doc_to_target: "{{answers}}"
+
+should_decontaminate: false
+
+generation_kwargs:
+  until:
+    - "\n"
+    - "."
+    - ","
+  do_sample: false
+  temperature: 0.0
+
+filter_list:
+  - name: remove_whitespace
+    filter:
+      - function: remove_whitespace
+      - function: take_first
+
+target_delimiter: " "
+
+metric_list:
+  - metric: exact_match
+    aggregation: mean
+    higher_is_better: true
+    ignore_case: true
+    ignore_punctuation: true
+
+metadata:
+  version: 3.0

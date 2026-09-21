@@ -88,3 +88,27 @@ def load_checkpoint_auxiliary_files(cp_path: str) -> dict:
         print(f"‼️ Error while inspecting/loading checkpoint auxiliary files: {e}")
     assert optimizer is not None or scheduler is not None, "Neither optimizer nor scheduler state could be loaded from checkpoint."
     return {"optimizer": optimizer, "scheduler": scheduler}
+
+def add_tokens(tokenizer):
+    """
+    Add new tokens to the tokenizer and resize the model's embeddings accordingly.
+    """
+    special_tokens_dict = {}
+    new_tokens_list = ["<UNK>", "<ENT>" ]
+    for i in range(10000):
+        new_tokens_list.append(f"<{i}>")
+
+    if tokenizer.pad_token is None:
+        special_tokens_dict["pad_token"] = tokenizer.eos_token
+    if tokenizer.bos_token is None:
+        special_tokens_dict["bos_token"] = tokenizer.eos_token
+    if tokenizer.eos_token is None:
+        special_tokens_dict["eos_token"] = tokenizer.eos_token
+    if special_tokens_dict:
+        tokenizer.add_special_tokens(special_tokens_dict)
+        print(f"  -> Added special tokens: {special_tokens_dict}")
+    if new_tokens_list:
+        tokenizer.add_tokens(new_tokens_list)
+        print(f"  -> Added new tokens: {new_tokens_list}")
+    
+    return tokenizer

@@ -1,6 +1,7 @@
 from datasets import load_dataset
 from transformers import AutoTokenizer
 from pathlib import Path
+from src.lib.utils import add_tokens
 
 import argparse
 
@@ -23,6 +24,8 @@ TOKENIZER = AutoTokenizer.from_pretrained(args.tokenizer)
 TOKENIZER.padding_side = "left"
 if TOKENIZER.pad_token_id is None:
     TOKENIZER.pad_token = TOKENIZER.eos_token
+TOKENIZER = add_tokens(TOKENIZER)
+
 
 def preprocess_mcq(example):
     question = example["question"]

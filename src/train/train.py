@@ -9,8 +9,8 @@ from transformers import AutoTokenizer
 
 from src.lib.dataset import load_dataset_for_training
 from src.lib.trainer import train_model_with_data, init_wandb_run
-from src.lib.model import load_model_from_pretrained, load_model_from_config_random
-from src.lib.model import freeze_parameters
+from src.lib.model import load_model_from_pretrained, load_model_from_config_random, freeze_parameters
+from src.lib.utils import add_tokens
 
 DECAY_RATE = 0.9
 random.seed(42)
@@ -64,6 +64,7 @@ def main(cfg: DictConfig):
     assert model is not None
     model.save_pretrained(Path(cfg.output.path) / "init_model")
     tokenizer.save_pretrained(Path(cfg.output.path) / "init_model")
+    tokenizer = add_tokens(tokenizer)
     print(f"Tokenizer vocab size: {tokenizer.vocab_size}, pad token id: {tokenizer.pad_token_id}")
 
     if cfg.model.freeze_layers != 0:

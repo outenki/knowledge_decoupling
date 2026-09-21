@@ -33,11 +33,11 @@ for TOKENIZER_NAME in meta-llama/Llama-3.2-1B; do
         # paws_en \
         # xsum
         # triviaqa_rc_context_ent_id
-        # squadv2_rnd_id \
-        # triviaqa_rc_context_rnd_id \
-        # triviaqa_rc_nocontext_rnd_id \
+        # google_boolq_rnd_id
     for dn in \
-        google_boolq_rnd_id
+        squadv2_rnd_id \
+        triviaqa_rc_context_rnd_id \
+        triviaqa_rc_nocontext_rnd_id
     do
         echo
         echo ">>>>>> $dn sft concat train"
