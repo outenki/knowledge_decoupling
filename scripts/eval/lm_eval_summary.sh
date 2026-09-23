@@ -13,9 +13,11 @@ MODEL_PATH=$1
 cd $MODEL_PATH
 
 SFT_PATH=$MODEL_PATH-sft_cnn_dailymail_train
+cd $SFT_PATH
 echo
 echo ">>>Evaluating cnn_dailymail for: $SFT_PATH"
 uv run accelerate launch -m lm_eval \
+    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
     --model hf \
     --model_args pretrained=. \
     --tasks cnn_dailymail \
@@ -23,9 +25,11 @@ uv run accelerate launch -m lm_eval \
     --output_path eval/cnn_dailymail
 
 SFT_PATH=$MODEL_PATH-sft_xsum_train
+cd $SFT_PATH
 echo
 echo ">>>Evaluating xsum for: $SFT_PATH"
 uv run accelerate launch -m lm_eval \
+    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
     --model hf \
     --model_args pretrained=. \
     --tasks xsum \
@@ -33,9 +37,11 @@ uv run accelerate launch -m lm_eval \
     --output_path eval/xsum
 
 SFT_PATH=$MODEL_PATH-sft_samsum_train
+cd $SFT_PATH
 echo
 echo ">>>Evaluating samsum for: $SFT_PATH"
 uv run accelerate launch -m lm_eval \
+    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
     --model hf \
     --model_args pretrained=. \
     --tasks samsum \
@@ -43,9 +49,11 @@ uv run accelerate launch -m lm_eval \
     --output_path eval/samsum
 
 SFT_PATH=$MODEL_PATH-sft_gigaword_train
+cd $SFT_PATH
 echo
 echo ">>>Evaluating gigaword for: $SFT_PATH"
 uv run accelerate launch -m lm_eval \
+    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
     --model hf \
     --model_args pretrained=. \
     --tasks gigaword \

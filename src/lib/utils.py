@@ -109,6 +109,6 @@ def add_tokens(tokenizer):
         print(f"  -> Added special tokens: {special_tokens_dict}")
     if new_tokens_list:
         tokenizer.add_tokens(new_tokens_list)
-        print(f"  -> Added new tokens: {new_tokens_list}")
+        print(f"  -> Added new {len(new_tokens_list)} tokens")
     
     return tokenizer

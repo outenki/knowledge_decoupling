@@ -1,16 +1,29 @@
 #!/bin/bash
 
-# !!!
-# !!NOTE: bad_tokens should be activated
-# !!!
+MODEL_CONFIG=$1
+MODEL_NAME=$2
+INIT_MODEL="$PROJECT_BASE_PATH/output/$MODEL_CONFIG/$MODEL_NAME"
 
-PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-$HOME/projects/knowledge_decoupling}"
-MODEL_PATH=$1
+export WANDB_MODE=offline
 
-# export HF_DATASETS_OFFLINE=1
-# export HF_HUB_OFFLINE=1
 
-TASK=google_boolq
+for SFT_DATA in \
+    triviaqa_rc_context \
+    triviaqa_rc_context_rnd_id
+do
+    # sft
+    cd $PROJECT_BASE_PATH/src/train
+    echo ">>> SFT $MODEL_CONFIG/$MODEL_NAME on $SFT_DATA"
+    uv run python train.py --config-name sft_train \
+        base.path=$PROJECT_BASE_PATH \
+        model.config="$MODEL_CONFIG" \
+        model.init_model="$INIT_MODEL" \
+        data.name=$SFT_DATA
+done
+
+
+MODEL_PATH=$INIT_MODEL
+TASK=triviaqa_rc_context
 SFT_PATH=$MODEL_PATH-sft_${TASK}_train
 cd $SFT_PATH
 echo 
@@ -24,20 +37,7 @@ uv run accelerate launch -m lm_eval \
     --output_path eval/$TASK
 
 
-TASK=google_boolq_ent_id
-SFT_PATH=$MODEL_PATH-sft_${TASK}_train
-cd $SFT_PATH
-echo 
-echo ">>> Evaluating $TASK QA for: $SFT_PATH"
-uv run accelerate launch -m lm_eval \
-    --model hf \
-    --model_args pretrained=. \
-    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-    --tasks $TASK \
-    --log_samples \
-    --output_path eval/$TASK
-
-TASK=google_boolq_rnd_id
+TASK=triviaqa_rc_context_rnd_id
 SFT_PATH=$MODEL_PATH-sft_${TASK}_train
 cd $SFT_PATH
 echo 

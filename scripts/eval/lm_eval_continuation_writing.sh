@@ -15,6 +15,7 @@ cd $MODEL_PATH
 echo
 echo ">>>Evaluating hellaswag for: $MODEL_PATH"
 uv run accelerate launch -m lm_eval \
+    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
     --model hf \
     --model_args pretrained=. \
     --tasks hellaswag \
@@ -25,6 +26,7 @@ uv run accelerate launch -m lm_eval \
 echo
 echo ">>>Evaluating lambada_openai for: $MODEL_PATH"
 uv run accelerate launch -m lm_eval \
+    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
     --model hf \
     --model_args pretrained=. \
     --tasks lambada_openai \
@@ -32,10 +34,11 @@ uv run accelerate launch -m lm_eval \
     --output_path eval/lambada_openai
 
 echo
-echo ">>>Evaluating storycloze for: $MODEL_PATH"
+echo ">>>Evaluating moe_storycloze for: $MODEL_PATH"
 uv run accelerate launch -m lm_eval \
+    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
     --model hf \
     --model_args pretrained=. \
-    --tasks storycloze \
+    --tasks moe_storycloze \
     --log_samples \
     --output_path eval/storycloze

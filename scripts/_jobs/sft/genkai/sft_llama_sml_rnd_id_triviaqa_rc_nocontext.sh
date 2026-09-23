@@ -1,0 +1,13 @@
+#!/bin/bash
+#PJM -L "rscgrp=c-batch"
+#PJM -L "elapse=24:00:00"
+#PJM -L "gpu=4"
+#PJM -e logs/sft_Llama3.2_1B_sml_rnd_id_triva_nocontext.log
+#PJM -o logs/sft_Llama3.2_1B_sml_rnd_id_triva_nocontext.log
+#PJM -N "sft_trnc"
+
+
+source $HOME/.zshrc
+cd $PROJECT_BASE_PATH/scripts/_jobs/sft
+
+sh sft_triviaqa_rc_nocontext.sh meta-llama/Llama-3.2-1B no_warmup/sml_rnd_id/SmolLM2-135M-20B-rnd_id-bs4096

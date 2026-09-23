@@ -1,5 +1,4 @@
-tag: storycloze
-task: storycloze
+task: moe_storycloze
 dataset_path: "MoE-UNC/story_cloze"
 output_type: multiple_choice
 validation_split: validation
