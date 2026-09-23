@@ -5,7 +5,7 @@ pjsub sft_llama_sml_rnd_id_arc.sh
 pjsub sft_llama_sml_rnd_id_boolq.sh
 pjsub sft_llama_sml_rnd_id_cnn_dailymail.sh
 pjsub sft_llama_sml_rnd_id_commonsense_qa.sh
-pjsub sft_llama_sml_rnd_id_gigaword.sh
+# pjsub sft_llama_sml_rnd_id_gigaword.sh
 pjsub sft_llama_sml_rnd_id_mrpc.sh
 pjsub sft_llama_sml_rnd_id_paws_en.sh
 pjsub sft_llama_sml_rnd_id_piqa.sh
@@ -15,4 +15,11 @@ pjsub sft_llama_sml_rnd_id_triviaqa_rc_context.sh
 pjsub sft_llama_sml_rnd_id_triviaqa_rc_nocontext.sh
 pjsub sft_llama_sml_rnd_id_winogrande.sh
 pjsub sft_llama_sml_rnd_id_xsum.sh
+
+pjsub sft_llama_sml_mask_mrpc.sh
+pjsub sft_llama_sml_ent_id_mrpc.sh
+pjsub sft_llama_sml_mrpc.sh
+pjsub sft_llama_sml_mask_paws_en.sh
+pjsub sft_llama_sml_ent_id_paws_en.sh
+pjsub sft_llama_sml_paws_en.sh
 watch -d pjstat
