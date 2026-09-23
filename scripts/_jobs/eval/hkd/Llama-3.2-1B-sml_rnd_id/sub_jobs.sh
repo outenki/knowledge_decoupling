@@ -1,11 +1,10 @@
-# pjsub blimp.sh
-pjsub qa.sh
-pjsub continuation_writing.sh
-pjsub google_boolq.sh
-pjsub triviaqa_rc_context.sh
-pjsub triviaqa_rc_nocontext.sh
-pjsub squadv2.sh
-pjsub blimp.sh
+qsub qa.sh
+qsub continuation_writing.sh
+qsub google_boolq.sh
+qsub triviaqa_rc_context.sh
+qsub triviaqa_rc_nocontext.sh
+qsub squadv2.sh
+qsub blimp.sh
 
-pjsub paraphrase.sh
-pjsub summary.sh
+qsub paraphrase.sh
+qsub summary.sh
