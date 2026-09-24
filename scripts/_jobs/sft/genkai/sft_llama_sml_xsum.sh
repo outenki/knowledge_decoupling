@@ -2,8 +2,8 @@
 #PJM -L "rscgrp=b-batch"
 #PJM -L "elapse=24:00:00"
 #PJM -L "gpu=4"
-#PJM -e logs/sft_Llama3.2_1B_sml_rnd_id_xsum.log
-#PJM -o logs/sft_Llama3.2_1B_sml_rnd_id_xsum.log
+#PJM -e logs/sft_Llama3.2_1B_sml_xsum.log
+#PJM -o logs/sft_Llama3.2_1B_sml_xsum.log
 #PJM -N "sft_xsum"
 
 

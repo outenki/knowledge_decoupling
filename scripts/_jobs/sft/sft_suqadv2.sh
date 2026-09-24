@@ -54,11 +54,11 @@ TASK=squadv2_rnd_id
 SFT_PATH=$MODEL_PATH-sft_${TASK}_train
 cd $SFT_PATH
 echo 
-echo ">>> Evaluating squadv2_context_gain QA for: $SFT_PATH"
+echo ">>> Evaluating $TASK QA for: $SFT_PATH"
 uv run accelerate launch -m lm_eval \
     --model hf \
     --model_args pretrained=. \
     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-    --tasks squadv2_context_gain \
+    --tasks $TASK \
     --log_samples \
     --output_path eval/$TASK
