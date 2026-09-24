@@ -1,2 +1,0 @@
-task: squadv2_core
-class: !function task.SQuAD2Core

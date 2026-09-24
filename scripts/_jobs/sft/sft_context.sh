@@ -15,20 +15,20 @@ export WANDB_MODE=offline
     # triviaqa_rc_nocontext_ent_id  \
     # triviaqa_rc_context \
     # triviaqa_rc_context_ent_id
-    # google_boolq_rnd_id \
-    # squadv2_rnd_id \
-    # triviaqa_rc_context_rnd_id \
-    # triviaqa_rc_nocontext_rnd_id \
-    # arc_easy \
-    # arc_challenge \
-    # commonsense_qa \
-    # winogrande \
-    # gigaword \
 for SFT_DATA in \
+    google_boolq_rnd_id \
+    squadv2_rnd_id \
+    triviaqa_rc_context_rnd_id \
+    triviaqa_rc_nocontext_rnd_id \
+    arc_easy \
+    arc_challenge \
+    commonsense_qa \
+    winogrande \
     piqa \
     cnn_dailymail \
     xsum \
     samsum \
+    gigaword \
     mrpc \
     paws_en
 do
