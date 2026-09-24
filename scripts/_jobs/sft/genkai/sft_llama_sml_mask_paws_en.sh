@@ -10,4 +10,4 @@
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/_jobs/sft
 
-sh sft_paws_en.sh meta-llama/Llama-3.2-1B no_warmup/sml_rnd_id/SmolLM2-135M-20B-rnd_id-bs4096
+sh sft_paws_en.sh meta-llama/Llama-3.2-1B no_warmup/sml_mask/SmolLM2-135M-20B-sml_mask-bs4096

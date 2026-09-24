@@ -1,10 +1,10 @@
 #!/bin/bash
-#PJM -L "rscgrp=c-batch"
+#PJM -L "rscgrp=b-batch"
 #PJM -L "elapse=24:00:00"
 #PJM -L "gpu=4"
 #PJM -e logs/sft_Llama3.2_1B_sml_rnd_id_boolq.log
 #PJM -o logs/sft_Llama3.2_1B_sml_rnd_id_boolq.log
-#PJM -N "sft_boolq"
+#PJM -N "sft_ac"
 
 
 source $HOME/.zshrc
