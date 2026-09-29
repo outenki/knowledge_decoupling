@@ -135,9 +135,11 @@ def construct_qa(
     if core_replace_config["count"]:
         prompt_core  = generate_core_for_texts([result["prompt"]], multi_process=False, lower_text=False, config=core_replace_config, aoa=AOA)
         result["token_num"] = prompt_core["token_num"][0]
+        result["prompt_core"] = prompt_core["core"][0]
         result["content_words_num"] = prompt_core["content_words_num"][0]
         result["replaced_ent_num"] = prompt_core["replaced_ent_num"][0]
         result["replaced_unk_num"] = prompt_core["replaced_unk_num"][0]
+        result["replaced_total_num"] = prompt_core["replaced_unk_num"][0] + prompt_core["replaced_ent_num"][0]
 
     if core_replace_config["replace"] and core_replace_config["ent_generator"] != "NONE" and core_replace_config["unk_generator"] != "NONE":
         context_core, _ , unk_id= generate_core_for_qa(qid, result["context"], "", AOA, core_replace_config)

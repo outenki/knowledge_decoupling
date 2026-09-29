@@ -1,0 +1,14 @@
+qsub arc.sh
+qsub boolq.sh
+qsub cnn_dailymail.sh
+qsub commonsense_qa.sh
+qsub gigaword.sh
+qsub mrpc.sh
+qsub paws_en.sh
+qsub piqa.sh
+qsub samsum.sh
+qsub sft_llama_sml_rnd_id_xsum.sh
+qsub squadv2.sh
+qsub triviaqa_rc_context.sh
+qsub triviaqa_rc_nocontext.sh
+qsub winogrande.sh
