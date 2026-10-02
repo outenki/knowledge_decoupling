@@ -6,6 +6,7 @@ description = "Add your description here"
 readme = "README.md"
 dependencies = [
     "accelerate>=1.13.0",
+    "bert-score>=0.3.13",
     "bitsandbytes>=0.49.2",
     "datasets>=4.8.5",
     "einops>=0.8.2",

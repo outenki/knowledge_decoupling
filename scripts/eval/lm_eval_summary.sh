@@ -10,7 +10,7 @@ MODEL_PATH=$1
 # export HF_DATASETS_OFFLINE=1
 # export HF_HUB_OFFLINE=1
 
-cd $MODEL_PATH
+# cd $MODEL_PATH
 
 SFT_PATH=$MODEL_PATH-sft_cnn_dailymail_train
 cd $SFT_PATH
@@ -48,14 +48,14 @@ uv run accelerate launch -m lm_eval \
     --log_samples \
     --output_path eval/samsum
 
-SFT_PATH=$MODEL_PATH-sft_gigaword_train
-cd $SFT_PATH
-echo
-echo ">>>Evaluating gigaword for: $SFT_PATH"
-uv run accelerate launch -m lm_eval \
-    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-    --model hf \
-    --model_args pretrained=. \
-    --tasks gigaword \
-    --log_samples \
-    --output_path eval/gigaword
+# SFT_PATH=$MODEL_PATH-sft_gigaword_train
+# cd $SFT_PATH
+# echo
+# echo ">>>Evaluating gigaword for: $SFT_PATH"
+# uv run accelerate launch -m lm_eval \
+#     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+#     --model hf \
+#     --model_args pretrained=. \
+#     --tasks gigaword \
+#     --log_samples \
+#     --output_path eval/gigaword

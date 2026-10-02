@@ -21,10 +21,10 @@ do
 done
 
 
-SFT_PATH=$INIT_MODEL-xsum
+SFT_PATH=$INIT_MODEL-sft_xsum
 cd $SFT_PATH
 echo
-echo ">>>Evaluating gigaword for: $SFT_PATH"
+echo ">>>Evaluating xsum for: $SFT_PATH"
 uv run accelerate launch -m lm_eval \
     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
     --model hf \
