@@ -26,8 +26,8 @@ def read_args():
         '--data-name', '-dn', dest='data_name', type=str, required=True,
         choices=[
             'arc_easy', 'arc_challenge', 'boolq', 'qasc', "squad_v2", "based_squad", "squadv2",
-            "cnn_dailymail", "mintaka", "cwq", "metaqa", "google_re", "commonsense_qa",
-            "triviaqa_rc_nocontext", "piqa", "winogrande", "clasheval", "nq_swap", "race",
+            "cnn_dailymail", "mintaka", "cwq", "metaqa", "google_re", "google_re_mix_short", "google_re_mix_conflict_short",
+            "commonsense_qa", "triviaqa_rc_nocontext", "piqa", "winogrande", "clasheval", "nq_swap", "race",
             "triviaqa_rc_context", "google_boolq_core", "xsum", "samsum", "gigaword", "mrpc", "paws_en"],
         help='Name of the dataset to load from Hugging Face'
     )
@@ -135,7 +135,6 @@ def construct_qa(
     if core_replace_config["count"]:
         prompt_core  = generate_core_for_texts([result["prompt"]], multi_process=False, lower_text=False, config=core_replace_config, aoa=AOA)
         result["token_num"] = prompt_core["token_num"][0]
-        result["prompt_core"] = prompt_core["core"][0]
         result["content_words_num"] = prompt_core["content_words_num"][0]
         result["replaced_ent_num"] = prompt_core["replaced_ent_num"][0]
         result["replaced_unk_num"] = prompt_core["replaced_unk_num"][0]
@@ -160,6 +159,7 @@ def construct_qa(
         result["choices"] = choices_core
         result["answer"] = answer_core
         result["answers"] = answers_core
+        result["prompt_ori"] = result["prompt"]
         result["prompt"] = prompt_core
 
     return result
@@ -841,6 +841,33 @@ def generate_qa_data_from_google_re(dataset: list, md: bool, probing: bool, lowe
     return qa_data
 
 
+def generate_qa_data_from_google_re_mix(dataset: list, md: bool, probing: bool, core_replace_config: dict) -> list[dict]:
+    qa_data = []
+    for doc in tqdm(dataset, total=len(dataset), desc="Generating QA data"):
+        qid = doc["id"]
+        context = doc["ori_context"]
+        question = doc["ori_question"]
+        answer = doc["answer"].strip()
+
+        prompt = f"Background: {context}\n\nQuestion: {question}\n\nAnswer: "
+        qa_data.append(
+            construct_qa(
+                qid=str(qid),
+                context=context,
+                question=question,
+                choices=[],
+                choices_str="",
+                answer=answer,
+                md=md,
+                probing=probing,
+                lower_text=False,
+                argkv={"prompt": prompt},
+                core_replace_config=core_replace_config
+            )
+        )
+    return qa_data
+
+
 def generate_qa_data_from_commonsense_qa(dataset: list, md: bool, probing: bool, lower_text: bool, core_replace_config: dict) -> list[dict]:
     qa_data = []
     for sample in tqdm(dataset, total=len(dataset), desc="Generating QA data"):
@@ -1096,10 +1123,26 @@ def load_mintaka(file_path: str) -> dict:
     return dataset
 
 
+def load_google_re_mix(file_path: str) -> dict:
+    dataset = {}
+    for split in ["train", "dev", "test"]:
+        fn = Path(file_path) / f"{split}.json"
+        if not fn.exists():
+            print(f"File {fn} does not exist, skipping.")
+            continue
+        print(f"Loading data from {fn}")
+        with open(fn, 'r') as f:
+            dataset[split] = json.load(f)
+    return dataset
+
+
 def load_cwq(file_path: str) -> dict:
     dataset = {}
     for split in ["train", "dev", "test"]:
         fn = Path(file_path) / f"ComplexWebQuestions_{split}.json"
+        if not fn.exists():
+            print(f"File {fn} does not exist, skipping.")
+            continue
         print(f"Loading data from {fn}")
         with open(fn, 'r') as f:
             dataset[split] = json.load(f)
@@ -1173,6 +1216,10 @@ elif args.data_name == "google_re":
     dataset_dict = load_google_re(args.local_path)
 elif args.data_name == "google_re_conflict":
     dataset_dict = load_google_re(args.local_path)
+elif args.data_name == "google_re_mix_short":
+    dataset_dict = load_google_re_mix(args.local_path)
+elif args.data_name == "google_re_mix_conflict_short":
+    dataset_dict = load_google_re_mix(args.local_path)
 elif args.data_name == "clasheval":
     dataset_dict = load_dataset("sagnikrayc/clasheval")
 elif args.data_name == "triviaqa_rc_context":
@@ -1252,6 +1299,7 @@ for split, dataset in dataset_dict.items():
         # https://github.com/yuyuz/MetaQA?tab=readme-ov-file
         assert isinstance(dataset, list)
         qa_data = generate_qa_data_from_metaqa(dataset, args.markdown, args.probing, args.lower_text, core_config)
+
     elif args.data_name == "google_re":
         # https://github.com/facebookresearch/LAMA?tab=readme-ov-file
         assert isinstance(dataset, list)
@@ -1260,6 +1308,13 @@ for split, dataset in dataset_dict.items():
         # https://github.com/facebookresearch/LAMA?tab=readme-ov-file
         assert isinstance(dataset, list)
         qa_data = generate_qa_data_from_google_re(dataset, args.markdown, args.probing, args.lower_text, args.context_key, conflict=args.conflict, core_replace_config=core_config)
+    elif args.data_name == "google_re_mix_short":
+        assert isinstance(dataset, list)
+        qa_data = generate_qa_data_from_google_re_mix(dataset, args.markdown, args.probing, core_replace_config=core_config)
+    elif args.data_name == "google_re_mix_conflict_short":
+        assert isinstance(dataset, list)
+        qa_data = generate_qa_data_from_google_re_mix(dataset, args.markdown, args.probing, core_replace_config=core_config)
+
     elif args.data_name == "commonsense_qa":
         # https://huggingface.co/datasets/tau/commonsense_qa
         assert isinstance(dataset, Dataset)

@@ -1,0 +1,38 @@
+# configs/train.yaml
+base:
+  path: null
+
+model:
+  config: null
+  init_model: null
+  checkpoint: null
+  freeze_layers: 0
+
+data:
+  name: null
+  paths:
+    - ${base.path}/input/tokenized/${model.config}/ext/concat/${data.name}/train
+  limits:
+    - 0
+  shuffle: true
+
+training:
+  epochs: 3
+  batch_size: 4
+  learning_rate: 5e-5
+  eval_strategy: "no"
+  checkpoints_per_epoch: 1
+  save_checkpoints_num: 1
+  attn_implementation: "sdpa"
+
+wandb:
+  group: ${model.config}_ext
+  tags:
+    - ext
+
+output:
+  path: ${model.init_model}-ext_${data.name}_train
+
+hydra:
+  run:
+    dir: ${output.path}

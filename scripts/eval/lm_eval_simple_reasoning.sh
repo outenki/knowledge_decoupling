@@ -12,27 +12,27 @@ MODEL_PATH=$1
 
 cd $MODEL_PATH
 
-echo
-echo ">>> Evaluating ewok for: $MODEL_PATH"
-uv run accelerate launch -m lm_eval \
-    --model hf \
-    --model_args pretrained=. \
-    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-    --tasks ewok \
-    --log_samples \
-    --output_path eval/ewok
+# echo
+# echo ">>> Evaluating ewok for: $MODEL_PATH"
+# uv run accelerate launch -m lm_eval \
+#     --model hf \
+#     --model_args pretrained=. \
+#     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+#     --tasks ewok \
+#     --log_samples \
+#     --output_path eval/ewok
 
-SFT_PATH=$MODEL_PATH-sft_commonsense_qa_train
-cd $SFT_PATH
-echo
-echo ">>>Evaluating commonsense_qa for: $SFT_PATH"
-uv run accelerate launch -m lm_eval \
-    --model hf \
-    --model_args pretrained=. \
-    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-    --tasks commonsense_qa \
-    --log_samples \
-    --output_path eval/commonsense_qa
+# SFT_PATH=$MODEL_PATH-sft_commonsense_qa_train
+# cd $SFT_PATH
+# echo
+# echo ">>>Evaluating commonsense_qa for: $SFT_PATH"
+# uv run accelerate launch -m lm_eval \
+#     --model hf \
+#     --model_args pretrained=. \
+#     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+#     --tasks commonsense_qa \
+#     --log_samples \
+#     --output_path eval/commonsense_qa
 
 
 SFT_PATH=$MODEL_PATH-sft_winogrande_train
@@ -48,14 +48,14 @@ uv run accelerate launch -m lm_eval \
     --output_path eval/winogrande
 
 
-SFT_PATH=$MODEL_PATH-sft_piqa_train
-cd $SFT_PATH
-echo
-echo ">>> Evaluating piqa for: $SFT_PATH"
-uv run accelerate launch -m lm_eval \
-    --model hf \
-    --model_args pretrained=. \
-    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-    --tasks  piqa\
-    --log_samples \
-    --output_path eval/piqa
+# SFT_PATH=$MODEL_PATH-sft_piqa_train
+# cd $SFT_PATH
+# echo
+# echo ">>> Evaluating piqa for: $SFT_PATH"
+# uv run accelerate launch -m lm_eval \
+#     --model hf \
+#     --model_args pretrained=. \
+#     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+#     --tasks  piqa\
+#     --log_samples \
+#     --output_path eval/piqa

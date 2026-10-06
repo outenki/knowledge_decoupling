@@ -129,7 +129,7 @@ def read_args():
     parser.add_argument("--load-from", "-lf", type=str, choices=["local", "hf"], required=True)
     parser.add_argument("--data-type", "-dt", type=str, default=None)
     parser.add_argument("--data-column", "-dc", type=str, choices=["text", "nonce", "core"], default="text")
-    parser.add_argument("--split", "-sp", type=str, required=True, help="train/dev/test")
+    parser.add_argument("--split", "-sp", type=str, required=False, help="train/dev/test")
     parser.add_argument("--tokenize", "-t", action="store_true")
     parser.add_argument("--slice", "-s", action="store_true")
     parser.add_argument("--block-size", "-bs", type=int, required=True)
@@ -323,6 +323,7 @@ def main():
 
     print(">>> Loading data ...")
     datasets = load_custom_dataset(args.data_path, args.data_type, args.load_from)
+    # import ipdb; ipdb.set_trace()
     if isinstance(datasets, dict):
         dataset = datasets[args.split]
     else:

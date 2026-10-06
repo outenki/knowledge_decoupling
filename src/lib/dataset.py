@@ -131,25 +131,29 @@ def drop_skipped_sources(ds: Dataset, skip_sources):
 def format_qa_prompt(example):
     prompt = example.get("prompt", "")
     response = example.get("answer", "")
-    if prompt and response:
-        return prompt, response
-    prompt = ""
-    context = example.get("context", "").strip()
-    if context:
-        prompt += "Background:\n" + context + "\n\n" 
-
-    question = example["question"]
-    prompt += "Question: " + question + "\n\n"
-
-    options = ""
-    if "options" in example:
-        options = "\n".join(example["options"]).strip()
-    if options:
-        prompt += "Options:\n" + options + "\n\n"
-
-    prompt += "Answer:\n"
-    response = example["answer"]
+    assert prompt and response
     return prompt, response
+
+    # if prompt and response:
+        # If the example already has a prompt and response, return them directly
+        # No formatting is needed
+    # prompt = ""
+    # context = example.get("context", "").strip()
+    # if context:
+    #     prompt += "Background:\n" + context + "\n\n" 
+
+    # question = example["question"]
+    # prompt += "Question: " + question + "\n\n"
+
+    # options = ""
+    # if "options" in example:
+    #     options = "\n".join(example["options"]).strip()
+    # if options:
+    #     prompt += "Options:\n" + options + "\n\n"
+
+    # prompt += "Answer:\n"
+    # response = example["answer"]
+    # return context, prompt, response
 
 
 def generate_qa_message(example):

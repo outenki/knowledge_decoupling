@@ -15,18 +15,22 @@ parser.add_argument(
 )
 parser.add_argument('--output-path', '-output', dest='output_path', type=str,)
 parser.add_argument(
-    '--tokenizer', '-tk', dest='tokenizer', type=str,
+    '--tokenizer', dest='tokenizer', type=str,
 )
 parser.add_argument(
-    '--apply-chat-template', '-ct', dest='chat_template', action='store_true',
+    '--apply-chat-template', dest='chat_template', action='store_true',
     help='Apply chat template for tokenization'
 )
 parser.add_argument(
-    '--skip-answer', '-sa', dest='skip_answer', action='store_true',
+    '--skip-answer', dest='skip_answer', action='store_true',
     help='Skip answer field (for unsupervised pretraining or nonce model training).\n Only applies when --apply-chat-template is not set.'
 )
 parser.add_argument(
-    '--mask-prompt', '-mp', dest='mask_prompt', action='store_true',
+    '--only-context', dest='only_context', action='store_true',
+    help='Only include context'
+)
+parser.add_argument(
+    '--mask-prompt', dest='mask_prompt', action='store_true',
     help='Mask prompt for SFT'
 )
 parser.add_argument(
@@ -111,13 +115,26 @@ def preprocess_chat_template(example):
 
 
 def preprocess_concat(example):
+    context = example.get("context", "")
     prompt, response = format_qa_prompt(example)
 
+    c_out = TOKENIZER(context, add_special_tokens=False)
     p_out = TOKENIZER(prompt, add_special_tokens=False)
     r_out = TOKENIZER(response + TOKENIZER.eos_token, add_special_tokens=False)
 
+    context_ids = c_out.input_ids if c_out.input_ids is not None else []
     prompt_ids = p_out.input_ids if p_out.input_ids is not None else []
     response_ids = r_out.input_ids if r_out.input_ids is not None else []
+    if args.only_context:
+        input_ids = context_ids
+        attention_mask = [1] * len(input_ids)
+        labels = input_ids
+        input_ids, attention_mask, labels = truncate_and_pad(input_ids, attention_mask, labels)
+        return {
+            "input_ids": input_ids,
+            "attention_mask": attention_mask,
+            "labels": labels,
+        }
 
     if args.skip_answer:
         response_ids = []
@@ -174,14 +191,28 @@ elif input_path.suffix == ".jsonl":
 train_ds = Dataset.from_list(train_js)
 example = train_ds[0]
 if args.chat_template:
+    template = generate_qa_message(example)
     print("\n*****Chat Template:*****")
-    print(generate_qa_message(example))
+    print(template)
     print("************************\n")
+    # save template to output_path
+    template_path = Path(output_path) / "chat_template.json"
+    with open(template_path, "w") as f:
+        json.dump(template, f, indent=4)
 else:
+    context = example.get("context", "")
     prompt, response = format_qa_prompt(example)
+    if args.only_context:
+        template = context
+    else:
+        template = prompt + response
     print("\n*****Concat Template:*****")
-    print(prompt + response)
+    print(template)
     print("**************************\n")
+    # save template to output_path
+    template_path = Path(output_path) / "concat_template.json"
+    with open(template_path, "w") as f:
+        json.dump({"template": template}, f, indent=4)
 
 tokenized_train = train_ds.map(
     preprocess,

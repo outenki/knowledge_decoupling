@@ -1,39 +1,6 @@
 #!/bin/bash
 
 
-# echo ">>> QASC"
-# uv run python generate_qa_data.py -dn qasc -p -o $OUTPUT_PATH/qasc
-# echo ">>> mintaka"
-# uv run python generate_qa_data.py -dn mintaka -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/mintaka/data -o $OUTPUT_PATH/mintaka
-# echo ">>> mintaka_multihop"
-# uv run python generate_qa_data.py -dn mintaka -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/mintaka/data -o $OUTPUT_PATH/mintaka_multihop
-# echo ">>> complex_web_questions"
-# uv run python generate_qa_data.py -dn cwq -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/complexwebquestions_V1_1 -o $OUTPUT_PATH/cwq
-# echo ">>> metaqa_1hop"
-# uv run python generate_qa_data.py -dn metaqa -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/metaqa_ntm/metaqa_ntm_1hop -o $OUTPUT_PATH/metaqa_1hop
-# echo ">>> metaqa_2hop"
-# uv run python generate_qa_data.py -dn metaqa -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/metaqa_ntm/metaqa_ntm_2hop -o $OUTPUT_PATH/metaqa_2hop
-# echo ">>> metaqa_3hop"
-# uv run python generate_qa_data.py -dn metaqa -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/metaqa_ntm/metaqa_ntm_3hop -o $OUTPUT_PATH/metaqa_3hop
-# echo ">>> google_re"
-# uv run python generate_qa_data.py -dn google_re -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/Google_RE -o $OUTPUT_PATH/google_re_long_context -ck snippet
-# uv run python generate_qa_data.py -dn google_re -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/Google_RE -o $OUTPUT_PATH/google_re_short_context -ck considered_sentences
-# echo ">>> google_re_conflict"
-# conflict as evaluate data
-# uv run python generate_qa_data.py -cc mod -dn google_re -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/Google_RE_conflict -o $OUTPUT_PATH/google_re_long_context -ck snippet
-# uv run python generate_qa_data.py -cc mod -dn google_re -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/Google_RE_conflict -o $OUTPUT_PATH/google_re_short_context -ck considered_sentences
-# ori as ext training data 
-# uv run python generate_qa_data.py -cc ori -dn google_re -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/Google_RE_conflict -o $EXT_TRAINING_PATH/google_re_long_context -ck snippet
-# uv run python generate_qa_data.py -cc ori -dn google_re -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/Google_RE_conflict -o $EXT_TRAINING_PATH/google_re_short_context -ck considered_sentences
-# echo ">>> google_re no context"
-# uv run python generate_qa_data.py -dn google_re -lp /home/pj25000107/ku50001566/projects/knowledge_decoupling/data/Google_RE -o $OUTPUT_PATH/google_re_no_context -ck ""
-# echo ">>> race"
-# uv run python generate_qa_data.py -dn race -lp $PROJECT_BASE_PATH/data/race -o $OUTPUT_PATH/race -ck ""
-# echo ">>> SquAD_based"
-# uv run python generate_qa_data.py -dn based_squad -lp $PROJECT_BASE_PATH/data/based_squad -o $OUTPUT_PATH/based_squad -ck ""
-# echo ">>> SquAD_v2"
-# uv run python generate_qa_data.py -dn squadv2 --core-count -o $OUTPUT_PATH/jsonl/squadv2 -ot jsonl --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv -at 10 --split validation --ent-generator "ENT_ID" --unk-generator "UNK_ID"
-
 OUTPUT_PATH=$PROJECT_BASE_PATH/input/evaluate_data/jsonl
 EXT_TRAINING_PATH=$PROJECT_BASE_PATH/data/ext
 SFT_TRAINING_PATH=$PROJECT_BASE_PATH/data/sft
@@ -124,18 +91,237 @@ SFT_TRAINING_PATH=$PROJECT_BASE_PATH/data/sft
 # echo ">>> triviaqa_rc_nocontext"
 # uv run python generate_qa_data.py -dn triviaqa_rc_nocontext -o $OUTPUT_PATH/jsonl/triviaqa_rc_nocontext -ot jsonl
 
-echo ">>> google_boolq_rnd_id"
-uv run python generate_qa_data.py  \
-    -dn boolq \
-    -o $OUTPUT_PATH/jsonl/google_boolq_rnd_id \
-    --core-replace \
-    --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv \
-    -at 10 \
-    --ent-generator "ID" \
-    --unk-generator "ID" \
-    --core-count \
-    --core-delimiter "<>" \
-    -ot jsonl
+# echo ">>> google_boolq_rnd_id"
+# uv run python generate_qa_data.py  \
+#     -dn boolq \
+#     -o $OUTPUT_PATH/jsonl/google_boolq_rnd_id \
+#     --core-replace \
+#     --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv \
+#     -at 10 \
+#     --ent-generator "ID" \
+#     --unk-generator "ID" \
+#     --core-count \
+#     --core-delimiter "<>" \
+#     -ot jsonl
+
+# echo ">>> arc_easy_count"
+# uv run python generate_qa_data.py \
+#     -dn arc_easy \
+#     -o $OUTPUT_PATH/jsonl/arc_easy_count \
+#     --core-replace \
+#     --core-count \
+#     --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv \
+#     -at 10 \
+#     --split test \
+#     --ent-generator "ID" \
+#     --unk-generator "ID" \
+#     --core-delimiter "<>" \
+#     -ot jsonl
+
+# echo ">>> arc_challenge_count"
+# uv run python generate_qa_data.py \
+#     -dn arc_challenge \
+#     -o $OUTPUT_PATH/jsonl/arc_challenge_count \
+#     --core-replace \
+#     --core-count \
+#     --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv \
+#     -at 10 \
+#     --split test \
+#     --ent-generator "ID" \
+#     --unk-generator "ID" \
+#     --core-delimiter "<>" \
+#     -ot jsonl
+
+# echo ">>> rc_nocontext_count"
+# uv run python generate_qa_data.py \
+#     -dn triviaqa_rc_nocontext \
+#     -o $OUTPUT_PATH/jsonl/triviaqa_rc_nocontext_count \
+#     --core-replace \
+#     --core-count \
+#     --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv \
+#     -at 10 \
+#     --split test \
+#     --ent-generator "ID" \
+#     --unk-generator "ID" \
+#     --core-delimiter "<>" \
+#     -ot jsonl
+
+# echo ">>> google_boolq_rnd_id_count"
+# uv run python generate_qa_data.py  \
+#     -dn boolq \
+#     -o $OUTPUT_PATH/jsonl/google_boolq_rnd_id_count \
+#     --core-replace \
+#     --core-count \
+#     --split validation \
+#     --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv \
+#     -at 10 \
+#     --ent-generator "ID" \
+#     --unk-generator "ID" \
+#     --core-count \
+#     --core-delimiter "<>" \
+#     -ot jsonl
+
+# echo ">>> squadv2_rnd_id_count"
+# uv run python generate_qa_data.py \
+#     -dn squadv2 \
+#     -o $OUTPUT_PATH/jsonl/squadv2_rnd_id_count \
+#     --core-replace \
+#     --core-count \
+#     --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv \
+#     -at 10 \
+#     --split validation \
+#     --ent-generator "ID" \
+#     --unk-generator "ID" \
+#     --core-delimiter "<>" \
+#     -ot jsonl
+
+# echo ">>> squadv2_rnd_id_count"
+# uv run python generate_qa_data.py \
+#     -dn squadv2 \
+#     -o $OUTPUT_PATH/jsonl/squadv2_rnd_id_count \
+#     --core-replace \
+#     --core-count \
+#     --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv \
+#     -at 10 \
+#     --split test \
+#     --ent-generator "ID" \
+#     --unk-generator "ID" \
+#     --core-delimiter "<>" \
+#     -ot jsonl
+
+# echo ">>> commonsenseqa_rnd_id_count"
+# uv run python generate_qa_data.py \
+#     -dn commonsense_qa \
+#     -o $OUTPUT_PATH/jsonl/commonsense_qa_count \
+#     --core-replace \
+#     --core-count \
+#     --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv \
+#     -at 10 \
+#     --split test \
+#     --ent-generator "ID" \
+#     --unk-generator "ID" \
+#     --core-delimiter "<>" \
+#     -ot jsonl
+# uv run python generate_qa_data.py \
+#     -dn commonsense_qa \
+#     -o $OUTPUT_PATH/jsonl/commonsense_qa_count \
+#     --core-replace \
+#     --core-count \
+#     --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv \
+#     -at 10 \
+#     --split validation \
+#     --ent-generator "ID" \
+#     --unk-generator "ID" \
+#     --core-delimiter "<>" \
+#     -ot jsonl
+
+# echo ">>> ewok_rnd_id_count"
+# uv run python generate_qa_data.py \
+#     -dn ewok \
+#     -o $OUTPUT_PATH/jsonl/ewok_count \
+#     --core-replace \
+#     --core-count \
+#     --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv \
+#     -at 10 \
+#     --split test \
+#     --ent-generator "ID" \
+#     --unk-generator "ID" \
+#     --core-delimiter "<>" \
+#     -ot jsonl
+# uv run python generate_qa_data.py \
+#     -dn ewok \
+#     -o $OUTPUT_PATH/jsonl/ewok_count \
+#     --core-replace \
+#     --core-count \
+#     --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv \
+#     -at 10 \
+#     --split validation \
+#     --ent-generator "ID" \
+#     --unk-generator "ID" \
+#     --core-delimiter "<>" \
+#     -ot jsonl
+
+# echo ">>> winogrande_rnd_id_count"
+# uv run python generate_qa_data.py \
+#     -dn winogrande \
+#     -o $OUTPUT_PATH/jsonl/winogrande_count \
+#     --core-replace \
+#     --core-count \
+#     --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv \
+#     -at 10 \
+#     --split test \
+#     --ent-generator "ID" \
+#     --unk-generator "ID" \
+#     --core-delimiter "<>" \
+#     -ot jsonl
+# uv run python generate_qa_data.py \
+#     -dn winogrande \
+#     -o $OUTPUT_PATH/jsonl/winogrande_count \
+#     --core-replace \
+#     --core-count \
+#     --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv \
+#     -at 10 \
+#     --split validation \
+#     --ent-generator "ID" \
+#     --unk-generator "ID" \
+#     --core-delimiter "<>" \
+#     -ot jsonl
+
+# echo ">>> piqa_rnd_id_count"
+# uv run python generate_qa_data.py \
+#     -dn piqa \
+#     -o $OUTPUT_PATH/jsonl/piqa_count \
+#     --core-replace \
+#     --core-count \
+#     --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv \
+#     -at 10 \
+#     --split test \
+#     --ent-generator "ID" \
+#     --unk-generator "ID" \
+#     --core-delimiter "<>" \
+#     -ot jsonl
+# uv run python generate_qa_data.py \
+#     -dn piqa \
+#     -o $OUTPUT_PATH/jsonl/piqa_count \
+#     --core-replace \
+#     --core-count \
+#     --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv \
+#     -at 10 \
+#     --split validation \
+#     --ent-generator "ID" \
+#     --unk-generator "ID" \
+#     --core-delimiter "<>" \
+#     -ot jsonl
+
+
+# echo ">>> triviaqa_rc_context_rnd_id_count"
+# uv run python generate_qa_data.py \
+#     -dn triviaqa_rc_context \
+#     -o $OUTPUT_PATH/jsonl/triviaqa_rc_context_rnd_id_count \
+#     --core-replace \
+#     --core-count \
+#     --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv \
+#     -at 10 \
+#     --split validation \
+#     --ent-generator "ID" \
+#     --unk-generator "ID" \
+#     --core-delimiter "<>" \
+#     -ot jsonl
+
+# echo ">>> triviaqa_rc_context_rnd_id_count"
+# uv run python generate_qa_data.py \
+#     -dn triviaqa_rc_context \
+#     -o $OUTPUT_PATH/jsonl/triviaqa_rc_context_rnd_id_count \
+#     --core-replace \
+#     --core-count \
+#     --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv \
+#     -at 10 \
+#     --split test \
+#     --ent-generator "ID" \
+#     --unk-generator "ID" \
+#     --core-delimiter "<>" \
+#     -ot jsonl
+
 
 # echo ">>> squadv2_core"
 # uv run python generate_qa_data.py \
@@ -178,3 +364,17 @@ uv run python generate_qa_data.py  \
 
 # echo ">>> winogrande"
 # uv run python generate_qa_data.py -dn winogrande -o $OUTPUT_PATH/jsonl/winogrande -ot jsonl
+
+echo ">>> google_re_mix_conflict_short"
+uv run python generate_qa_data.py \
+    -dn google_re_mix_conflict_short \
+    -lp /home/pj24001974/ku50001571/projects/knowledge_decoupling/input/evaluate_data/json/unformated/bak/google_re_short_context \
+    -o $OUTPUT_PATH/google_re_mix_conflict_short \
+    -ot jsonl
+
+echo ">>> google_re_mix_short"
+uv run python generate_qa_data.py \
+    -dn google_re_mix_short \
+    -lp /home/pj24001974/ku50001571/projects/knowledge_decoupling/input/evaluate_data/json/unformated/bak/google_re_short_context \
+    -o $OUTPUT_PATH/google_re_mix_short \
+    -ot jsonl

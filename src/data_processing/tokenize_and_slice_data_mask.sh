@@ -6,7 +6,7 @@ PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-$HOME/projects/knowledge_decoupling}"
 DATA_NAME=google_re_mix_short
 DATA_PATH=/home/pj24001974/ku50001571/projects/knowledge_decoupling/input/evaluate_data/dataset/$DATA_NAME/test
 AOA_PATH=$PROJECT_BASE_PATH/data/AOA/aoa.csv
-OUTPUT_PATH=$PROJECT_BASE_PATH/input/tokenized/$TOKENIZER/ext/$DATA_NAME-bs$BLOCK_SIZE
+OUTPUT_PATH=$PROJECT_BASE_PATH/input/tokenized/$TOKENIZER/ext/$DATA_NAME-mask-bs$BLOCK_SIZE
 
 start_time=$(date +"%s")
 echo "start time: $(date -d @$start_time +"%D %T")"
@@ -17,6 +17,7 @@ uv run python $PROJECT_BASE_PATH/src/data_processing/tokenize_and_slice_data.py 
     -dp $DATA_PATH \
     -lf local \
     -dc text \
+    -aoa $AOA_PATH \
     -s \
     -bs $BLOCK_SIZE \
     -t \
