@@ -8,7 +8,7 @@ export WANDB_MODE=offline
 
 
 for SFT_DATA in \
-    commonsense_qa
+    samsum
 do
     # sft
     cd $PROJECT_BASE_PATH/src/train
@@ -20,14 +20,14 @@ do
         data.name=$SFT_DATA
 done
 
-SFT_PATH=$INIT_MODEL-sft_commonsense_qa_train
+SFT_PATH=$INIT_MODEL-sft_samsum_train
 cd $SFT_PATH
 echo
-echo ">>>Evaluating cnn_dailymail for: $SFT_PATH"
+echo ">>>Evaluating samsum for: $SFT_PATH"
 uv run accelerate launch -m lm_eval \
     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
     --model hf \
     --model_args pretrained=. \
-    --tasks commonsense_qa \
+    --tasks samsum \
     --log_samples \
-    --output_path eval/commonsense_qa
+    --output_path eval/samsum

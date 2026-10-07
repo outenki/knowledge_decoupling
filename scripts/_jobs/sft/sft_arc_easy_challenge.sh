@@ -43,4 +43,4 @@ uv run accelerate launch -m lm_eval \
     --model_args pretrained=. \
     --tasks arc_challenge \
     --log_samples \
-    --output_path eval/arc_easy
+    --output_path eval/arc_challenge
