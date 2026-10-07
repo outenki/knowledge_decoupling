@@ -368,13 +368,13 @@ SFT_TRAINING_PATH=$PROJECT_BASE_PATH/data/sft
 echo ">>> google_re_mix_conflict_short"
 uv run python generate_qa_data.py \
     -dn google_re_mix_conflict_short \
-    -lp /home/pj24001974/ku50001571/projects/knowledge_decoupling/input/evaluate_data/json/unformated/bak/google_re_short_context \
+    -lp /home/pj24001974/ku50001571/projects/knowledge_decoupling/input/evaluate_data/json/unformated/bak/google_re_conflict_short_context \
     -o $OUTPUT_PATH/google_re_mix_conflict_short \
     -ot jsonl
 
-echo ">>> google_re_mix_short"
-uv run python generate_qa_data.py \
-    -dn google_re_mix_short \
-    -lp /home/pj24001974/ku50001571/projects/knowledge_decoupling/input/evaluate_data/json/unformated/bak/google_re_short_context \
-    -o $OUTPUT_PATH/google_re_mix_short \
-    -ot jsonl
+# echo ">>> google_re_mix_short"
+# uv run python generate_qa_data.py \
+#     -dn google_re_mix_short \
+#     -lp /home/pj24001974/ku50001571/projects/knowledge_decoupling/input/evaluate_data/json/unformated/bak/google_re_short_context \
+#     -o $OUTPUT_PATH/google_re_mix_short \
+#     -ot jsonl
