@@ -1,0 +1,4 @@
+- base.path=/lustre1/work/c30897/wtq/projects/knowledge_decoupling
+- model.config=meta-llama/Llama-3.2-1B
+- model.init_model=
+- data.name=google_re_mix_short

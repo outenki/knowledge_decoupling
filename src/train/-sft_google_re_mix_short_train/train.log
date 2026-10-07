@@ -1,0 +1,2 @@
+[2026-10-06 18:55:28,597][httpx][INFO] - HTTP Request: HEAD https://huggingface.co/meta-llama/Llama-3.2-1B/resolve/main/config.json "HTTP/1.1 200 OK"
+[2026-10-06 18:55:28,807][httpx][INFO] - HTTP Request: GET https://huggingface.co/meta-llama/Llama-3.2-1B/resolve/main/config.json "HTTP/1.1 200 OK"

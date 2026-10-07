@@ -52,7 +52,7 @@ def train_model_with_data(
     effective_batch_size = per_device_train_batch_size * gradient_accumulation_steps * world_size
 
     # 计算总步数
-    steps_per_epoch = train_dataset_size // effective_batch_size
+    steps_per_epoch = max(1, train_dataset_size // effective_batch_size)
     total_steps = steps_per_epoch * epochs
 
     # 计算 Warmup Steps
@@ -60,10 +60,11 @@ def train_model_with_data(
 
     # 计算保存和评估间隔
     save_steps = max(1, total_steps // (checkpoints_per_epoch * epochs))
-    eval_steps = save_steps // 5
+    eval_steps = max(1, save_steps // 5)
     logging_steps = eval_steps
 
     print(f">>> Total training steps: {total_steps}")
+    print(f">>> Warmup training steps: {warmup_steps}")
     print(f">>> Targeting {checkpoints_per_epoch} checkpoints per epoch.")
     print(f">>> Computed save steps/times: {save_steps}/{total_steps // save_steps}")
     print(f">>> Computed eval/logging steps and times: {logging_steps}/{total_steps // logging_steps}")
@@ -106,9 +107,9 @@ def train_model_with_data(
     def ws_decay(step):
         if step < warmup_steps:
             return step / warmup_steps
-        progress = (step - warmup_steps) / (total_steps - warmup_steps)
+        progress = (step - warmup_steps) / max(1, total_steps - warmup_steps)
         cosine = 0.5 * (1 + math.cos(math.pi * progress))
-        wsd = DECAY_RATE ** ((step - warmup_steps) / steps_per_epoch)
+        wsd = DECAY_RATE ** ((step - warmup_steps) / max(1, steps_per_epoch))
         return cosine * wsd
     scheduler_ws = LambdaLR(optimizer, lr_lambda=ws_decay)
     

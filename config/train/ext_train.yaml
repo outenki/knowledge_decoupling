@@ -31,7 +31,7 @@ wandb:
     - ext
 
 output:
-  path: ${model.init_model}-ext_${data.name}_train
+  path: ${model.init_model}-ext_${data.name}
 
 hydra:
   run:
