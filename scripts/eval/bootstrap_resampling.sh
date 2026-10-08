@@ -55,15 +55,15 @@ TASK=google_re_mix_short
 echo
 echo "Bootstrap resampling for ${MASK_DIR}/eval/${TASK}..."
 uv run $PROJECT_BASE_PATH/scripts/eval/bootstrap_resampling.py \
-    -sml $SML_DIR/SmolLM2-135M-20B-sml-bs4096-sft_google_re_mix_short_train/eval/${TASK} \
-    -core $MASK_DIR/SmolLM2-135M-20B-sml_mask-bs4096-sft_google_re_mix_short_train/eval/${TASK} \
+    -sml $SML_DIR-sft_google_re_mix_short_train/eval/${TASK} \
+    -core $MASK_DIR-sft_google_re_mix_short_train/eval/${TASK} \
     -m $METRIC \
-    -o $MASK_DIR/SmolLM2-135M-20B-sml_mask-bs4096-sft_google_re_mix_short_train/eval/${TASK}/bootstrap_resampling_results.json
+    -o $MASK_DIR-sft_google_re_mix_short_train/eval/${TASK}/bootstrap_resampling_results.json
 TASK=google_re_mix_conflict_short
 echo
 echo "Bootstrap resampling for ${MASK_DIR}/eval/${TASK}..."
 uv run $PROJECT_BASE_PATH/scripts/eval/bootstrap_resampling.py \
-    -sml $SML_DIR/SmolLM2-135M-20B-sml-bs4096-sft_google_re_mix_short_train/eval/${TASK} \
-    -core $MASK_DIR/SmolLM2-135M-20B-sml_mask-bs4096-sft_google_re_mix_short_train/eval/${TASK} \
+    -sml $SML_DIR-sft_google_re_mix_short_train/eval/${TASK} \
+    -core $MASK_DIR-sft_google_re_mix_short_train/eval/${TASK} \
     -m $METRIC \
-    -o $MASK_DIR/SmolLM2-135M-20B-sml_mask-bs4096-sft_google_re_mix_short_train/eval/${TASK}/bootstrap_resampling_results.json
+    -o $MASK_DIR-sft_google_re_mix_short_train/eval/${TASK}/bootstrap_resampling_results.json
