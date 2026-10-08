@@ -8,7 +8,6 @@
 #PBS -N sm_blimp
 
 
-source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/eval
 
 sh lm_eval_blimp.sh $PROJECT_BASE_PATH/output/meta-llama/Llama-3.2-1B/no_warmup/sml_mask/checkpoints/check_1

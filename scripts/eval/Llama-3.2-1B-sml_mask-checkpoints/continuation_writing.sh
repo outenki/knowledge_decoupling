@@ -8,7 +8,6 @@
 #PBS -N sm_cont_writing
 
 
-source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/eval
 
 sh lm_eval_continuation_writing.sh $PROJECT_BASE_PATH/output/meta-llama/Llama-3.2-1B/no_warmup/sml_mask/checkpoints/check_1
