@@ -365,12 +365,15 @@ SFT_TRAINING_PATH=$PROJECT_BASE_PATH/data/sft
 # echo ">>> winogrande"
 # uv run python generate_qa_data.py -dn winogrande -o $OUTPUT_PATH/jsonl/winogrande -ot jsonl
 
-echo ">>> google_re_mix_conflict_short"
-uv run python generate_qa_data.py \
-    -dn google_re_mix_conflict_short \
-    -lp /home/pj24001974/ku50001571/projects/knowledge_decoupling/input/evaluate_data/json/unformated/bak/google_re_conflict_short_context \
-    -o $OUTPUT_PATH/google_re_mix_conflict_short \
-    -ot jsonl
+# for sub in pod pob ins edu dob; do
+#     echo ">>> google_re_${sub}"
+#     uv run python generate_qa_data.py \
+#         -dn google_re \
+#         -lp /home/pj24001974/ku50001571/projects/knowledge_decoupling/input/evaluate_data/json/google-relation-extraction-corpus-augmented/${sub} \
+#         -o $OUTPUT_PATH/google_re/${sub} \
+#         --split train \
+#         -ot jsonl
+# done
 
 # echo ">>> google_re_mix_short"
 # uv run python generate_qa_data.py \
@@ -378,3 +381,61 @@ uv run python generate_qa_data.py \
 #     -lp /home/pj24001974/ku50001571/projects/knowledge_decoupling/input/evaluate_data/json/unformated/bak/google_re_short_context \
 #     -o $OUTPUT_PATH/google_re_mix_short \
 #     -ot jsonl
+
+# echo ">>> clasheval_core"
+# uv run python generate_qa_data.py \
+#     -dn clasheval \
+#     -lp $PROJECT_BASE_PATH/input/evaluate_data/dataset/clasheval \
+#     --split val \
+#     -o $OUTPUT_PATH/clasheval_rnd_id \
+#     --core-replace \
+#     --core-count \
+#     --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv \
+#     -at 10 \
+#     --ent-generator "ID" \
+#     --unk-generator "ID" \
+#     --core-delimiter "<>" \
+#     -ot jsonl
+
+echo ">>> clasheval"
+uv run python generate_qa_data.py \
+    -dn clasheval \
+    -o $OUTPUT_PATH/clasheval \
+    -ot jsonl
+
+echo ">>> clasheval"
+uv run python generate_qa_data.py \
+    -dn clasheval \
+    --context-conflict \
+    -o $OUTPUT_PATH/clasheval_conflict \
+    -ot jsonl
+
+# echo ">>> nq_swap_core"
+# uv run python generate_qa_data.py \
+#     -dn nq_swap \
+#     -lp $PROJECT_BASE_PATH/input/evaluate_data/dataset/nq_swap \
+#     -o $OUTPUT_PATH/nq_swap_rnd_id \
+#     --core-replace \
+#     --core-count \
+#     --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv \
+#     -at 10 \
+#     --ent-generator "ID" \
+#     --unk-generator "ID" \
+#     --core-delimiter "<>" \
+#     -ot jsonl
+
+echo ">>> nq_swap"
+uv run python generate_qa_data.py \
+    -dn nq_swap \
+    -lp $PROJECT_BASE_PATH/input/evaluate_data/dataset/nq_swap \
+    -o $OUTPUT_PATH/nq_swap \
+    -ot jsonl
+
+echo ">>> nq_swap_conflict"
+uv run python generate_qa_data.py \
+    -dn nq_swap \
+    -lp $PROJECT_BASE_PATH/input/evaluate_data/dataset/nq_swap \
+    --context-conflict \
+    -o $OUTPUT_PATH/nq_swap_swap \
+    -ot jsonl
+

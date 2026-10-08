@@ -39,7 +39,7 @@ for TOKENIZER_NAME in meta-llama/Llama-3.2-1B; do
         # mrpc
         # google_re_mix_short
     for dn in \
-        google_re_mix_short
+        google_re
     do
         echo
         echo ">>>>>> $dn sft concat train"

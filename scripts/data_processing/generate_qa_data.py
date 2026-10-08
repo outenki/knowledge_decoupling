@@ -26,7 +26,7 @@ def read_args():
         '--data-name', '-dn', dest='data_name', type=str, required=True,
         choices=[
             'arc_easy', 'arc_challenge', 'boolq', 'qasc', "squad_v2", "based_squad", "squadv2",
-            "cnn_dailymail", "mintaka", "cwq", "metaqa", "google_re", "google_re_mix_short", "google_re_mix_conflict_short",
+            "cnn_dailymail", "mintaka", "cwq", "metaqa", "google_re", "google_re_mix_short",
             "commonsense_qa", "triviaqa_rc_nocontext", "piqa", "winogrande", "clasheval", "nq_swap", "race",
             "triviaqa_rc_context", "google_boolq_core", "xsum", "samsum", "gigaword", "mrpc", "paws_en"],
         help='Name of the dataset to load from Hugging Face'
@@ -44,12 +44,7 @@ def read_args():
     parser.add_argument('--core-delimiter', dest='core_delimiter', default="<>", help='Delimiter for core generation') 
     parser.add_argument('--probing', '-p', dest='probing', action='store_true')
     parser.add_argument(
-        '--context-conflict', '-cc', dest='context_conflict', type=str, choices=['ori', 'mod'], default='none',
-        help='For context conflict dataset.'
-    )
-    parser.add_argument(
-        '--context-key', '-ck', dest='context_key', type=str, required=False, default=None,
-        help='Should be one of "snippet" or "considered_sentences". Only used when data_name is google_re.'
+        '--context-conflict', dest='context_conflict', action='store_true', help='For context conflict dataset.'
     )
     parser.add_argument(
         '--output-path', '-o', dest='output_path', type=str, required=True,
@@ -758,69 +753,76 @@ def generate_qa_data_from_metaqa(dataset: list, md: bool, probing: bool, lower_t
     return qa_data
 
 
-def generate_qa_data_from_google_re(dataset: list, md: bool, probing: bool, lower_text: bool, context_key: str, conflict: str, core_replace_config: dict) -> list[dict]:
+def generate_qa_data_from_google_re(dataset: list, md: bool, probing: bool, lower_text: bool, core_replace_config: dict) -> list[dict]:
     """
+    https://github.com/CSDL-UMD/google-relation-extraction-corpus-augmented
     {
         "pred": "/people/deceased_person/place_of_death",
-        "sub": "/m/0205jm",
-        "obj": "/m/06mzp",
-        "evidences": [{
-            "url": "http://en.wikipedia.org/wiki/John_Renshaw_Starr",
-            "snippet": "After the war John Starr opened a night-club in Hanley, Staffordshire, in partnership with the brothers Alfred and Henry Newton, SOE agents whom he had met during his training and also at the Avenue Foch. The Newton brothers had been in the Buchenwald concentration camp. He later returned to live in Paris, before moving to Switzerland, where he died in 1996.",
-            "considered_sentences": ["After the war John Starr opened a night-club in Hanley, Staffordshire, in partnership with the brothers Alfred and Henry Newton, SOE agents whom he had met during his training and also at the Avenue Foch .", "He later returned to live in Paris, before moving to Switzerland, where he died in 1996 ."]
-        }],
-        "judgments": [{
+        "sub": "Charles Garry",
+        "obj": "Berkeley",
+        "evidences": [
+        {
+            "url": "http://en.wikipedia.org/wiki/Charles_Garry",
+            "snippet": "Garry continued to practice law after the Jonestown incident, his clientele changed and his chance for further national acclaim had passed. His post-Jonestown press conferences of November/December 1978 served as his final public acts. Garry died of a stroke in August 1991, at the age of 82 in Berkeley, California."
+        }
+        ],
+        "judgments": [
+        {
+            "rater": "9080307652848457551",
+            "judgment": "yes"
+        },
+        {
+            "rater": "1568443823013462240",
+            "judgment": "yes"
+        },
+        {
+            "rater": "14404876356854644346",
+            "judgment": "yes"
+        },
+        {
             "rater": "17966044108931836156",
             "judgment": "yes"
-        }, {
-            "rater": "1406006087371975930",
-            "judgment": "yes"
-        }, {
-            "rater": "16676975657004889938",
-            "judgment": "yes"
-        }, {
-            "rater": "13855588585185268925",
-            "judgment": "yes"
-        }, {
+        },
+        {
             "rater": "4185483665120273114",
             "judgment": "yes"
-        }],
-        "sub_w": "Q3182510",
-        "sub_label": "John Renshaw Starr",
-        "sub_aliases": [],
-        "obj_w": "Q39",
-        "obj_label": "Switzerland",
-        "obj_aliases": ["Swiss Confederation", "CH", "SUI", "Suisse", "Schweiz", "Svizzera", "\ud83c\udde8\ud83c\udded"],
-        "uuid": "61aad52c-4256-468a-a9ae-55e3fa4dc44e",
-        "masked_sentences": ["After the war John Starr opened a night-club in Hanley, Staffordshire, in partnership with the brothers Alfred and Henry Newton, SOE agents whom he had met during his training and also at the Avenue Foch .", "He later returned to live in Paris, before moving to [MASK], where he died in 1996 ."]
-    }
+        }
+        ],
+        "UID": "pod_UyBFJFA5zR",
+        "maj_vote": "yes",
+        "sub_id": "/m/027r0v8",
+        "obj_id": "/m/01jr6",
+        "dbpedia_sub": "http://dbpedia.org/resource/Charles_Garry",
+        "dbpedia_obj": "http://dbpedia.org/resource/University_of_California,_Berkeley",
+        "wikidata_qid_sub": "Q5077976",
+        "wikidata_qid_obj": "Q223870"
+    },
     """
     qa_data = []
     for qid, sample in tqdm(enumerate(dataset), total=len(dataset), desc="Generating QA data"):
         assert isinstance(sample, dict)
-        sub = sample["sub_label"]
-        if context_key == "snippet":
-            context = sample["evidences"][0]["snippet"]
-        elif context_key == "considered_sentences":
-            context = " ".join(sample["evidences"][0]["considered_sentences"])
-        else:
-            context = ""
+        sub = sample["sub"]
+        context = sample["evidences"][0]["snippet"]
+        answer = sample["obj"]
 
-        target_relation = sample["target_relation"]
+        target_relation = sample["pred"].split("/")[-1]
         if target_relation == "place_of_birth":
             question = f"Where was {sub} born?"
         elif target_relation == "place_of_death":
             question = f"Where did {sub} die?"
         elif target_relation == "date_of_birth":
             question = f"When was {sub} born?"
+        elif target_relation == "institution":
+            question = f"When did {sub} graduate from?"
+        elif target_relation == "degree":
+            question = f"What degree did {sub} graduate with?"
+            match = re.search(r'\(\(NAM:\s*(.*?)\)\)', context)
+            if match:
+                answer = match.group(1)
+                context = re.sub(r'\(\(NAM:\s*.*?\)\)', answer, context)
         else:
             raise ValueError(f"Unsupported target relation: {target_relation}")
-        if conflict == "ori":
-            answer = sample["ori_obj_label"]
-        elif conflict == "mod":
-            answer = sample["mod_obj_label"]
-        else:
-            answer = sample["obj_label"]
+        prompt = f"Background: {context}\n\nQuestion: {question}\n\nAnswer:"
         choices = []
         choices_str = ""
         qa_data.append(
@@ -834,38 +836,38 @@ def generate_qa_data_from_google_re(dataset: list, md: bool, probing: bool, lowe
                 md=md,
                 probing=probing,
                 lower_text=lower_text,
-                argkv={},
+                argkv={"prompt": prompt, "target_relation": target_relation},
                 core_replace_config=core_replace_config
             )
         )
     return qa_data
 
 
-def generate_qa_data_from_google_re_mix(dataset: list, md: bool, probing: bool, core_replace_config: dict) -> list[dict]:
-    qa_data = []
-    for doc in tqdm(dataset, total=len(dataset), desc="Generating QA data"):
-        qid = doc["id"]
-        context = doc["ori_context"]
-        question = doc["ori_question"]
-        answer = doc["answer"].strip()
+# def generate_qa_data_from_google_re_mix(dataset: list, md: bool, probing: bool, core_replace_config: dict) -> list[dict]:
+#     qa_data = []
+#     for doc in tqdm(dataset, total=len(dataset), desc="Generating QA data"):
+#         qid = doc["id"]
+#         context = doc["ori_context"]
+#         question = doc["ori_question"]
+#         answer = doc["answer"].strip()
 
-        prompt = f"Background: {context}\n\nQuestion: {question}\n\nAnswer: "
-        qa_data.append(
-            construct_qa(
-                qid=str(qid),
-                context=context,
-                question=question,
-                choices=[],
-                choices_str="",
-                answer=answer,
-                md=md,
-                probing=probing,
-                lower_text=False,
-                argkv={"prompt": prompt},
-                core_replace_config=core_replace_config
-            )
-        )
-    return qa_data
+#         prompt = f"Background: {context}\n\nQuestion: {question}\n\nAnswer: "
+#         qa_data.append(
+#             construct_qa(
+#                 qid=str(qid),
+#                 context=context,
+#                 question=question,
+#                 choices=[],
+#                 choices_str="",
+#                 answer=answer,
+#                 md=md,
+#                 probing=probing,
+#                 lower_text=False,
+#                 argkv={"prompt": prompt},
+#                 core_replace_config=core_replace_config
+#             )
+#         )
+#     return qa_data
 
 
 def generate_qa_data_from_commonsense_qa(dataset: list, md: bool, probing: bool, lower_text: bool, core_replace_config: dict) -> list[dict]:
@@ -905,7 +907,7 @@ def generate_qa_data_from_commonsense_qa(dataset: list, md: bool, probing: bool,
     return qa_data
 
 
-def generate_qa_data_from_clasheval(dataset: list, md: bool, probing: bool, lower_text: bool, context_conflict: str, core_replace_config: dict) -> list[dict]:
+def generate_qa_data_from_clasheval(dataset: list, md: bool, probing: bool, context_conflict: str, core_replace_config: dict) -> list[dict]:
     """
     {
         "question": "Who is the Canadian actor known for playing Peter Rasputin / Colossus in the X-Men film series, whose parents are Sue Bailey and Richard Cudmore?",
@@ -919,16 +921,20 @@ def generate_qa_data_from_clasheval(dataset: list, md: bool, probing: bool, lowe
     for qid, sample in tqdm(enumerate(dataset), total=len(dataset), desc="Generating QA data"):
         assert isinstance(sample, dict)
         question = sample["question"]
-        if context_conflict == "ori":
-            answer = sample["answer_ori"]
-            context = sample["context_ori"]
-        elif context_conflict == "mod":
+        answer = sample["answer_original"]
+        context = sample["context_original"]
+        if context_conflict:
             answer = sample["answer_mod"]
             context = sample["context_mod"]
-        else:
-            raise ValueError(f"Unsupported context conflict type: {context_conflict}")
         choices = []
         choices_str = ""
+        prompt = f"Background: {context}\n\nQuestion: {question}\n\nAnswer: "
+        argkv = {
+            "prompt": prompt    
+        }
+        if context_conflict:
+            argkv["is_conflict"] = "true"
+            argkv["mod_degree"] = sample["mod_degree"]
         qa_data.append(
             construct_qa(
                 qid=str(qid),
@@ -939,15 +945,15 @@ def generate_qa_data_from_clasheval(dataset: list, md: bool, probing: bool, lowe
                 answer=answer,
                 md=md,
                 probing=probing,
-                lower_text=lower_text,
-                argkv={},
+                lower_text=False,
+                argkv=argkv,
                 core_replace_config=core_replace_config
             )
         )
     return qa_data
 
 
-def generate_qa_data_from_nq_swap(dataset: list, md: bool, probing: bool, context_conflict: str, lower_text: bool, core_replace_config: dict) -> list[dict]:
+def generate_qa_data_from_nq_swap(dataset: list, md: bool, probing: bool, context_conflict: str, core_replace_config: dict) -> list[dict]:
     """
     {
         "question": "how many episodes are in chicago fire season 4",
@@ -964,17 +970,21 @@ def generate_qa_data_from_nq_swap(dataset: list, md: bool, probing: bool, contex
         answers = []
         if not question.endswith("?"):
             question += "?"
-        if context_conflict == "ori":
-            answers = sample["org_answer"]
-            context = sample["org_context"]
-        elif context_conflict == "mod":
+        answers = sample["org_answer"]
+        context = sample["org_context"]
+        if context_conflict:
             answers = sample["sub_answer"]
             context = sample["sub_context"]
-        else:
-            raise ValueError(f"Unsupported context conflict type: {context_conflict}")
         answer = answers[0]
+        context = context.strip("<P>").strip("</P>").strip()
         choices = []
         choices_str = ""
+        prompt = f"Background: {context}\n\nQuestion: {question}\n\nAnswer: "
+        argkv = {
+            "prompt": prompt    
+        }
+        if context_conflict:
+            argkv["is_conflict"] = "true"
         qa_data.append(
             construct_qa(
                 qid=str(qid),
@@ -985,8 +995,8 @@ def generate_qa_data_from_nq_swap(dataset: list, md: bool, probing: bool, contex
                 answer=answer,
                 md=md,
                 probing=probing,
-                lower_text=lower_text,
-                argkv={},
+                lower_text=False,
+                argkv=argkv,
                 core_replace_config=core_replace_config
             )
         )
@@ -1123,17 +1133,17 @@ def load_mintaka(file_path: str) -> dict:
     return dataset
 
 
-def load_google_re_mix(file_path: str) -> dict:
-    dataset = {}
-    for split in ["train", "dev", "test"]:
-        fn = Path(file_path) / f"{split}.json"
-        if not fn.exists():
-            print(f"File {fn} does not exist, skipping.")
-            continue
-        print(f"Loading data from {fn}")
-        with open(fn, 'r') as f:
-            dataset[split] = json.load(f)
-    return dataset
+# def load_google_re_mix(file_path: str) -> dict:
+#     dataset = {}
+#     for split in ["train", "dev", "test"]:
+#         fn = Path(file_path) / f"{split}.json"
+#         if not fn.exists():
+#             print(f"File {fn} does not exist, skipping.")
+#             continue
+#         print(f"Loading data from {fn}")
+#         with open(fn, 'r') as f:
+#             dataset[split] = json.load(f)
+#     return dataset
 
 
 def load_cwq(file_path: str) -> dict:
@@ -1211,23 +1221,21 @@ elif args.data_name == "mintaka":
 elif args.data_name == "cwq":
     dataset_dict = load_cwq(args.local_path)
 elif args.data_name == "clasheval":
-    dataset_dict = load_json(args.local_path)
+    dataset_dict = load_from_disk(args.local_path)
+elif args.data_name == "nq_swap":
+    dataset_dict = load_from_disk(args.local_path)
 elif args.data_name == "google_re":
-    dataset_dict = load_google_re(args.local_path)
-elif args.data_name == "google_re_conflict":
-    dataset_dict = load_google_re(args.local_path)
-elif args.data_name == "google_re_mix_short":
-    dataset_dict = load_google_re_mix(args.local_path)
-elif args.data_name == "google_re_mix_conflict_short":
-    dataset_dict = load_google_re_mix(args.local_path)
-elif args.data_name == "clasheval":
-    dataset_dict = load_dataset("sagnikrayc/clasheval")
+    dataset_dict = load_json(args.local_path)
+# elif args.data_name == "google_re_conflict":
+#     dataset_dict = load_google_re(args.local_path)
+# elif args.data_name == "google_re_mix_short":
+#     dataset_dict = load_google_re_mix(args.local_path)
+# elif args.data_name == "google_re_mix_conflict_short":
+#     dataset_dict = load_google_re_mix(args.local_path)
 elif args.data_name == "triviaqa_rc_context":
     dataset_dict = load_dataset("mandarjoshi/trivia_qa", "rc")
 elif args.data_name == "triviaqa_rc_nocontext":
     dataset_dict = load_dataset("mandarjoshi/trivia_qa", "rc.nocontext")
-elif args.data_name == "nq_swap":
-    dataset_dict = load_dataset("pminervini/NQ-Swap")
 elif args.data_name == "squad_v2":
     dataset_dict = load_dataset("rajpurkar/squad_v2")
 elif args.data_name == "winogrande":
@@ -1302,18 +1310,9 @@ for split, dataset in dataset_dict.items():
 
     elif args.data_name == "google_re":
         # https://github.com/facebookresearch/LAMA?tab=readme-ov-file
+        # https://github.com/CSDL-UMD/google-relation-extraction-corpus-augmented
         assert isinstance(dataset, list)
-        qa_data = generate_qa_data_from_google_re(dataset, args.markdown, args.probing, args.lower_text, args.context_key, conflict="none", core_replace_config=core_config)
-    elif args.data_name == "google_re_conflict":
-        # https://github.com/facebookresearch/LAMA?tab=readme-ov-file
-        assert isinstance(dataset, list)
-        qa_data = generate_qa_data_from_google_re(dataset, args.markdown, args.probing, args.lower_text, args.context_key, conflict=args.conflict, core_replace_config=core_config)
-    elif args.data_name == "google_re_mix_short":
-        assert isinstance(dataset, list)
-        qa_data = generate_qa_data_from_google_re_mix(dataset, args.markdown, args.probing, core_replace_config=core_config)
-    elif args.data_name == "google_re_mix_conflict_short":
-        assert isinstance(dataset, list)
-        qa_data = generate_qa_data_from_google_re_mix(dataset, args.markdown, args.probing, core_replace_config=core_config)
+        qa_data = generate_qa_data_from_google_re(dataset, args.markdown, args.probing, args.lower_text, core_replace_config=core_config)
 
     elif args.data_name == "commonsense_qa":
         # https://huggingface.co/datasets/tau/commonsense_qa
@@ -1321,12 +1320,12 @@ for split, dataset in dataset_dict.items():
         qa_data = generate_qa_data_from_commonsense_qa(dataset, args.markdown, args.probing, args.lower_text, core_config)
     elif args.data_name == "clasheval":
         # https://huggingface.co/datasets/sagnikrayc/clasheval
-        assert isinstance(dataset, list)
-        qa_data = generate_qa_data_from_clasheval(dataset, args.markdown, args.probing, args.lower_text, args.context_conflict, core_config)
+        assert isinstance(dataset, Dataset)
+        qa_data = generate_qa_data_from_clasheval(dataset, args.markdown, args.probing, args.context_conflict, core_config)
     elif args.data_name == "nq_swap":
         # https://huggingface.co/datasets/pminervini/NQ-Swap
         assert isinstance(dataset, Dataset)
-        qa_data = generate_qa_data_from_nq_swap(dataset, args.markdown, args.probing, args.lower_text, args.context_conflict, core_config)
+        qa_data = generate_qa_data_from_nq_swap(dataset, args.markdown, args.probing, args.context_conflict, core_config)
     elif args.data_name == "race":
         assert isinstance(dataset, Dataset)
         qa_data = generate_qa_data_from_race(dataset, args.markdown,  args.probing, args.lower_text, core_config)
