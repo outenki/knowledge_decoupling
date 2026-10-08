@@ -25,26 +25,45 @@ RND_DIR=$PROJECT_BASE_PATH/output/meta-llama/Llama-3.2-1B/no_warmup/rnd/rnd
 #     -o $RND_DIR-sft_${TASK}_train/eval/${TASK}/bootstrap_resampling_results.json
 
 # w/o SFT
-TASK=lambada_openai
+# TASK=lambada_openai
+# METRIC=acc
+# echo
+# echo "Bootstrap resampling for ${MASK_DIR}/eval/${TASK}..."
+# uv run $PROJECT_BASE_PATH/scripts/eval/bootstrap_resampling.py \
+#     -sml $SML_DIR/eval/${TASK} \
+#     -core $MASK_DIR/eval/${TASK} \
+#     -m $METRIC \
+#     -o $MASK_DIR/eval/${TASK}/bootstrap_resampling_results.json
+# echo
+# echo "Bootstrap resampling for ${RND_ID_DIR}/eval/${TASK}..."
+# uv run $PROJECT_BASE_PATH/scripts/eval/bootstrap_resampling.py \
+#     -sml $SML_DIR/eval/${TASK} \
+#     -core $RND_ID_DIR/eval/${TASK} \
+#     -m $METRIC \
+#     -o $RND_ID_DIR/eval/${TASK}/bootstrap_resampling_results.json
+# echo
+# echo "Bootstrap resampling for ${RND_DIR}/eval/${TASK}..."
+# uv run $PROJECT_BASE_PATH/scripts/eval/bootstrap_resampling.py \
+#     -sml $SML_DIR/eval/${TASK} \
+#     -core $RND_DIR/eval/${TASK} \
+#     -m $METRIC \
+#     -o $RND_DIR/eval/${TASK}/bootstrap_resampling_results.json
+
+# google re
 METRIC=acc
+TASK=google_re_mix_short
 echo
 echo "Bootstrap resampling for ${MASK_DIR}/eval/${TASK}..."
 uv run $PROJECT_BASE_PATH/scripts/eval/bootstrap_resampling.py \
-    -sml $SML_DIR/eval/${TASK} \
-    -core $MASK_DIR/eval/${TASK} \
+    -sml $SML_DIR/SmolLM2-135M-20B-sml-bs4096-sft_google_re_mix_short_train/eval/${TASK} \
+    -core $MASK_DIR/SmolLM2-135M-20B-sml_mask-bs4096-sft_google_re_mix_short_train/eval/${TASK} \
     -m $METRIC \
-    -o $MASK_DIR/eval/${TASK}/bootstrap_resampling_results.json
+    -o $MASK_DIR/SmolLM2-135M-20B-sml_mask-bs4096-sft_google_re_mix_short_train/eval/${TASK}/bootstrap_resampling_results.json
+TASK=google_re_mix_conflict_short
 echo
-echo "Bootstrap resampling for ${RND_ID_DIR}/eval/${TASK}..."
+echo "Bootstrap resampling for ${MASK_DIR}/eval/${TASK}..."
 uv run $PROJECT_BASE_PATH/scripts/eval/bootstrap_resampling.py \
-    -sml $SML_DIR/eval/${TASK} \
-    -core $RND_ID_DIR/eval/${TASK} \
+    -sml $SML_DIR/SmolLM2-135M-20B-sml-bs4096-sft_google_re_mix_short_train/eval/${TASK} \
+    -core $MASK_DIR/SmolLM2-135M-20B-sml_mask-bs4096-sft_google_re_mix_short_train/eval/${TASK} \
     -m $METRIC \
-    -o $RND_ID_DIR/eval/${TASK}/bootstrap_resampling_results.json
-echo
-echo "Bootstrap resampling for ${RND_DIR}/eval/${TASK}..."
-uv run $PROJECT_BASE_PATH/scripts/eval/bootstrap_resampling.py \
-    -sml $SML_DIR/eval/${TASK} \
-    -core $RND_DIR/eval/${TASK} \
-    -m $METRIC \
-    -o $RND_DIR/eval/${TASK}/bootstrap_resampling_results.json
+    -o $MASK_DIR/SmolLM2-135M-20B-sml_mask-bs4096-sft_google_re_mix_short_train/eval/${TASK}/bootstrap_resampling_results.json
