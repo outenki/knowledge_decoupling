@@ -21,7 +21,7 @@ do
 done
 
 
-SFT_PATH=$INIT_MODEL-sft_xsum
+SFT_PATH=$INIT_MODEL-sft_xsum_train
 cd $SFT_PATH
 echo
 echo ">>>Evaluating xsum for: $SFT_PATH"
