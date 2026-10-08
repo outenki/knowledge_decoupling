@@ -400,12 +400,14 @@ SFT_TRAINING_PATH=$PROJECT_BASE_PATH/data/sft
 echo ">>> clasheval"
 uv run python generate_qa_data.py \
     -dn clasheval \
+    -lp $PROJECT_BASE_PATH/input/evaluate_data/dataset/clasheval \
     -o $OUTPUT_PATH/clasheval \
     -ot jsonl
 
-echo ">>> clasheval"
+echo ">>> clasheval_conflict"
 uv run python generate_qa_data.py \
     -dn clasheval \
+    -lp $PROJECT_BASE_PATH/input/evaluate_data/dataset/clasheval \
     --context-conflict \
     -o $OUTPUT_PATH/clasheval_conflict \
     -ot jsonl
@@ -424,18 +426,18 @@ uv run python generate_qa_data.py \
 #     --core-delimiter "<>" \
 #     -ot jsonl
 
-echo ">>> nq_swap"
-uv run python generate_qa_data.py \
-    -dn nq_swap \
-    -lp $PROJECT_BASE_PATH/input/evaluate_data/dataset/nq_swap \
-    -o $OUTPUT_PATH/nq_swap \
-    -ot jsonl
+# echo ">>> nq_swap"
+# uv run python generate_qa_data.py \
+#     -dn nq_swap \
+#     -lp $PROJECT_BASE_PATH/input/evaluate_data/dataset/nq_swap \
+#     -o $OUTPUT_PATH/nq_swap \
+#     -ot jsonl
 
-echo ">>> nq_swap_conflict"
-uv run python generate_qa_data.py \
-    -dn nq_swap \
-    -lp $PROJECT_BASE_PATH/input/evaluate_data/dataset/nq_swap \
-    --context-conflict \
-    -o $OUTPUT_PATH/nq_swap_swap \
-    -ot jsonl
+# echo ">>> nq_swap_conflict"
+# uv run python generate_qa_data.py \
+#     -dn nq_swap \
+#     -lp $PROJECT_BASE_PATH/input/evaluate_data/dataset/nq_swap \
+#     --context-conflict \
+#     -o $OUTPUT_PATH/nq_swap_conflict \
+#     -ot jsonl
 

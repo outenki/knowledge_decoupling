@@ -1,5 +1,6 @@
 from spacy.lang.en import English
 import re
+import html
 
 from nltk.tokenize import sent_tokenize
 from lemminflect import getInflection
@@ -122,3 +123,4 @@ def format_word(word: str, ref: str) -> str:
         return word.capitalize()
 
     return word
+

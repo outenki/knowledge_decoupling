@@ -5,6 +5,7 @@ from tqdm import tqdm
 from pathlib import Path
 # from config import GPT_API_KEY
 # from openai import OpenAI
+import html
 import random
 
 from datasets import load_dataset, Dataset, load_from_disk
@@ -12,6 +13,27 @@ from src.data_processing.core_data.lib import generate_core_for_qa, load_aoa, ge
 
 # client = OpenAI(api_key=GPT_API_KEY)
 AOA = {}
+
+
+def remove_html_tags(text: str) -> str:
+    # <br>, <br/>, <br /> -> newline
+    text = re.sub(r"<br\s*/?>", "\n", text, flags=re.IGNORECASE)
+
+    # </p>, </div>, </li> 等块级结束标签 -> newline
+    text = re.sub(r"</(?:p|div|li|tr|h[1-6])\s*>", "\n", text, flags=re.IGNORECASE)
+
+    # Remove remaining HTML tags
+    text = re.sub(r"<[^>]+>", "", text)
+
+    # Decode HTML entities: &amp; -> &, &quot; -> ", etc.
+    text = html.unescape(text)
+
+    # Clean up whitespace while preserving newlines
+    text = re.sub(r"[ \t]+", " ", text)
+    text = re.sub(r" *\n *", "\n", text)
+    text = re.sub(r"\n{3,}", "\n\n", text)
+
+    return text.strip()
 
 def print_args(args: dict):
     print("↓↓↓↓↓↓↓↓↓↓ Arguments ↓↓↓↓↓↓↓↓↓↓")
@@ -976,7 +998,7 @@ def generate_qa_data_from_nq_swap(dataset: list, md: bool, probing: bool, contex
             answers = sample["sub_answer"]
             context = sample["sub_context"]
         answer = answers[0]
-        context = context.strip("<P>").strip("</P>").strip()
+        context = remove_html_tags(context)
         choices = []
         choices_str = ""
         prompt = f"Background: {context}\n\nQuestion: {question}\n\nAnswer: "

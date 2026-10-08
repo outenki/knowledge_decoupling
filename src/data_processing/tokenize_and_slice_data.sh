@@ -3,7 +3,7 @@ TOKENIZER=$1
 BLOCK_SIZE=4096
 
 PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-$HOME/projects/knowledge_decoupling}"
-DATA_NAME=google_re
+DATA_NAME=clasheval
 DATA_PATH=/home/pj24001974/ku50001571/projects/knowledge_decoupling/input/evaluate_data/dataset/$DATA_NAME/test
 AOA_PATH=$PROJECT_BASE_PATH/data/AOA/aoa.csv
 

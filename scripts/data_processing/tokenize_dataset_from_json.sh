@@ -38,8 +38,9 @@ for TOKENIZER_NAME in meta-llama/Llama-3.2-1B; do
         # xsum
         # mrpc
         # google_re_mix_short
+        # nq_swap \
     for dn in \
-        google_re
+        clasheval
     do
         echo
         echo ">>>>>> $dn sft concat train"
