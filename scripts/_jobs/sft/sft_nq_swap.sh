@@ -10,23 +10,23 @@ export WANDB_MODE=offline
 SFT_DATA=nq_swap
 cd $PROJECT_BASE_PATH/src/train
 echo ">>> SFT $MODEL_CONFIG/$MODEL_NAME on $SFT_DATA"
-uv run python train.py --config-name sft_train \
-    base.path=$PROJECT_BASE_PATH \
-    model.config="$MODEL_CONFIG" \
-    model.init_model="$INIT_MODEL" \
-    data.name=$SFT_DATA
+# uv run python train.py --config-name sft_train \
+#     base.path=$PROJECT_BASE_PATH \
+#     model.config="$MODEL_CONFIG" \
+#     model.init_model="$INIT_MODEL" \
+#     data.name=$SFT_DATA
 
-SFT_PATH=$INIT_MODEL-sft_${SFT_DATA}_train
-cd $SFT_PATH
-echo
-echo ">>>Evaluating $SFT_DATA for: $SFT_PATH"
-uv run accelerate launch -m lm_eval \
-    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-    --model hf \
-    --model_args pretrained=. \
-    --tasks $SFT_DATA \
-    --log_samples \
-    --output_path eval/$SFT_DATA
+# SFT_PATH=$INIT_MODEL-sft_${SFT_DATA}_train
+# cd $SFT_PATH
+# echo
+# echo ">>>Evaluating $SFT_DATA for: $SFT_PATH"
+# uv run accelerate launch -m lm_eval \
+#     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+#     --model hf \
+#     --model_args pretrained=. \
+#     --tasks $SFT_DATA \
+#     --log_samples \
+#     --output_path eval/$SFT_DATA
 
 echo
 echo ">>>Evaluating ${SFT_DATA}_rnd_id for: $SFT_PATH"

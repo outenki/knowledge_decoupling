@@ -48,7 +48,7 @@ def read_args():
         '--data-name', '-dn', dest='data_name', type=str, required=True,
         choices=[
             'arc_easy', 'arc_challenge', 'boolq', 'qasc', "squad_v2", "based_squad", "squadv2",
-            "cnn_dailymail", "mintaka", "cwq", "metaqa", "google_re", "google_re_mix_short",
+            "cnn_dailymail", "mintaka", "cwq", "metaqa", "google_re", "google_re_jsonl",
             "commonsense_qa", "triviaqa_rc_nocontext", "piqa", "winogrande", "clasheval", "nq_swap", "race",
             "triviaqa_rc_context", "google_boolq_core", "xsum", "samsum", "gigaword", "mrpc", "paws_en"],
         help='Name of the dataset to load from Hugging Face'
@@ -864,32 +864,46 @@ def generate_qa_data_from_google_re(dataset: list, md: bool, probing: bool, lowe
         )
     return qa_data
 
+def generate_qa_data_from_google_re_jsonl(dataset: list, md: bool, probing: bool, lower_text: bool, core_replace_config: dict) -> list[dict]:
+    """
+    {
+    "id": "3387",
+    "context": "Schundler grew up in Woodbridge Township and Westfield, New Jersey as the youngest of nine children. At Westfield High School, he was an All-State football player. He was recruited by Harvard University, where, to help pay for his tuition, he washed dishes, cleaned bathrooms, and worked as a security guard. He graduated with honors in 1981. Schundler's ethnic heritage is German and Barbadian.",
+    "question": "When did Bret Schundler graduate from?",
+    "choices": [],
+    "answer": "Westfield High School",
+    "prompt": "Background: Schundler grew up in Woodbridge Township and Westfield, New Jersey as the youngest of nine children. At Westfield High School, he was an All-State football player. He was recruited by Harvard University, where, to help pay for his tuition, he washed dishes, cleaned bathrooms, and worked as a security guard. He graduated with honors in 1981. Schundler's ethnic heritage is German and Barbadian.\n\nQuestion: When did Bret Schundler graduate from?\n\nAnswer:",
+    "target_relation": "institution"
+    }
+    """
+    qa_data = []
+    for qid, sample in tqdm(enumerate(dataset), total=len(dataset), desc="Generating QA data"):
+        assert isinstance(sample, dict)
+        context = sample["context"]
+        question = sample["question"]
+        answer = sample["answer"]
+        target_relation = sample["target_relation"]
+        prompt = sample["prompt"]
+        choices = []
+        choices_str = ""
+        qa_data.append(
+            construct_qa(
+                qid=str(qid),
+                context=context,
+                question=question,
+                choices=choices,
+                choices_str=choices_str,
+                answer=answer,
+                md=md,
+                probing=probing,
+                lower_text=lower_text,
+                argkv={"prompt": prompt, "target_relation": target_relation},
+                core_replace_config=core_replace_config
+            )
+        )
+    return qa_data
 
-# def generate_qa_data_from_google_re_mix(dataset: list, md: bool, probing: bool, core_replace_config: dict) -> list[dict]:
-#     qa_data = []
-#     for doc in tqdm(dataset, total=len(dataset), desc="Generating QA data"):
-#         qid = doc["id"]
-#         context = doc["ori_context"]
-#         question = doc["ori_question"]
-#         answer = doc["answer"].strip()
 
-#         prompt = f"Background: {context}\n\nQuestion: {question}\n\nAnswer: "
-#         qa_data.append(
-#             construct_qa(
-#                 qid=str(qid),
-#                 context=context,
-#                 question=question,
-#                 choices=[],
-#                 choices_str="",
-#                 answer=answer,
-#                 md=md,
-#                 probing=probing,
-#                 lower_text=False,
-#                 argkv={"prompt": prompt},
-#                 core_replace_config=core_replace_config
-#             )
-#         )
-#     return qa_data
 
 
 def generate_qa_data_from_commonsense_qa(dataset: list, md: bool, probing: bool, lower_text: bool, core_replace_config: dict) -> list[dict]:
@@ -1181,17 +1195,9 @@ def load_cwq(file_path: str) -> dict:
     return dataset
 
 
-def load_jsonl(file_path: str) -> list[dict]:
-    data = []
-    with open(file_path, 'r') as f:
-        for line in tqdm(f, desc=f"Loading data from {file_path}", total=sum(1 for _ in open(file_path, 'r'))):
-            data.append(json.loads(line.strip()))
-    return data
-
-
 def load_json(file_path: str) -> dict:
     dataset = {}
-    for split in ["train", "dev", "test"]:
+    for split in ["train", "dev", "test", "val", "validation"]:
         fn = Path(file_path) / f"{split}.json"
         if not fn.exists():
             print(f"File {fn} does not exist, skipping.")
@@ -1202,23 +1208,24 @@ def load_json(file_path: str) -> dict:
     return dataset
 
 
-def load_google_re(dir_path: str) -> dict:
+def load_jsonl(file_path: Path) -> list[dict]:
     data = []
-    for fn in ["date_of_birth", "place_of_birth", "place_of_death"]:
-        fp = Path(dir_path) / f"{fn}_test.jsonl"
-        _data = load_jsonl(fp)
-        for sample in _data:
-            sample["target_relation"] = fn
-        data.extend(_data)
+    with open(file_path, 'r') as f:
+        for line in tqdm(f, desc=f"Loading data from {file_path}", total=sum(1 for _ in open(file_path, 'r'))):
+            data.append(json.loads(line.strip()))
+    return data
 
-    # shuffle and split into train/dev/test
-    random.shuffle(data)
-    n = len(data)
-    dataset = {
-        "train": data[:int(0.8 * n)],
-        "test": data[int(0.8 * n):]
-    }
+def load_google_re_jsonl(dir_path: str) -> dict:
+    dataset = {}
+    for split in ["train", "dev", "test", "val", "validation"]:
+        fn = Path(dir_path) / f"{split}.jsonl"
+        if not fn.exists():
+            print(f"File {fn} does not exist, skipping.")
+            continue
+        _data = load_jsonl(fn)
+        dataset[split] = _data
     return dataset
+
 
 
 args = read_args()
@@ -1248,8 +1255,8 @@ elif args.data_name == "nq_swap":
     dataset_dict = load_from_disk(args.local_path)
 elif args.data_name == "google_re":
     dataset_dict = load_json(args.local_path)
-# elif args.data_name == "google_re_conflict":
-#     dataset_dict = load_google_re(args.local_path)
+elif args.data_name == "google_re_jsonl":
+    dataset_dict = load_google_re_jsonl(args.local_path)
 # elif args.data_name == "google_re_mix_short":
 #     dataset_dict = load_google_re_mix(args.local_path)
 # elif args.data_name == "google_re_mix_conflict_short":
@@ -1335,6 +1342,11 @@ for split, dataset in dataset_dict.items():
         # https://github.com/CSDL-UMD/google-relation-extraction-corpus-augmented
         assert isinstance(dataset, list)
         qa_data = generate_qa_data_from_google_re(dataset, args.markdown, args.probing, args.lower_text, core_replace_config=core_config)
+    elif args.data_name == "google_re_jsonl":
+        # https://github.com/facebookresearch/LAMA?tab=readme-ov-file
+        # https://github.com/CSDL-UMD/google-relation-extraction-corpus-augmented
+        assert isinstance(dataset, list)
+        qa_data = generate_qa_data_from_google_re_jsonl(dataset, args.markdown, args.probing, args.lower_text, core_replace_config=core_config)
 
     elif args.data_name == "commonsense_qa":
         # https://huggingface.co/datasets/tau/commonsense_qa
