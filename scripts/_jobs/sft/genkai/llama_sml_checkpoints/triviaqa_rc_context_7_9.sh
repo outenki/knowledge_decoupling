@@ -2,9 +2,9 @@
 #PJM -L "rscgrp=b-batch"
 #PJM -L "elapse=50:00:00"
 #PJM -L "gpu=4"
-#PJM -e logs/triviaqa_rc_context_7.log
-#PJM -o logs/triviaqa_rc_context_7.log
-#PJM -N "sft_trc_7"
+#PJM -e logs/triviaqa_rc_context_7_9.log
+#PJM -o logs/triviaqa_rc_context_7_9.log
+#PJM -N "sml_trc_7_9"
 
 
 source $HOME/.zshrc

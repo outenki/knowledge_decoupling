@@ -5,7 +5,7 @@
 #PBS -W group_list=c30897
 #PBS -j oe
 #PBS -o logs/triviaqa_rc_nocontext_7_9.log
-#PBS -N "sft_trnc_7_9"
+#PBS -N "sml_trnc_7_9"
 
 
 source $HOME/.zshrc

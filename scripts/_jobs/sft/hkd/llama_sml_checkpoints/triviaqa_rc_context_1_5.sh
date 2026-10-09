@@ -5,13 +5,13 @@
 #PBS -W group_list=c30897
 #PBS -j oe
 #PBS -o logs/triviaqa_rc_context_1_5.log
-#PBS -N "sft_trc_1_5"
+#PBS -N "sml_trc_1_5"
 
 
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/_jobs/sft
 
-# sh sft_triviaqa_rc_context.sh meta-llama/Llama-3.2-1B no_warmup/sml/checkpoints/check_1
+sh sft_triviaqa_rc_context.sh meta-llama/Llama-3.2-1B no_warmup/sml/checkpoints/check_1
 sh sft_triviaqa_rc_context.sh meta-llama/Llama-3.2-1B no_warmup/sml/checkpoints/check_3
 sh sft_triviaqa_rc_context.sh meta-llama/Llama-3.2-1B no_warmup/sml/checkpoints/check_5
 # sh sft_triviaqa_rc_context.sh meta-llama/Llama-3.2-1B no_warmup/sml/checkpoints/check_7
