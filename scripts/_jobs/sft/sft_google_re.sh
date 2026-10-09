@@ -70,6 +70,7 @@ uv run python train.py --config-name sft_train \
     data.name=$SFT_DATA
 
 SFT_PATH=$EXT_MODEL-sft_${SFT_DATA}_train
+cd $SFT_PATH
 echo
 echo ">>>Evaluating ${SFT_DATA}_conflict for: $SFT_PATH"
 uv run accelerate launch -m lm_eval \

@@ -52,17 +52,17 @@ uv run accelerate launch -m lm_eval \
 
 # SFT after extensive pretraining
 EXT_DATA=clasheval_test_mask-bs4096
-cd $PROJECT_BASE_PATH/src/train
 echo ">>> EXT training $MODEL_CONFIG/$MODEL_NAME on $EXT_DATA"
+cd $PROJECT_BASE_PATH/src/train
 uv run python train.py --config-name ext_train \
     base.path=$PROJECT_BASE_PATH \
     model.config="$MODEL_CONFIG" \
     model.init_model="$INIT_MODEL" \
     data.name=$EXT_DATA
 
+cd $PROJECT_BASE_PATH/src/train
 EXT_MODEL=$INIT_MODEL-ext_${EXT_DATA}
 SFT_DATA=clasheval
-cd $PROJECT_BASE_PATH/src/train
 echo ">>> SFT $MODEL_CONFIG/$EXT_MODEL on $SFT_DATA"
 uv run python train.py --config-name sft_train \
     base.path=$PROJECT_BASE_PATH \
@@ -73,6 +73,7 @@ uv run python train.py --config-name sft_train \
 SFT_PATH=$EXT_MODEL-sft_${SFT_DATA}_train
 echo
 echo ">>>Evaluating ${SFT_DATA}_conflict for: $SFT_PATH"
+cd $SFT_PATH
 uv run accelerate launch -m lm_eval \
     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
     --model hf \
