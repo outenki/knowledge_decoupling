@@ -11,7 +11,7 @@ model:
 data:
   name: null
   paths:
-    - ${base.path}/input/tokenized/${model.config}/ext/${data.name}/train
+    - ${base.path}/input/tokenized/${model.config}/ext/${data.name}
   limits:
     - 0
   shuffle: true

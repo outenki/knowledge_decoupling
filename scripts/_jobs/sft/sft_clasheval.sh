@@ -16,8 +16,8 @@ cd $PROJECT_BASE_PATH/src/train
 #     model.init_model="$INIT_MODEL" \
 #     data.name=$SFT_DATA
 
-# SFT_PATH=$INIT_MODEL-sft_${SFT_DATA}_train
-# cd $SFT_PATH
+SFT_PATH=$INIT_MODEL-sft_${SFT_DATA}_train
+cd $SFT_PATH
 # echo
 # echo ">>>Evaluating $SFT_DATA for: $SFT_PATH"
 # uv run accelerate launch -m lm_eval \
@@ -28,15 +28,15 @@ cd $PROJECT_BASE_PATH/src/train
 #     --log_samples \
 #     --output_path eval/$SFT_DATA
 
-echo
-echo ">>>Evaluating ${SFT_DATA}_rnd_id for: $SFT_PATH"
-uv run accelerate launch -m lm_eval \
-    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-    --model hf \
-    --model_args pretrained=. \
-    --tasks ${SFT_DATA}_rnd_id \
-    --log_samples \
-    --output_path eval/${SFT_DATA}_rnd_id
+# echo
+# echo ">>>Evaluating ${SFT_DATA}_rnd_id for: $SFT_PATH"
+# uv run accelerate launch -m lm_eval \
+#     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+#     --model hf \
+#     --model_args pretrained=. \
+#     --tasks ${SFT_DATA}_rnd_id \
+#     --log_samples \
+#     --output_path eval/${SFT_DATA}_rnd_id
 
 echo
 echo ">>>Evaluating ${SFT_DATA}_conflict for: $SFT_PATH"
