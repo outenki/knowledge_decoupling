@@ -9,34 +9,38 @@ export WANDB_MODE=offline
 # SFT
 SFT_DATA=nq_swap
 cd $PROJECT_BASE_PATH/src/train
-# echo ">>> SFT $MODEL_CONFIG/$MODEL_NAME on $SFT_DATA"
-# uv run python train.py --config-name sft_train \
-#     base.path=$PROJECT_BASE_PATH \
-#     model.config="$MODEL_CONFIG" \
-#     model.init_model="$INIT_MODEL" \
-#     data.name=$SFT_DATA
+echo ">>> SFT $MODEL_CONFIG/$MODEL_NAME on $SFT_DATA"
+uv run python train.py --config-name sft_train \
+    base.path=$PROJECT_BASE_PATH \
+    model.config="$MODEL_CONFIG" \
+    model.init_model="$INIT_MODEL" \
+    data.name=$SFT_DATA
 
+SFT_DATA=nq_swap
 SFT_PATH=$INIT_MODEL-sft_${SFT_DATA}_train
 cd $SFT_PATH
-# echo
-# echo ">>>Evaluating $SFT_DATA for: $SFT_PATH"
-# uv run accelerate launch -m lm_eval \
-#     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-#     --model hf \
-#     --model_args pretrained=. \
-#     --tasks $SFT_DATA \
-#     --log_samples \
-#     --output_path eval/$SFT_DATA
 
+TASK=nq_swap
 echo
-echo ">>>Evaluating ${SFT_DATA}_rnd_id for: $SFT_PATH"
+echo ">>>Evaluating $TASK for: $SFT_PATH"
 uv run accelerate launch -m lm_eval \
     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
     --model hf \
     --model_args pretrained=. \
-    --tasks ${SFT_DATA}_rnd_id \
+    --tasks $TASK \
     --log_samples \
-    --output_path eval/${SFT_DATA}_rnd_id
+    --output_path eval/$TASK
+
+TASK=nq_swap_rnd_id
+echo
+echo ">>>Evaluating $TASK for: $SFT_PATH"
+uv run accelerate launch -m lm_eval \
+    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+    --model hf \
+    --model_args pretrained=. \
+    --tasks $TASK \
+    --log_samples \
+    --output_path eval/$TASK
 
 # echo
 # echo ">>>Evaluating ${SFT_DATA}_conflict for: $SFT_PATH"
@@ -49,10 +53,10 @@ uv run accelerate launch -m lm_eval \
 #     --output_path eval/${SFT_DATA}_conflict
 
 
-# # SFT after extensive pretraining
+# SFT after extensive pretraining
 # EXT_DATA=nq_swap_test_mask-bs4096
-# cd $PROJECT_BASE_PATH/src/train
 # echo ">>> EXT training $MODEL_CONFIG/$MODEL_NAME on $EXT_DATA"
+# cd $PROJECT_BASE_PATH/src/train
 # uv run python train.py --config-name ext_train \
 #     base.path=$PROJECT_BASE_PATH \
 #     model.config="$MODEL_CONFIG" \
@@ -61,8 +65,8 @@ uv run accelerate launch -m lm_eval \
 
 # EXT_MODEL=$INIT_MODEL-ext_${EXT_DATA}
 # SFT_DATA=nq_swap
-# cd $PROJECT_BASE_PATH/src/train
 # echo ">>> SFT $MODEL_CONFIG/$EXT_MODEL on $SFT_DATA"
+# cd $PROJECT_BASE_PATH/src/train
 # uv run python train.py --config-name sft_train \
 #     base.path=$PROJECT_BASE_PATH \
 #     model.config="$MODEL_CONFIG" \
@@ -73,6 +77,7 @@ uv run accelerate launch -m lm_eval \
 # cd $SFT_PATH
 # echo
 # echo ">>>Evaluating ${SFT_DATA}_conflict for: $SFT_PATH"
+# cd $PROJECT_BASE_PATH/src/train
 # uv run accelerate launch -m lm_eval \
 #     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
 #     --model hf \
