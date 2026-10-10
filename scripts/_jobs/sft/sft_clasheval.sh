@@ -6,8 +6,7 @@ INIT_MODEL="$PROJECT_BASE_PATH/output/$MODEL_CONFIG/$MODEL_NAME"
 
 export WANDB_MODE=offline
 
-# SFT
-SFT_DATA=clasheval
+SFT_DATA=clasheval_rnd_id
 cd $PROJECT_BASE_PATH/src/train
 echo ">>> SFT $MODEL_CONFIG/$MODEL_NAME on $SFT_DATA"
 uv run python train.py --config-name sft_train \
@@ -16,31 +15,56 @@ uv run python train.py --config-name sft_train \
     model.init_model="$INIT_MODEL" \
     data.name=$SFT_DATA
 
-SFT_DATA=clasheval
+SFT_DATA=clasheval_rnd_id
 SFT_PATH=$INIT_MODEL-sft_${SFT_DATA}_train
 cd $SFT_PATH
-
-TASK=clasheval
+TASK=clasheval_rnd_id
 echo
 echo ">>>Evaluating $TASK for: $SFT_PATH"
 uv run accelerate launch -m lm_eval \
     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
     --model hf \
     --model_args pretrained=. \
-    --tasks $TASK \
+    --tasks ${TASK} \
     --log_samples \
     --output_path eval/$TASK
 
-TASK=clasheval_rnd_id
-echo
-echo ">>>Evaluating ${SFT_DATA}_rnd_id for: $SFT_PATH"
-uv run accelerate launch -m lm_eval \
-    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-    --model hf \
-    --model_args pretrained=. \
-    --tasks $TASK \
-    --log_samples \
-    --output_path eval/${SFT_DATA}_rnd_id
+
+# # SFT
+# SFT_DATA=clasheval
+# cd $PROJECT_BASE_PATH/src/train
+# echo ">>> SFT $MODEL_CONFIG/$MODEL_NAME on $SFT_DATA"
+# uv run python train.py --config-name sft_train \
+#     base.path=$PROJECT_BASE_PATH \
+#     model.config="$MODEL_CONFIG" \
+#     model.init_model="$INIT_MODEL" \
+#     data.name=$SFT_DATA
+
+# SFT_DATA=clasheval
+# SFT_PATH=$INIT_MODEL-sft_${SFT_DATA}_train
+# cd $SFT_PATH
+
+# TASK=clasheval
+# echo
+# echo ">>>Evaluating $TASK for: $SFT_PATH"
+# uv run accelerate launch -m lm_eval \
+#     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+#     --model hf \
+#     --model_args pretrained=. \
+#     --tasks $TASK \
+#     --log_samples \
+#     --output_path eval/$TASK
+
+# TASK=clasheval_rnd_id
+# echo
+# echo ">>>Evaluating ${SFT_DATA}_rnd_id for: $SFT_PATH"
+# uv run accelerate launch -m lm_eval \
+#     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+#     --model hf \
+#     --model_args pretrained=. \
+#     --tasks $TASK \
+#     --log_samples \
+#     --output_path eval/${SFT_DATA}_rnd_id
 
 # echo
 # echo ">>>Evaluating ${SFT_DATA}_conflict for: $SFT_PATH"

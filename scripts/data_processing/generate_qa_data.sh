@@ -375,19 +375,19 @@ SFT_TRAINING_PATH=$PROJECT_BASE_PATH/data/sft
 #         -ot jsonl
 # done
 
-uv run python generate_qa_data.py \
-    -dn google_re_jsonl \
-    -lp /home/pj24001974/ku50001571/projects/knowledge_decoupling/input/evaluate_data/jsonl/google_re \
-    -o $OUTPUT_PATH/google_re_rnd_id/ \
-    --core-replace \
-    --core-count \
-    --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv \
-    -at 10 \
-    --ent-generator "ID" \
-    --unk-generator "ID" \
-    --core-delimiter "<>" \
-    --split train \
-    -ot jsonl
+# uv run python generate_qa_data.py \
+#     -dn google_re_jsonl \
+#     -lp /home/pj24001974/ku50001571/projects/knowledge_decoupling/input/evaluate_data/jsonl/google_re \
+#     -o $OUTPUT_PATH/google_re_rnd_id/ \
+#     --core-replace \
+#     --core-count \
+#     --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv \
+#     -at 10 \
+#     --ent-generator "ID" \
+#     --unk-generator "ID" \
+#     --core-delimiter "<>" \
+#     --split train \
+#     -ot jsonl
 
 # echo ">>> google_re_mix_short"
 # uv run python generate_qa_data.py \

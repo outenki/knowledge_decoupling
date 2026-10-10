@@ -39,8 +39,8 @@ for TOKENIZER_NAME in meta-llama/Llama-3.2-1B; do
         # mrpc
         # google_re_mix_short
         # nq_swap \
+        # clasheval_rnd_id \
     for dn in \
-        clasheval_rnd_id \
         google_re_rnd_id \
         nq_swap_rnd_id
     do

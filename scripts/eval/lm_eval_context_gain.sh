@@ -7,46 +7,55 @@
 PROJECT_BASE_PATH="${PROJECT_BASE_PATH:-$HOME/projects/knowledge_decoupling}"
 MODEL_PATH=$1
 
-# export HF_DATASETS_OFFLINE=1
-# export HF_HUB_OFFLINE=1
-
-# cd $MODEL_PATH
-
-# SFT_PATH=$MODEL_PATH-sft_google_boolq_train
-# cd $SFT_PATH
-# echo
-# echo ">>>Evaluating google_boolq_context_gain for: $SFT_PATH"
-# uv run accelerate launch -m lm_eval \
-#     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-#     --model hf \
-#     --model_args pretrained=. \
-#     --tasks google_boolq_context_gain \
-#     --log_samples \
-#     --output_path eval/google_boolq_context_gain
-
-
 SFT_PATH=$MODEL_PATH-sft_squadv2_train
+TASK=squadv2_context_gain
 cd $SFT_PATH
 echo 
-echo ">>> Evaluating squadv2_context_gain QA for: $SFT_PATH"
+echo ">>> Evaluating $TASK for: $SFT_PATH"
 uv run accelerate launch -m lm_eval \
     --model hf \
     --model_args pretrained=. \
     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-    --tasks squadv2_context_gain \
+    --tasks $TASK \
     --log_samples \
-    --output_path eval/squadv2_context_gain
+    --output_path eval/$TASK
+
+SFT_PATH=$MODEL_PATH-sft_clasheval_train
+TASK=clasheval_context_gain
+cd $SFT_PATH
+echo 
+echo ">>> Evaluating $TASK for: $SFT_PATH"
+uv run accelerate launch -m lm_eval \
+    --model hf \
+    --model_args pretrained=. \
+    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+    --tasks $TASK \
+    --log_samples \
+    --output_path eval/$TASK
+
+SFT_PATH=$MODEL_PATH-sft_nq_swap_train
+TASK=nq_swap_context_gain
+cd $SFT_PATH
+echo 
+echo ">>> Evaluating $TASK for: $SFT_PATH"
+uv run accelerate launch -m lm_eval \
+    --model hf \
+    --model_args pretrained=. \
+    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+    --tasks $TASK \
+    --log_samples \
+    --output_path eval/$TASK
 
 
-
-# SFT_PATH=$MODEL_PATH-sft_triviaqa_rc_context_train
-# cd $SFT_PATH
-# echo
-# echo ">>>Evaluating triviaqa_rc_context_context_gain for: $SFT_PATH"
-# uv run accelerate launch -m lm_eval \
-#     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-#     --model hf \
-#     --model_args pretrained=. \
-#     --tasks triviaqa_rc_context_context_gain \
-#     --log_samples \
-#     --output_path eval/triviaqa_rc_context_context_gain
+SFT_PATH=$MODEL_PATH-sft_google_re_train
+TASK=google_re_context_gain
+cd $SFT_PATH
+echo 
+echo ">>> Evaluating $TASK for: $SFT_PATH"
+uv run accelerate launch -m lm_eval \
+    --model hf \
+    --model_args pretrained=. \
+    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+    --tasks $TASK \
+    --log_samples \
+    --output_path eval/$TASK
