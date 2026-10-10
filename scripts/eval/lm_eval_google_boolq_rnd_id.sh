@@ -10,7 +10,7 @@ MODEL_PATH=$1
 # export HF_DATASETS_OFFLINE=1
 # export HF_HUB_OFFLINE=1
 
-TASK=squadv2
+# TASK=google_boolq
 # SFT_PATH=$MODEL_PATH-sft_${TASK}_train
 # cd $SFT_PATH
 # echo 
@@ -23,20 +23,34 @@ TASK=squadv2
 #     --log_samples \
 #     --output_path eval/$TASK
 
-# TASK=squadv2
+# TASK=google_boolq
 # SFT_PATH=$MODEL_PATH-sft_${TASK}_train
 # cd $SFT_PATH
 # echo 
-# echo ">>> Evaluating squadv2_context_gain QA for: $SFT_PATH"
+# echo ">>> Evaluating ${TASK}_rnd_id QA for: $SFT_PATH"
 # uv run accelerate launch -m lm_eval \
 #     --model hf \
 #     --model_args pretrained=. \
 #     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-#     --tasks squadv2_context_gain \
+#     --tasks ${TASK} \
 #     --log_samples \
-#     --output_path eval/squadv2_context_gain
+#     --output_path eval/$TASK
 
-# SFT_PATH=$MODEL_PATH-sft_${TASK}_train
+SFT_DATA=google_boolq
+TASK=google_boolq_rnd_id
+SFT_PATH=$MODEL_PATH-sft_${SFT_DATA}_train
+cd $SFT_PATH
+echo 
+echo ">>> Evaluating ${TASK} QA for: $SFT_PATH"
+uv run accelerate launch -m lm_eval \
+    --model hf \
+    --model_args pretrained=. \
+    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+    --tasks ${TASK} \
+    --log_samples \
+    --output_path eval/$TASK
+
+# SFT_PATH=$MODEL_PATH-sft_${TASK}_rnd_id_train
 # cd $SFT_PATH
 # echo 
 # echo ">>> Evaluating ${TASK}_rnd_id QA for: $SFT_PATH"
@@ -47,17 +61,4 @@ TASK=squadv2
 #     --tasks ${TASK}_rnd_id \
 #     --log_samples \
 #     --output_path eval/$TASK
-
-SFT_PATH=$MODEL_PATH-sft_${TASK}_rnd_id_train
-cd $SFT_PATH
-echo 
-echo ">>> Evaluating ${TASK}_rnd_id QA for: $SFT_PATH"
-uv run accelerate launch -m lm_eval \
-    --model hf \
-    --model_args pretrained=. \
-    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-    --tasks ${TASK}_rnd_id \
-    --log_samples \
-    --output_path eval/$TASK
-
 

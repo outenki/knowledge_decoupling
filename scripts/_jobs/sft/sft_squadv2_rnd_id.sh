@@ -7,9 +7,9 @@ INIT_MODEL="$PROJECT_BASE_PATH/output/$MODEL_CONFIG/$MODEL_NAME"
 export WANDB_MODE=offline
 
 
-    # google_boolq_rnd_id
 # for SFT_DATA in \
-#     google_boolq
+#     squadv2 \
+#     squadv2_rnd_id
 # do
 #     # sft
 #     cd $PROJECT_BASE_PATH/src/train
@@ -21,12 +21,13 @@ export WANDB_MODE=offline
 #         data.name=$SFT_DATA
 # done
 
+MODEL_PATH=$INIT_MODEL
 
-# TASK=google_boolq
-# SFT_DATA=google_boolq
-# SFT_PATH=$INIT_MODEL-sft_${SFT_DATA}_train
-# cd $SFT_PATH
-# echo 
+SFT_DATA=squadv2
+TASK=squadv2
+SFT_PATH=$MODEL_PATH-sft_${TASK}_train
+cd $SFT_PATH
+echo 
 # echo ">>> Evaluating $TASK QA for: $SFT_PATH"
 # uv run accelerate launch -m lm_eval \
 #     --model hf \
@@ -36,23 +37,20 @@ export WANDB_MODE=offline
 #     --log_samples \
 #     --output_path eval/$TASK
 
-TASK=google_boolq_rnd_id
-SFT_DATA=google_boolq
-SFT_PATH=$INIT_MODEL-sft_${SFT_DATA}_train
-cd $SFT_PATH
+TASK=squadv2_rnd_id
 echo 
-echo ">>> Evaluating ${TASK}_rnd_id QA for: $SFT_PATH"
+echo ">>> Evaluating $TASK QA for: $SFT_PATH"
 uv run accelerate launch -m lm_eval \
     --model hf \
     --model_args pretrained=. \
     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-    --tasks ${TASK} \
+    --tasks $TASK \
     --log_samples \
     --output_path eval/$TASK
 
-
-# SFT_DATA=google_boolq_rnd_id
-# SFT_PATH=$INIT_MODEL-sft_${SFT_DATA}_train
+# TASK=squadv2_rnd_id
+# SFT_DATA=squadv2_rnd_id
+# SFT_PATH=$MODEL_PATH-sft_${TASK}_train
 # cd $SFT_PATH
 # echo 
 # echo ">>> Evaluating $TASK QA for: $SFT_PATH"
