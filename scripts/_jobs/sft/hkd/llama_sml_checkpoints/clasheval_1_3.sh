@@ -8,7 +8,7 @@
 #PBS -N "sml_cls_1_3"
 
 
-source $HOME/.zshrc
+# source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/_jobs/sft
 
 sh sft_clasheval.sh meta-llama/Llama-3.2-1B no_warmup/sml/SmolLM2-135M-20B-sml-bs4096
