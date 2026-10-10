@@ -386,7 +386,7 @@ uv run python generate_qa_data.py \
     --ent-generator "ID" \
     --unk-generator "ID" \
     --core-delimiter "<>" \
-    --split val \
+    --split train \
     -ot jsonl
 
 # echo ">>> google_re_mix_short"
@@ -396,20 +396,20 @@ uv run python generate_qa_data.py \
 #     -o $OUTPUT_PATH/google_re_mix_short \
 #     -ot jsonl
 
-# echo ">>> clasheval_core"
-# uv run python generate_qa_data.py \
-#     -dn clasheval \
-#     -lp $PROJECT_BASE_PATH/input/evaluate_data/dataset/clasheval \
-#     --split val \
-#     -o $OUTPUT_PATH/clasheval_rnd_id \
-#     --core-replace \
-#     --core-count \
-#     --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv \
-#     -at 10 \
-#     --ent-generator "ID" \
-#     --unk-generator "ID" \
-#     --core-delimiter "<>" \
-#     -ot jsonl
+echo ">>> clasheval_rnd_id"
+uv run python generate_qa_data.py \
+    -dn clasheval \
+    -lp $PROJECT_BASE_PATH/input/evaluate_data/dataset/clasheval \
+    --split train \
+    -o $OUTPUT_PATH/clasheval_rnd_id \
+    --core-replace \
+    --core-count \
+    --aoa $PROJECT_BASE_PATH/data/AOA/aoa.csv \
+    -at 10 \
+    --ent-generator "ID" \
+    --unk-generator "ID" \
+    --core-delimiter "<>" \
+    -ot jsonl
 
 # echo ">>> clasheval"
 # uv run python generate_qa_data.py \
