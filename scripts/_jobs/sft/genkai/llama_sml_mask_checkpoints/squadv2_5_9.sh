@@ -4,7 +4,7 @@
 #PJM -L "gpu=4"
 #PJM -e logs/squadv2_5_9.log
 #PJM -o logs/squadv2_5_9.log
-#PJM -N "ms_sq_5_9"
+#PJM -N "msk_sq_5_9"
 
 
 source $HOME/.zshrc
