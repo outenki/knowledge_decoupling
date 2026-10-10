@@ -8,7 +8,7 @@
 #PBS -N "sml_cls_5_9"
 
 
-source $HOME/.zshrc
+# source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/_jobs/sft
 
 sh sft_clasheval.sh meta-llama/Llama-3.2-1B no_warmup/sml/checkpoints/check_5

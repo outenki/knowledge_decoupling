@@ -40,9 +40,10 @@ for TOKENIZER_NAME in meta-llama/Llama-3.2-1B; do
         # google_re_mix_short
         # nq_swap \
         # clasheval_rnd_id \
+        # google_re_rnd_id \
+        # nq_swap_rnd_id
     for dn in \
-        google_re_rnd_id \
-        nq_swap_rnd_id
+        clasheval_rnd_id
     do
         echo
         echo ">>>>>> $dn sft concat train"
