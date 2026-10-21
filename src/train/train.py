@@ -1,16 +1,26 @@
 import random
 from pathlib import Path
-from datetime import datetime
 
 import hydra
 from omegaconf import DictConfig, OmegaConf
 import torch
 from transformers import AutoTokenizer
+from transformers import set_seed
+import numpy as np
 
 from src.lib.dataset import load_dataset_for_training
 from src.lib.trainer import train_model_with_data, init_wandb_run
 from src.lib.model import load_model_from_pretrained, load_model_from_config_random, freeze_parameters
 from src.lib.utils import add_tokens
+
+
+def set_all_seeds(seed: int):
+    random.seed(seed)
+    np.random.seed(seed)
+    torch.manual_seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed_all(seed)
+    set_seed(seed)
 
 DECAY_RATE = 0.9
 random.seed(42)
@@ -48,6 +58,8 @@ def main(cfg: DictConfig):
         tokenizer = AutoTokenizer.from_pretrained(cfg.model.init_model)
     else:
         assert cfg.model.config is not None, "model.config is required"
+        seed = cfg.seed
+        set_all_seeds(seed)
         model = load_model_from_config_random(cfg.model.config, cfg.training.attn_implementation)
         print(">>> Randomly initialized model. Config:", model.config)
         print(f"Loading tokenizer from: {cfg.model.tokenizer}")
@@ -89,7 +101,8 @@ def main(cfg: DictConfig):
         save_checkpoints_num=cfg.training.save_checkpoints_num,
         learning_rate=cfg.training.learning_rate,
         attn_implementation=cfg.training.attn_implementation,
-        checkpoint=cfg.model.checkpoint
+        seed=cfg.seed,
+        checkpoint=cfg.model.checkpoint,
     ) 
     wandb_run.finish()
     print(f">>> Save model to: {cfg.output.path}")

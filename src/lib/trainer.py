@@ -40,7 +40,9 @@ def init_wandb_run(output_path: str, group_name: str, tags: list = []):
 
 def train_model_with_data(
     model, train_dataset, eval_dataset, wandb_run, output_path,
-    batch_size, epochs, checkpoints_per_epoch, eval_strategy, save_checkpoints_num, learning_rate, attn_implementation, checkpoint=None
+    batch_size, epochs, checkpoints_per_epoch, eval_strategy,
+    save_checkpoints_num, learning_rate, attn_implementation,
+    seed, checkpoint=None
 ):
     # === Training setup
     log_path = f"{output_path}/logs"
@@ -94,6 +96,8 @@ def train_model_with_data(
         optim="adamw_torch",  # Use optimized AdamW
         max_grad_norm=1.0,  # Gradient clipping
         gradient_checkpointing=True,  # Enable gradient checkpointing
+        seed=seed,
+        data_seed=seed
     )
 
     # Save training arguments to JSON for later reference

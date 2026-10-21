@@ -1,4 +1,5 @@
 # configs/train.yaml
+seed: null
 base:
   path: null
 
@@ -36,7 +37,7 @@ wandb:
     - bs4096
 
 output:
-  path: ${base.path}/output/${model.config}/random_init/${data.name}
+  path: ${base.path}/output/${model.config}/seed_{$seed}/random_init/${data.name}
 
 hydra:
   run:

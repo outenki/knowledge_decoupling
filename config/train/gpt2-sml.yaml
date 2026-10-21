@@ -1,4 +1,5 @@
 # configs/train.yaml
+seed: null
 base:
   path: null
 
@@ -34,7 +35,7 @@ wandb:
     - bs1024
 
 output:
-  path: ${base.path}/output/${model.config}/${data.name}
+  path: ${base.path}/output/${model.config}/seed_${seed}/${data.name}
 
 hydra:
   run:
