@@ -39,12 +39,12 @@
 #     -o /home/pj24001974/ku50001571/projects/knowledge_decoupling/input/evaluate_data/jsonl/jsonl/arc_challenge_count/sml_mask.csv
 
 # triviaqa_rc_nocontext
-uv run python extract_samples_with_replaced_tokens_num.py \
-    -s1 /home/pj24001974/ku50001571/projects/knowledge_decoupling/output/meta-llama/Llama-3.2-1B/no_warmup/sml/SmolLM2-135M-20B-sml-bs4096-sft_triviaqa_rc_nocontext_train/eval/triviaqa_rc_nocontext/samples_triviaqa_2026-09-23T01-01-28.894863.jsonl \
-    -s2 /home/pj24001974/ku50001571/projects/knowledge_decoupling/output/meta-llama/Llama-3.2-1B/no_warmup/sml_mask/SmolLM2-135M-20B-sml_mask-bs4096-sft_triviaqa_rc_nocontext_train/eval/triviaqa_rc_nocontext/samples_triviaqa_2026-09-23T01-31-37.451801.jsonl \
-    -rp /home/pj24001974/ku50001571/projects/knowledge_decoupling/input/evaluate_data/jsonl/jsonl/triviaqa_rc_nocontext_count/validation.jsonl \
-    -m em \
-    -o /home/pj24001974/ku50001571/projects/knowledge_decoupling/input/evaluate_data/jsonl/jsonl/triviaqa_rc_nocontext_count/sml_mask.csv
+# uv run python extract_samples_with_replaced_tokens_num.py \
+#     -s1 /home/pj24001974/ku50001571/projects/knowledge_decoupling/output/meta-llama/Llama-3.2-1B/no_warmup/sml/SmolLM2-135M-20B-sml-bs4096-sft_triviaqa_rc_nocontext_train/eval/triviaqa_rc_nocontext/samples_triviaqa_2026-09-23T01-01-28.894863.jsonl \
+#     -s2 /home/pj24001974/ku50001571/projects/knowledge_decoupling/output/meta-llama/Llama-3.2-1B/no_warmup/sml_mask/SmolLM2-135M-20B-sml_mask-bs4096-sft_triviaqa_rc_nocontext_train/eval/triviaqa_rc_nocontext/samples_triviaqa_2026-09-23T01-31-37.451801.jsonl \
+#     -rp /home/pj24001974/ku50001571/projects/knowledge_decoupling/input/evaluate_data/jsonl/jsonl/triviaqa_rc_nocontext_count/validation.jsonl \
+#     -m em \
+#     -o /home/pj24001974/ku50001571/projects/knowledge_decoupling/input/evaluate_data/jsonl/jsonl/triviaqa_rc_nocontext_count/sml_mask.csv
 
 # commonsense_qa
 # uv run python extract_samples_with_replaced_tokens_num.py \
@@ -70,3 +70,28 @@ uv run python extract_samples_with_replaced_tokens_num.py \
 #     -rp /home/pj24001974/ku50001571/projects/knowledge_decoupling/input/evaluate_data/jsonl/jsonl/piqa_count/validation.jsonl \
 #     -m acc\
 #     -o /home/pj24001974/ku50001571/projects/knowledge_decoupling/input/evaluate_data/jsonl/jsonl/piqa_count/sml_mask.csv
+
+# google_re
+uv run python extract_samples_with_replaced_tokens_num.py \
+    -s1 $PROJECT_BASE_PATH/output/meta-llama/Llama-3.2-1B/no_warmup/sml/SmolLM2-135M-20B-sml-bs4096-sft_google_re_train/eval/google_re/samples_google_re_2026-10-09T07-11-27.047405.jsonl \
+    -s2 $PROJECT_BASE_PATH/output/meta-llama/Llama-3.2-1B/no_warmup/sml_mask/SmolLM2-135M-20B-sml_mask-bs4096-sft_google_re_train/eval/google_re/samples_google_re_2026-10-09T02-42-41.397975.jsonl \
+    -rp $PROJECT_BASE_PATH/input/evaluate_data/jsonl/google_re_rnd_id/val.jsonl \
+    -m acc \
+    -o $PROJECT_BASE_PATH/input/evaluate_data/jsonl/google_re_rnd_id/sml_mask.csv
+
+# clasheval
+uv run python extract_samples_with_replaced_tokens_num.py \
+    -s1 $PROJECT_BASE_PATH/output/meta-llama/Llama-3.2-1B/no_warmup/sml/SmolLM2-135M-20B-sml-bs4096-sft_clasheval_train/eval/clasheval/samples_clasheval_2026-10-09T05-42-37.830997.jsonl \
+    -s2 $PROJECT_BASE_PATH/output/meta-llama/Llama-3.2-1B/no_warmup/sml_mask/SmolLM2-135M-20B-sml_mask-bs4096-sft_clasheval_train/eval/clasheval/samples_clasheval_2026-10-09T04-46-09.645310.jsonl \
+    -rp $PROJECT_BASE_PATH/input/evaluate_data/jsonl/clasheval_rnd_id/val.jsonl \
+    -m acc \
+    -o $PROJECT_BASE_PATH/input/evaluate_data/jsonl/clasheval_rnd_id/sml_mask.csv
+
+
+# clasheval
+uv run python extract_samples_with_replaced_tokens_num.py \
+    -s1 $PROJECT_BASE_PATH/output/meta-llama/Llama-3.2-1B/no_warmup/sml/SmolLM2-135M-20B-sml-bs4096-sft_nq_swap_train/eval/nq_swap/samples_nq_swap_2026-10-09T06-04-27.683518.jsonl \
+    -s2 $PROJECT_BASE_PATH/output/meta-llama/Llama-3.2-1B/no_warmup/sml_mask/SmolLM2-135M-20B-sml_mask-bs4096-sft_nq_swap_train/eval/nq_swap/samples_nq_swap_2026-10-09T05-06-48.263752.jsonl \
+    -rp $PROJECT_BASE_PATH/input/evaluate_data/jsonl/nq_swap_rnd_id/val.jsonl \
+    -m acc \
+    -o $PROJECT_BASE_PATH/input/evaluate_data/jsonl/nq_swap_rnd_id/sml_mask.csv

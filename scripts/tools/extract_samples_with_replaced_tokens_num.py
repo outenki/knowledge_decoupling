@@ -111,8 +111,8 @@ def main():
             replaced_tokens_data[i]["id"] = str(i)
 
     # Create a dictionary for quick lookup of samples by doc_id
-    sample1_dict = {sample["arguments"]["gen_args_0"]["arg_0"].replace("??", "?"): sample for sample in tqdm(sample1_data, desc="Creating sample1 dict")}
-    sample2_dict = {sample["arguments"]["gen_args_0"]["arg_0"].replace("??", "?"): sample for sample in tqdm(sample2_data, desc="Creating sample2 dict")}
+    sample1_dict = {sample["arguments"]["gen_args_0"]["arg_0"].replace("??", "?").replace("\n\n", "\n").strip(): sample for sample in tqdm(sample1_data, desc="Creating sample1 dict")}
+    sample2_dict = {sample["arguments"]["gen_args_0"]["arg_0"].replace("??", "?").replace("\n\n", "\n").strip(): sample for sample in tqdm(sample2_data, desc="Creating sample2 dict")}
     # sample1_dict = {sample["doc"]["sentence"]: sample for sample in tqdm(sample1_data, desc="Creating sample1 dict")}
     # sample2_dict = {sample["doc"]["sentence"]: sample for sample in tqdm(sample2_data, desc="Creating sample2 dict")}
     replaced_tokens_dict = {sample["prompt_ori"]: sample for sample in tqdm(replaced_tokens_data, desc="Creating replaced tokens dict")}
