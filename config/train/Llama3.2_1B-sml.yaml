@@ -37,7 +37,7 @@ wandb:
     - bs4096
 
 output:
-  path: ${base.path}/output/${model.config}/seed_{$seed}/random_init/${data.name}
+  path: ${base.path}/output/${model.config}/seed_${seed}/no_warmup/${data.name}
 
 hydra:
   run:
