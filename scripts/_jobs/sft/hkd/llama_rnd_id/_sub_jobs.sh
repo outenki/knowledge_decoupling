@@ -1,3 +1,3 @@
-pjsub popqa.sh
-pjsub redirect_qa.sh
-pjsub qasc.sh
+qsub popqa.sh
+qsub redirect_qa.sh
+qsub qasc.sh
