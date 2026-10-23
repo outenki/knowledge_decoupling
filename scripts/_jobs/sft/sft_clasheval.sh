@@ -13,6 +13,7 @@ uv run python train.py --config-name sft_train \
     base.path=$PROJECT_BASE_PATH \
     model.config="$MODEL_CONFIG" \
     model.init_model="$INIT_MODEL" \
+    seed=42 \
     data.name=$SFT_DATA
 
 SFT_DATA=clasheval_rnd_id
@@ -30,81 +31,81 @@ uv run accelerate launch -m lm_eval \
     --output_path eval/$TASK
 
 
-# # SFT
-# SFT_DATA=clasheval
-# cd $PROJECT_BASE_PATH/src/train
-# echo ">>> SFT $MODEL_CONFIG/$MODEL_NAME on $SFT_DATA"
-# uv run python train.py --config-name sft_train \
-#     base.path=$PROJECT_BASE_PATH \
-#     model.config="$MODEL_CONFIG" \
-#     model.init_model="$INIT_MODEL" \
-#     data.name=$SFT_DATA
+# SFT
+SFT_DATA=clasheval
+cd $PROJECT_BASE_PATH/src/train
+echo ">>> SFT $MODEL_CONFIG/$MODEL_NAME on $SFT_DATA"
+uv run python train.py --config-name sft_train \
+    base.path=$PROJECT_BASE_PATH \
+    model.config="$MODEL_CONFIG" \
+    model.init_model="$INIT_MODEL" \
+    data.name=$SFT_DATA
 
-# SFT_DATA=clasheval
-# SFT_PATH=$INIT_MODEL-sft_${SFT_DATA}_train
-# cd $SFT_PATH
+SFT_DATA=clasheval
+SFT_PATH=$INIT_MODEL-sft_${SFT_DATA}_train
+cd $SFT_PATH
 
-# TASK=clasheval
-# echo
-# echo ">>>Evaluating $TASK for: $SFT_PATH"
-# uv run accelerate launch -m lm_eval \
-#     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-#     --model hf \
-#     --model_args pretrained=. \
-#     --tasks $TASK \
-#     --log_samples \
-#     --output_path eval/$TASK
+TASK=clasheval
+echo
+echo ">>>Evaluating $TASK for: $SFT_PATH"
+uv run accelerate launch -m lm_eval \
+    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+    --model hf \
+    --model_args pretrained=. \
+    --tasks $TASK \
+    --log_samples \
+    --output_path eval/$TASK
 
-# TASK=clasheval_rnd_id
-# echo
-# echo ">>>Evaluating ${SFT_DATA}_rnd_id for: $SFT_PATH"
-# uv run accelerate launch -m lm_eval \
-#     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-#     --model hf \
-#     --model_args pretrained=. \
-#     --tasks $TASK \
-#     --log_samples \
-#     --output_path eval/${SFT_DATA}_rnd_id
+TASK=clasheval_rnd_id
+echo
+echo ">>>Evaluating ${SFT_DATA}_rnd_id for: $SFT_PATH"
+uv run accelerate launch -m lm_eval \
+    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+    --model hf \
+    --model_args pretrained=. \
+    --tasks $TASK \
+    --log_samples \
+    --output_path eval/${SFT_DATA}_rnd_id
 
-# echo
-# echo ">>>Evaluating ${SFT_DATA}_conflict for: $SFT_PATH"
-# uv run accelerate launch -m lm_eval \
-#     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-#     --model hf \
-#     --model_args pretrained=. \
-#     --tasks ${SFT_DATA}_conflict \
-#     --log_samples \
-#     --output_path eval/${SFT_DATA}_conflict
+echo
+echo ">>>Evaluating ${SFT_DATA}_conflict for: $SFT_PATH"
+uv run accelerate launch -m lm_eval \
+    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+    --model hf \
+    --model_args pretrained=. \
+    --tasks ${SFT_DATA}_conflict \
+    --log_samples \
+    --output_path eval/${SFT_DATA}_conflict
 
 
-# # SFT after extensive pretraining
-# EXT_DATA=clasheval_test-bs4096
-# cd $PROJECT_BASE_PATH/src/train
-# echo ">>> EXT training $MODEL_CONFIG/$MODEL_NAME on $EXT_DATA"
-# uv run python train.py --config-name ext_train \
-#     base.path=$PROJECT_BASE_PATH \
-#     model.config="$MODEL_CONFIG" \
-#     model.init_model="$INIT_MODEL" \
-#     data.name=$EXT_DATA
+# SFT after extensive pretraining
+EXT_DATA=clasheval_test-bs4096
+cd $PROJECT_BASE_PATH/src/train
+echo ">>> EXT training $MODEL_CONFIG/$MODEL_NAME on $EXT_DATA"
+uv run python train.py --config-name ext_train \
+    base.path=$PROJECT_BASE_PATH \
+    model.config="$MODEL_CONFIG" \
+    model.init_model="$INIT_MODEL" \
+    data.name=$EXT_DATA
 
-# EXT_MODEL=$INIT_MODEL-ext_${EXT_DATA}
-# SFT_DATA=clasheval
-# cd $PROJECT_BASE_PATH/src/train
-# echo ">>> SFT $MODEL_CONFIG/$EXT_MODEL on $SFT_DATA"
-# uv run python train.py --config-name sft_train \
-#     base.path=$PROJECT_BASE_PATH \
-#     model.config="$MODEL_CONFIG" \
-#     model.init_model="$EXT_MODEL" \
-#     data.name=$SFT_DATA
+EXT_MODEL=$INIT_MODEL-ext_${EXT_DATA}
+SFT_DATA=clasheval
+cd $PROJECT_BASE_PATH/src/train
+echo ">>> SFT $MODEL_CONFIG/$EXT_MODEL on $SFT_DATA"
+uv run python train.py --config-name sft_train \
+    base.path=$PROJECT_BASE_PATH \
+    model.config="$MODEL_CONFIG" \
+    model.init_model="$EXT_MODEL" \
+    data.name=$SFT_DATA
 
-# SFT_PATH=$EXT_MODEL-sft_${SFT_DATA}_train
-# cd $SFT_PATH
-# echo
-# echo ">>>Evaluating ${SFT_DATA}_conflict for: $SFT_PATH"
-# uv run accelerate launch -m lm_eval \
-#     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-#     --model hf \
-#     --model_args pretrained=. \
-#     --tasks ${SFT_DATA}_conflict \
-#     --log_samples \
-#     --output_path eval/${SFT_DATA}_conflict
+SFT_PATH=$EXT_MODEL-sft_${SFT_DATA}_train
+cd $SFT_PATH
+echo
+echo ">>>Evaluating ${SFT_DATA}_conflict for: $SFT_PATH"
+uv run accelerate launch -m lm_eval \
+    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+    --model hf \
+    --model_args pretrained=. \
+    --tasks ${SFT_DATA}_conflict \
+    --log_samples \
+    --output_path eval/${SFT_DATA}_conflict
