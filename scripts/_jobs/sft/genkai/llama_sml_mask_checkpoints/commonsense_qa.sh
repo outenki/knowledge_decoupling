@@ -4,7 +4,7 @@
 #PJM -L "gpu=4"
 #PJM -e logs/commonsense_qa.log
 #PJM -o logs/commonsense_qa.log
-#PJM -N "ms_cs"
+#PJM -N "msk_cs"
 
 
 source $HOME/.zshrc

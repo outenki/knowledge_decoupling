@@ -2,9 +2,9 @@
 #PJM -L "rscgrp=b-batch"
 #PJM -L "elapse=50:00:00"
 #PJM -L "gpu=4"
-#PJM -e logs/commonsense_qa.log
+#PJM -j
 #PJM -o logs/commonsense_qa.log
-#PJM -N "sft_cs"
+#PJM -N "sml_cs"
 
 
 source $HOME/.zshrc

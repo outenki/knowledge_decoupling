@@ -4,7 +4,7 @@
 #PJM -L "gpu=4"
 #PJM -e logs/boolq.log
 #PJM -o logs/boolq.log
-#PJM -N "ms_boolq"
+#PJM -N "msk_boolq"
 
 
 source $HOME/.zshrc

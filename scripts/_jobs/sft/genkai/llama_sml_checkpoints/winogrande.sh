@@ -2,9 +2,9 @@
 #PJM -L "rscgrp=c-batch"
 #PJM -L "elapse=24:00:00"
 #PJM -L "gpu=4"
-#PJM -e logs/winogrande.log
+#PJM -j
 #PJM -o logs/winogrande.log
-#PJM -N "sft_wino"
+#PJM -N "sml_wino"
 
 
 source $HOME/.zshrc

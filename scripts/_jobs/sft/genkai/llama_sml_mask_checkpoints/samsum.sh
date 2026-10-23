@@ -4,7 +4,7 @@
 #PJM -L "gpu=4"
 #PJM -e logs/samsum.log
 #PJM -o logs/samsum.log
-#PJM -N "ms_samsum"
+#PJM -N "msk_samsum"
 
 
 source $HOME/.zshrc

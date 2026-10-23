@@ -9,6 +9,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--data-path", type=str, help="Path to input JSONL file")
     parser.add_argument("--train-ratio", type=float, help="Ratio of training data, e.g. 0.9")
+    parser.add_argument("--key", type=str, help="Split by key")
     parser.add_argument("--output-dir", type=str, help="Directory to save train.jsonl and val.jsonl")
 
     args = parser.parse_args()
@@ -35,22 +36,22 @@ def main():
     print(f"Total samples: {len(data)}")
 
     # --------------------------------------------------
-    # 2. 按 context 分组
+    # 2. 按 key 分组
     # --------------------------------------------------
-    context_to_samples = defaultdict(list)
+    key_to_samples = defaultdict(list)
 
     for item in data:
-        context = item["context"]
-        context_to_samples[context].append(item)
+        keys = item[args.key]
+        key_to_samples[keys].append(item)
 
-    contexts = list(context_to_samples.keys())
+    keys = list(key_to_samples.keys())
 
-    print(f"Unique contexts: {len(contexts)}")
+    print(f"Unique keys: {len(keys)}")
 
     # --------------------------------------------------
-    # 3. 随机打乱 context
+    # 3. 随机打乱 keys
     # --------------------------------------------------
-    random.shuffle(contexts)
+    random.shuffle(keys)
 
     # --------------------------------------------------
     # 4. 根据 sample 数量决定 train / val
@@ -62,10 +63,10 @@ def main():
 
     train_size = 0
 
-    for context in contexts:
-        samples = context_to_samples[context]
+    for keys in keys:
+        samples = key_to_samples[keys]
 
-        # 如果加入这个 context 后不会超过目标 train size，
+        # 如果加入这个 key 后不会超过目标 train size，
         # 就放到 train
         if train_size + len(samples) <= target_train_size:
             train.extend(samples)
@@ -74,17 +75,17 @@ def main():
             val.extend(samples)
 
     # --------------------------------------------------
-    # 5. 再次检查 context 是否发生泄漏
+    # 5. 再次检查 key 是否发生泄漏
     # --------------------------------------------------
-    train_contexts = {item["context"] for item in train}
-    val_contexts = {item["context"] for item in val}
+    train_keys = {item[args.key] for item in train}
+    val_keys = {item[args.key] for item in val}
 
-    overlap = train_contexts & val_contexts
+    overlap = train_keys & val_keys
 
     if overlap:
         raise RuntimeError(
-            f"Context leakage detected! "
-            f"{len(overlap)} contexts appear in both train and val."
+            f"Target key leakage detected! "
+            f"{len(overlap)} key values appear in both train and val."
         )
 
     # --------------------------------------------------
@@ -118,9 +119,9 @@ def main():
     print(f"Train: {len(train)} samples")
     print(f"Val:   {len(val)} samples")
     print(f"Train ratio: {len(train) / len(data):.4f}")
-    print(f"Unique train contexts: {len(train_contexts)}")
-    print(f"Unique val contexts:   {len(val_contexts)}")
-    print(f"Context overlap:       {len(overlap)}")
+    print(f"Unique train keys: {len(train_keys)}")
+    print(f"Unique val keys:   {len(val_keys)}")
+    print(f"Keys overlap:       {len(overlap)}")
     print()
     print(f"Saved train to: {train_path}")
     print(f"Saved val to:   {val_path}")

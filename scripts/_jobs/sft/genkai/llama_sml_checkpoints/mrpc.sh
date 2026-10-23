@@ -2,9 +2,9 @@
 #PJM -L "rscgrp=b-batch"
 #PJM -L "elapse=50:00:00"
 #PJM -L "gpu=4"
-#PJM -e logs/mrpc.log
+#PJM -j
 #PJM -o logs/mrpc.log
-#PJM -N "sft_mrpc"
+#PJM -N "sml_mrpc"
 
 
 source $HOME/.zshrc

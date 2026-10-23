@@ -4,7 +4,7 @@
 #PJM -L "gpu=4"
 #PJM -e logs/xsum_7_9.log
 #PJM -o logs/xsum_7_9.log
-#PJM -N "sft_xsum_7_9"
+#PJM -N "sml_xsum_7_9"
 
 
 source $HOME/.zshrc

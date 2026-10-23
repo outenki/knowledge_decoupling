@@ -2,7 +2,7 @@
 #PJM -L "rscgrp=c-batch"
 #PJM -L "elapse=24:00:00"
 #PJM -L "gpu=4"
-#PJM -e logs/clasheval_5_9.log
+#PJM -j
 #PJM -o logs/clasheval_5_9.log
 #PJM -N "sml_cls_5_9"
 

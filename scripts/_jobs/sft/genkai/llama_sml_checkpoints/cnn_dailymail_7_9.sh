@@ -2,7 +2,7 @@
 #PJM -L "rscgrp=c-batch"
 #PJM -L "elapse=24:00:00"
 #PJM -L "gpu=4"
-#PJM -e logs/cnn_dailymail_7_9.log
+#PJM -j
 #PJM -o logs/cnn_dailymail_7_9.log
 #PJM -N "sft_cdm_7_9"
 

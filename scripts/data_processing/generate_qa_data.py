@@ -50,7 +50,8 @@ def read_args():
             'arc_easy', 'arc_challenge', 'boolq', 'qasc', "squad_v2", "based_squad", "squadv2",
             "cnn_dailymail", "mintaka", "cwq", "metaqa", "google_re", "google_re_jsonl",
             "commonsense_qa", "triviaqa_rc_nocontext", "piqa", "winogrande", "clasheval", "nq_swap", "race",
-            "triviaqa_rc_context", "google_boolq_core", "xsum", "samsum", "gigaword", "mrpc", "paws_en"],
+            "triviaqa_rc_context", "google_boolq_core", "xsum", "samsum", "gigaword", "mrpc", "paws_en",
+            "popqa", "redirect_qa"],
         help='Name of the dataset to load from Hugging Face'
     )
     parser.add_argument('--local-path', '-lp', dest='local_path', type=str)
@@ -432,6 +433,61 @@ def generate_qa_data_from_mrpc(dataset: Dataset, md: bool, probing: bool, lower_
         )
     return qa_data
 
+def generate_qa_data_from_popqa(dataset: Dataset, md: bool, probing: bool, lower_text: bool, core_replace_config: dict) -> list[dict]:
+    qa_data = []
+    for qid, sample in tqdm(enumerate(dataset), total=len(dataset), desc="Generating QA data"):
+        assert isinstance(sample, dict)
+        qid = sample["id"]
+        question = sample["question"]
+        answers = eval(sample["possible_answers"])
+        answer = answers[0]
+        obj = sample["obj"]
+
+        prompt = f"Question: {question}\nAnswer:"
+        qa_data.append(
+            construct_qa(
+                qid=str(qid),
+                context="",
+                question=question,
+                choices=[],
+                choices_str="",
+                answer=answer,
+                md=md,
+                probing=probing,
+                lower_text=lower_text,
+                argkv={"prompt": prompt, "category": obj, "answers": answers},
+                core_replace_config=core_replace_config
+            )
+        )
+    return qa_data
+
+def generate_qa_data_from_redirect_qa(dataset: Dataset, md: bool, probing: bool, lower_text: bool, core_replace_config: dict) -> list[dict]:
+    qa_data = []
+    for qid, sample in tqdm(enumerate(dataset), total=len(dataset), desc="Generating QA data"):
+        assert isinstance(sample, dict)
+        question = sample["question"]
+        answers = sample["possible_answers"][0]
+        answer = answers[0]
+        category = sample["predicate_surface"]
+        template_type = sample["template_type"]
+
+        prompt = f"Question: {question}\nAnswer:"
+        qa_data.append(
+            construct_qa(
+                qid=str(qid),
+                context="",
+                question=question,
+                choices=[],
+                choices_str="",
+                answer=answer,
+                md=md,
+                probing=probing,
+                lower_text=lower_text,
+                argkv={"prompt": prompt, "category": category, "template_type": template_type, "answers": answers},
+                core_replace_config=core_replace_config
+            )
+        )
+    return qa_data
 
 def generate_qa_data_from_ai2_arc(dataset: Dataset, md: bool, probing: bool, lower_text: bool, core_replace_config: dict) -> list[dict]:
     qa_data = []
@@ -527,15 +583,17 @@ def generate_qa_data_from_qasc(dataset: Dataset, md: bool, probing: bool, lower_
     qa_data = []
     for qid, sample in tqdm(enumerate(dataset), total=len(dataset), desc="Generating QA data"):
         assert isinstance(sample, dict)
+        qid = sample["id"]
         question = sample["question"]
         if not question.endswith("?") and not question.endswith("."):
             question += "?"
         choices = sample["choices"]["text"]
         labels = sample["choices"]["label"]
         answer_key = sample["answerKey"]
-        if answer_key not in labels:
-            continue  # Skip if the answer key is not in the labels
-        answer = choices[labels.index(answer_key)]
+        answer = "unanswerable"
+        if answer_key in labels:
+            answer = choices[labels.index(answer_key)]
+        prompt = f"Question: {question}\nAnswer:"
         context = ""
         qa_data.append(
             construct_qa(
@@ -548,7 +606,7 @@ def generate_qa_data_from_qasc(dataset: Dataset, md: bool, probing: bool, lower_
                 md=md,
                 probing=probing,
                 lower_text=lower_text,
-                argkv={},
+                argkv={"prompt": prompt},
                 core_replace_config=core_replace_config
             )
         )
@@ -1241,6 +1299,8 @@ elif args.data_name == "arc_challenge":
     dataset_dict = load_dataset("allenai/ai2_arc", "ARC-Challenge")
 elif args.data_name == "commonsense_qa":
     dataset_dict = load_dataset("tau/commonsense_qa")
+elif args.data_name == "qasc":
+    dataset_dict = load_dataset("allenai/qasc")
 elif args.data_name == "piqa":
     dataset_dict = load_dataset("baber/piqa")
 elif args.data_name == "metaqa":
@@ -1279,6 +1339,10 @@ elif args.data_name == "samsum":
     dataset_dict = load_dataset("knkarthick/samsum")
 elif args.data_name == "gigaword":
     dataset_dict = load_dataset("SalmanFaroz/gigaword")
+elif args.data_name == "popqa":
+    dataset_dict = load_dataset("akariasai/PopQA")
+elif args.data_name == "redirect_qa":
+    dataset_dict = load_dataset("naist-nlp/RedirectQA")
 elif args.data_name == "paws_en":
     dataset_dict = load_dataset("google-research-datasets/paws-x", "en")
 elif args.data_name == "mrpc":
@@ -1390,6 +1454,12 @@ for split, dataset in dataset_dict.items():
     elif args.data_name == "mrpc":
         assert isinstance(dataset, Dataset)
         qa_data = generate_qa_data_from_mrpc(dataset, args.markdown, args.probing, args.lower_text, core_config)
+    elif args.data_name == "popqa":
+        assert isinstance(dataset, Dataset)
+        qa_data = generate_qa_data_from_popqa(dataset, args.markdown, args.probing, args.lower_text, core_config)
+    elif args.data_name == "redirect_qa":
+        assert isinstance(dataset, Dataset)
+        qa_data = generate_qa_data_from_redirect_qa(dataset, args.markdown, args.probing, args.lower_text, core_config)
     else:
         raise ValueError(f"Unsupported dataset: {args.data_name}")
 
