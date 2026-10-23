@@ -4,7 +4,7 @@
 #PJM -L "gpu=4"
 #PJM -j
 #PJM -o logs/mrpc.log
-#PJM -N "sml_mrpc"
+#PJM -N "smlc_mrpc"
 
 
 source $HOME/.zshrc

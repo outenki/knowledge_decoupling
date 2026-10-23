@@ -1,10 +1,11 @@
 #!/bin/bash
-#PJM -L "rscgrp=c-batch"
-#PJM -L "elapse=24:00:00"
-#PJM -L "gpu=4"
-#PJM -e logs/triviaqa_rc_nocontext_1.log
-#PJM -o logs/triviaqa_rc_nocontext_1.log
-#PJM -N "ms_trnc_1"
+#PBS -q c30897g
+#PBS -l select=1:ngpus=4
+#PBS -l walltime=50:00:00
+#PBS -W group_list=c30897
+#PBS -j oe
+#PBS -o logs/triviaqa_rc_nocontext_1_3.log
+#PBS -N "mskc_trnc_1_3"
 
 
 source $HOME/.zshrc

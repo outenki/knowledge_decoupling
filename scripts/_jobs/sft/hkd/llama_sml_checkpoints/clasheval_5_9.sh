@@ -5,7 +5,7 @@
 #PBS -W group_list=c30897
 #PBS -j oe
 #PBS -o logs/clasheval_5_9.log
-#PBS -N "sml_cls_5_9"
+#PBS -N "smlc_cls_5_9"
 
 
 # source $HOME/.zshrc

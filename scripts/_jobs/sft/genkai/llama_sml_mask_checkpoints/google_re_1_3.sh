@@ -4,7 +4,7 @@
 #PJM -L "gpu=4"
 #PJM -e logs/google_re_1_3.log
 #PJM -o logs/google_re_1_3.log
-#PJM -N "msk_gre_1_3"
+#PJM -N "mskc_gre_1_3"
 
 
 source $HOME/.zshrc

@@ -4,7 +4,7 @@
 #PJM -L "gpu=4"
 #PJM -j
 #PJM -o logs/cnn_dailymail_7_9.log
-#PJM -N "sft_cdm_7_9"
+#PJM -N "smlc_cdm_7_9"
 
 
 source $HOME/.zshrc

@@ -5,7 +5,7 @@
 #PBS -W group_list=c30897
 #PBS -j oe
 #PBS -o logs/winogrande.log
-#PBS -N ms_wino
+#PBS -N mskc_wino
 
 
 source $HOME/.zshrc

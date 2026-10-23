@@ -4,7 +4,7 @@
 #PJM -L "gpu=4"
 #PJM -e logs/triviaqa_rc_nocontext_5_9.log
 #PJM -o logs/triviaqa_rc_nocontext_5)9.log
-#PJM -N "sml_trnc_5_9"
+#PJM -N "smlc_trnc_5_9"
 
 
 source $HOME/.zshrc

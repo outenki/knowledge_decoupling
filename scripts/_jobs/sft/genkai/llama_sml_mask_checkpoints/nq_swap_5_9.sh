@@ -4,7 +4,7 @@
 #PJM -L "gpu=4"
 #PJM -e logs/nq_swap_5_9.log
 #PJM -o logs/nq_swap_5_9.log
-#PJM -N "msk_nq_5_9"
+#PJM -N "mskc_nq_5_9"
 
 
 source $HOME/.zshrc

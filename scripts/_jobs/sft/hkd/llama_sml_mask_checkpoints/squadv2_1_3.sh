@@ -5,7 +5,7 @@
 #PBS -W group_list=c30897
 #PBS -j oe
 #PBS -o logs/squadv2_1_3.log
-#PBS -N msk_sq_1_3
+#PBS -N mskc_sq_1_3
 
 
 source $HOME/.zshrc

@@ -4,7 +4,7 @@
 #PJM -L "gpu=4"
 #PJM -e logs/clasheval_1_3.log
 #PJM -o logs/clasheval_1_3.log
-#PJM -N "sml_cls_1_3"
+#PJM -N "smlc_cls_1_3"
 
 
 source $HOME/.zshrc

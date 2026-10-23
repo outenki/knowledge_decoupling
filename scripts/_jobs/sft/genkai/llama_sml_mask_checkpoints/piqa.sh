@@ -4,7 +4,7 @@
 #PJM -L "gpu=4"
 #PJM -e logs/piqa.log
 #PJM -o logs/piqa.log
-#PJM -N "msk_piqa"
+#PJM -N "mskc_piqa"
 
 
 source $HOME/.zshrc

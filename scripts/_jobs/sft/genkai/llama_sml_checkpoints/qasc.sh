@@ -4,7 +4,7 @@
 #PJM -L "gpu=4"
 #PJM -j
 #PJM -o logs/qasc.log
-#PJM -N "sml_qasc"
+#PJM -N "smlc_qasc"
 
 
 source $HOME/.zshrc

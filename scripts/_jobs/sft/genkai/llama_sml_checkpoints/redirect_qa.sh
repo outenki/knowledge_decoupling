@@ -4,7 +4,7 @@
 #PJM -L "gpu=4"
 #PJM -j
 #PJM -o logs/redirect_qa.log
-#PJM -N "sml_rdqa"
+#PJM -N "smlc_rdqa"
 
 
 source $HOME/.zshrc

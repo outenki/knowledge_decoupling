@@ -5,7 +5,7 @@
 #PBS -W group_list=c30897
 #PBS -j oe
 #PBS -o logs/google_re_1_3.log
-#PBS -N "msk_gre_1_3"
+#PBS -N "mskc_gre_1_3"
 
 
 source $HOME/.zshrc

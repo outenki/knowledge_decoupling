@@ -4,7 +4,7 @@
 #PJM -L "gpu=4"
 #PJM -j
 #PJM -o logs/winogrande.log
-#PJM -N "sml_wino"
+#PJM -N "smlc_wino"
 
 
 source $HOME/.zshrc

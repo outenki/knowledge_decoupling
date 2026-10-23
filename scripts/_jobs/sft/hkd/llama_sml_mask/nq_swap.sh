@@ -5,7 +5,7 @@
 #PBS -W group_list=c30897
 #PBS -j oe
 #PBS -o logs/nq_swap.log
-#PBS -N ms_nq
+#PBS -N msk_nq
 
 
 source $HOME/.zshrc

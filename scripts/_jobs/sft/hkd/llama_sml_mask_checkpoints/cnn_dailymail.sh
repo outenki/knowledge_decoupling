@@ -1,10 +1,11 @@
 #!/bin/bash
-#PJM -L "rscgrp=c-batch"
-#PJM -L "elapse=24:00:00"
-#PJM -L "gpu=4"
-#PJM -e logs/cnn_dailymail.log
-#PJM -o logs/cnn_dailymail.log
-#PJM -N "ms_cdm"
+#PBS -q c30897g
+#PBS -l select=1:ngpus=4
+#PBS -l walltime=50:00:00
+#PBS -W group_list=c30897
+#PBS -j oe
+#PBS -o logs/cnn_dailymail.log
+#PBS -N "mskc_cdm"
 
 
 source $HOME/.zshrc

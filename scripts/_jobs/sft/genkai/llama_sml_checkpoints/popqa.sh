@@ -4,7 +4,7 @@
 #PJM -L "gpu=4"
 #PJM -j
 #PJM -o logs/popqa.log
-#PJM -N "sml_qqpa"
+#PJM -N "smlc_qqpa"
 
 
 source $HOME/.zshrc

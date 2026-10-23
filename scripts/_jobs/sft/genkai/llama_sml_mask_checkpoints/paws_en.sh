@@ -4,7 +4,7 @@
 #PJM -L "gpu=4"
 #PJM -e logs/paws_en.log
 #PJM -o logs/paws_en.log
-#PJM -N "msk_paws_en"
+#PJM -N "mskc_paws_en"
 
 
 source $HOME/.zshrc

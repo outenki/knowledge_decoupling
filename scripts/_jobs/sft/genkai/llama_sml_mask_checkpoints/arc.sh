@@ -4,7 +4,7 @@
 #PJM -L "gpu=4"
 #PJM -e logs/arc.log
 #PJM -o logs/arc.log
-#PJM -N "msk_ac"
+#PJM -N "mskc_ac"
 
 
 source $HOME/.zshrc

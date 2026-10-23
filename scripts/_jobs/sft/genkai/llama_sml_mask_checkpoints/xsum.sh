@@ -4,7 +4,7 @@
 #PJM -L "gpu=4"
 #PJM -e logs/xsum.log
 #PJM -o logs/xsum.log
-#PJM -N "msk_xsum"
+#PJM -N "mskc_xsum"
 
 
 source $HOME/.zshrc

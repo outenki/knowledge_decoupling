@@ -1,10 +1,11 @@
 #!/bin/bash
-#PJM -L "rscgrp=b-batch"
-#PJM -L "elapse=50:00:00"
-#PJM -L "gpu=4"
-#PJM -e logs/commonsense_qa.log
-#PJM -o logs/commonsense_qa.log
-#PJM -N "ms_cs"
+#PBS -q c30897g
+#PBS -l select=1:ngpus=4
+#PBS -l walltime=50:00:00
+#PBS -W group_list=c30897
+#PBS -j oe
+#PBS -o logs/commonsense_qa.log
+#PBS -N "mskc_cs"
 
 
 source $HOME/.zshrc

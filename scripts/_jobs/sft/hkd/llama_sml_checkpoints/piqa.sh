@@ -1,10 +1,11 @@
 #!/bin/bash
-#PJM -L "rscgrp=b-batch"
-#PJM -L "elapse=50:00:00"
-#PJM -L "gpu=4"
-#PJM -e logs/piqa.log
-#PJM -o logs/piqa.log
-#PJM -N "sft_piqa"
+#PBS -q c30897g
+#PBS -l select=1:ngpus=4
+#PBS -l walltime=24:00:00
+#PBS -W group_list=c30897
+#PBS -j oe
+#PBS -o logs/piqa.log
+#PBS -N smlc_piqa
 
 
 source $HOME/.zshrc

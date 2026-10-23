@@ -4,7 +4,7 @@
 #PJM -L "gpu=4"
 #PJM -j
 #PJM -o logs/popqa.log
-#PJM -N "msk_ppqa"
+#PJM -N "mskc_ppqa"
 
 
 source $HOME/.zshrc
