@@ -20,4 +20,4 @@
 qsub popqa.sh
 qsub redirect_qa.sh
 qsub qasc.sh
-watch -d pjstat
+watch -d qstat
