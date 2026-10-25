@@ -23,7 +23,7 @@ def set_all_seeds(seed: int):
     set_seed(seed)
 
 DECAY_RATE = 0.9
-random.seed(42)
+# random.seed(42)
 
 
 @hydra.main(
