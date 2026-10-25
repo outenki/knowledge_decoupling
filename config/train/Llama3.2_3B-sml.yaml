@@ -21,7 +21,7 @@ data:
 
 training:
   epochs: 1
-  batch_size: 4
+  batch_size: 2
   learning_rate: 2e-4
   eval_strategy: "no"
   checkpoints_per_epoch: 10
