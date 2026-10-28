@@ -22,7 +22,7 @@ training:
   batch_size: 4
   learning_rate: 5e-5
   eval_strategy: "no"
-  checkpoints_per_epoch: 0
+  checkpoints_per_epoch: 1
   save_checkpoints_num: 0
   attn_implementation: "sdpa"
 
