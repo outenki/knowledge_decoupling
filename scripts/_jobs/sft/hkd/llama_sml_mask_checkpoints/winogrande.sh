@@ -11,6 +11,7 @@
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/_jobs/sft
 
+sh sft_winogrande.sh meta-llama/Llama-3.2-1B no_warmup/sml_mask/SmolLM2-135M-20B-sml_mask-bs4096
 sh sft_winogrande.sh meta-llama/Llama-3.2-1B no_warmup/sml_mask/checkpoints/check_1
 sh sft_winogrande.sh meta-llama/Llama-3.2-1B no_warmup/sml_mask/checkpoints/check_3
 sh sft_winogrande.sh meta-llama/Llama-3.2-1B no_warmup/sml_mask/checkpoints/check_5

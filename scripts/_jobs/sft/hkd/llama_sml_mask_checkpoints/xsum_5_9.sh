@@ -4,16 +4,14 @@
 #PBS -l walltime=50:00:00
 #PBS -W group_list=c30897
 #PBS -j oe
-#PBS -o logs/xsum.log
-#PBS -N mskc_xsum
+#PBS -o logs/xsum_5_9.log
+#PBS -N mskc_xsum_5_9
 
 
 
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/_jobs/sft
 
-sh sft_xsum.sh meta-llama/Llama-3.2-1B no_warmup/sml_mask/checkpoints/check_1
-sh sft_xsum.sh meta-llama/Llama-3.2-1B no_warmup/sml_mask/checkpoints/check_3
 sh sft_xsum.sh meta-llama/Llama-3.2-1B no_warmup/sml_mask/checkpoints/check_5
 sh sft_xsum.sh meta-llama/Llama-3.2-1B no_warmup/sml_mask/checkpoints/check_7
 sh sft_xsum.sh meta-llama/Llama-3.2-1B no_warmup/sml_mask/checkpoints/check_9

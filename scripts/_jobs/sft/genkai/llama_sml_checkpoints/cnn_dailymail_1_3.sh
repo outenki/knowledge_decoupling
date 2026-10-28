@@ -3,15 +3,16 @@
 #PJM -L "elapse=24:00:00"
 #PJM -L "gpu=4"
 #PJM -j
-#PJM -o logs/cnn_dailymail_1_5.log
-#PJM -N "smlc_cdm_1_5"
+#PJM -o logs/cnn_dailymail_1_3.log
+#PJM -N "smlc_cdm_1_3"
 
 
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/_jobs/sft
 
+sh sft_cnn_dailymail.sh meta-llama/Llama-3.2-1B no_warmup/sml/SmolLM2-135M-20B-sml-bs4096
 sh sft_cnn_dailymail.sh meta-llama/Llama-3.2-1B no_warmup/sml/checkpoints/check_1
 sh sft_cnn_dailymail.sh meta-llama/Llama-3.2-1B no_warmup/sml/checkpoints/check_3
-sh sft_cnn_dailymail.sh meta-llama/Llama-3.2-1B no_warmup/sml/checkpoints/check_5
+# sh sft_cnn_dailymail.sh meta-llama/Llama-3.2-1B no_warmup/sml/checkpoints/check_5
 # sh sft_cnn_dailymail.sh meta-llama/Llama-3.2-1B no_warmup/sml/checkpoints/check_7
 # sh sft_cnn_dailymail.sh meta-llama/Llama-3.2-1B no_warmup/sml/checkpoints/check_9

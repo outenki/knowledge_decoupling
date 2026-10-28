@@ -2,16 +2,17 @@
 #PJM -L "rscgrp=c-batch"
 #PJM -L "elapse=24:00:00"
 #PJM -L "gpu=4"
-#PJM -e logs/xsum_1_5.log
-#PJM -o logs/xsum_1_5.log
-#PJM -N "smlc_xsum_1_5"
+#PJM -e logs/xsum_1_3.log
+#PJM -o logs/xsum_1_3.log
+#PJM -N "smlc_xsum_1_3"
 
 
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/_jobs/sft
 
+sh sft_xsum.sh meta-llama/Llama-3.2-1B no_warmup/sml/SmolLM2-135M-20B-sml-bs4096
 sh sft_xsum.sh meta-llama/Llama-3.2-1B no_warmup/sml/checkpoints/check_1
 sh sft_xsum.sh meta-llama/Llama-3.2-1B no_warmup/sml/checkpoints/check_3
-sh sft_xsum.sh meta-llama/Llama-3.2-1B no_warmup/sml/checkpoints/check_5
+# sh sft_xsum.sh meta-llama/Llama-3.2-1B no_warmup/sml/checkpoints/check_5
 # sh sft_xsum.sh meta-llama/Llama-3.2-1B no_warmup/sml/checkpoints/check_7
 # sh sft_xsum.sh meta-llama/Llama-3.2-1B no_warmup/sml/checkpoints/check_9
