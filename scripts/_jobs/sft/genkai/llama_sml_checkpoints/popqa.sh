@@ -1,16 +1,16 @@
 #!/bin/bash
-#PJM -L "rscgrp=c-batch"
+#PJM -L "rscgrp=b-batch"
 #PJM -L "elapse=24:00:00"
 #PJM -L "gpu=4"
 #PJM -j
 #PJM -o logs/popqa.log
-#PJM -N "smlc_qqpa"
+#PJM -N "smlc_ppqa"
 
 
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/_jobs/sft
 
-sh sft_popqa.sh meta-llama/Llama-3.2-1B no_warmup/sml/SmolLM2-135M-20B-sml-bs4096
+# sh sft_popqa.sh meta-llama/Llama-3.2-1B no_warmup/sml/SmolLM2-135M-20B-sml-bs4096
 sh sft_popqa.sh meta-llama/Llama-3.2-1B no_warmup/sml/checkpoints/check_9
 sh sft_popqa.sh meta-llama/Llama-3.2-1B no_warmup/sml/checkpoints/check_7
 sh sft_popqa.sh meta-llama/Llama-3.2-1B no_warmup/sml/checkpoints/check_5
