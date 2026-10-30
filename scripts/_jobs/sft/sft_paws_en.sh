@@ -15,6 +15,7 @@ uv run python train.py --config-name sft_train \
     base.path=$PROJECT_BASE_PATH \
     model.config="$MODEL_CONFIG" \
     model.init_model="$INIT_MODEL" \
+    seed=42 \
     data.name=$SFT_DATA
 
 SFT_PATH=$INIT_MODEL-sft_paws_en_train
