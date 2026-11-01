@@ -1,6 +1,6 @@
 #!/bin/bash
 #PJM -L "rscgrp=b-batch"
-#PJM -L "elapse=24:00:00"
+#PJM -L "elapse=60:00:00"
 #PJM -L "gpu=4"
 #PJM -e logs/cnn_dailymail_1_3.log
 #PJM -o logs/cnn_dailymail_1_3.log
@@ -10,6 +10,6 @@
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/_jobs/sft
 
-sh sft_cnn_dailymail.sh meta-llama/Llama-3.2-1B no_warmup/sml_mask/SmolLM2-135M-20B-sml_mask-bs4096
+# sh sft_cnn_dailymail.sh meta-llama/Llama-3.2-1B no_warmup/sml_mask/SmolLM2-135M-20B-sml_mask-bs4096
 sh sft_cnn_dailymail.sh meta-llama/Llama-3.2-1B no_warmup/sml_mask/checkpoints/check_1
 sh sft_cnn_dailymail.sh meta-llama/Llama-3.2-1B no_warmup/sml_mask/checkpoints/check_3

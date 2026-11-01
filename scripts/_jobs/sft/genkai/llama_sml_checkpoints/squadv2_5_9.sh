@@ -1,6 +1,6 @@
 #!/bin/bash
 #PJM -L "rscgrp=b-batch"
-#PJM -L "elapse=24:00:00"
+#PJM -L "elapse=60:00:00"
 #PJM -L "gpu=4"
 #PJM -e logs/squadv2_5.log
 #PJM -o logs/squadv2_5.log

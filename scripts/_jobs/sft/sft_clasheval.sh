@@ -39,6 +39,7 @@ uv run python train.py --config-name sft_train \
     base.path=$PROJECT_BASE_PATH \
     model.config="$MODEL_CONFIG" \
     model.init_model="$INIT_MODEL" \
+    seed=42 \
     data.name=$SFT_DATA
 
 SFT_DATA=clasheval
@@ -96,6 +97,7 @@ uv run python train.py --config-name sft_train \
     base.path=$PROJECT_BASE_PATH \
     model.config="$MODEL_CONFIG" \
     model.init_model="$EXT_MODEL" \
+    seed=42 \
     data.name=$SFT_DATA
 
 SFT_PATH=$EXT_MODEL-sft_${SFT_DATA}_train
