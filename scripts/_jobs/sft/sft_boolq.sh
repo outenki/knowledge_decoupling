@@ -8,7 +8,47 @@ export WANDB_MODE=offline
 
 
 # sft
-SFT_DATA=google_boolq
+# SFT_DATA=google_boolq
+# cd $PROJECT_BASE_PATH/src/train
+# echo ">>> SFT $MODEL_CONFIG/$MODEL_NAME on $SFT_DATA"
+# uv run python train.py --config-name sft_train \
+#     base.path=$PROJECT_BASE_PATH \
+#     model.config="$MODEL_CONFIG" \
+#     model.init_model="$INIT_MODEL" \
+#     seed=42 \
+#     data.name=$SFT_DATA
+
+
+# TASK=google_boolq
+# SFT_DATA=google_boolq
+# SFT_PATH=$INIT_MODEL-sft_${SFT_DATA}_train
+# cd $SFT_PATH
+# echo 
+# echo ">>> Evaluating $TASK QA for: $SFT_PATH"
+# uv run accelerate launch -m lm_eval \
+#     --model hf \
+#     --model_args pretrained=. \
+#     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+#     --tasks $TASK \
+#     --log_samples \
+#     --output_path eval/$TASK
+
+# TASK=google_boolq_rnd_id
+# SFT_DATA=google_boolq
+# SFT_PATH=$INIT_MODEL-sft_${SFT_DATA}_train
+# cd $SFT_PATH
+# echo 
+# echo ">>> Evaluating ${TASK}_rnd_id QA for: $SFT_PATH"
+# uv run accelerate launch -m lm_eval \
+#     --model hf \
+#     --model_args pretrained=. \
+#     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+#     --tasks ${TASK} \
+#     --log_samples \
+#     --output_path eval/$TASK
+
+
+SFT_DATA=google_boolq_rnd_id
 cd $PROJECT_BASE_PATH/src/train
 echo ">>> SFT $MODEL_CONFIG/$MODEL_NAME on $SFT_DATA"
 uv run python train.py --config-name sft_train \
@@ -18,36 +58,7 @@ uv run python train.py --config-name sft_train \
     seed=42 \
     data.name=$SFT_DATA
 
-
-TASK=google_boolq
-SFT_DATA=google_boolq
-SFT_PATH=$INIT_MODEL-sft_${SFT_DATA}_train
-cd $SFT_PATH
-echo 
-echo ">>> Evaluating $TASK QA for: $SFT_PATH"
-uv run accelerate launch -m lm_eval \
-    --model hf \
-    --model_args pretrained=. \
-    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-    --tasks $TASK \
-    --log_samples \
-    --output_path eval/$TASK
-
 TASK=google_boolq_rnd_id
-SFT_DATA=google_boolq
-SFT_PATH=$INIT_MODEL-sft_${SFT_DATA}_train
-cd $SFT_PATH
-echo 
-echo ">>> Evaluating ${TASK}_rnd_id QA for: $SFT_PATH"
-uv run accelerate launch -m lm_eval \
-    --model hf \
-    --model_args pretrained=. \
-    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-    --tasks ${TASK} \
-    --log_samples \
-    --output_path eval/$TASK
-
-
 SFT_DATA=google_boolq_rnd_id
 SFT_PATH=$INIT_MODEL-sft_${SFT_DATA}_train
 cd $SFT_PATH

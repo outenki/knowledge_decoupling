@@ -1,6 +1,6 @@
 #!/bin/bash
-#PJM -L "rscgrp=b-batch"
-#PJM -L "elapse=50:00:00"
+#PJM -L "rscgrp=c-batch"
+#PJM -L "elapse=24:00:00"
 #PJM -L "gpu=4"
 #PJM -j
 #PJM -o logs/commonsense_qa.log
