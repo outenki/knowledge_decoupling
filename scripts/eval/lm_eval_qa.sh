@@ -34,29 +34,29 @@ MODEL_PATH=$1
 #     --log_samples \
 #     --output_path eval/arc_easy
 
-SFT_PATH=$MODEL_PATH-sft_arc_challenge_train
-cd $SFT_PATH
-echo
-echo ">>>Evaluating arc_challenge for: $SFT_PATH"
-uv run accelerate launch -m lm_eval \
-    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-    --model hf \
-    --model_args pretrained=. \
-    --tasks arc_challenge \
-    --log_samples \
-    --output_path eval/arc_challenge
-
-# SFT_PATH=$MODEL_PATH-sft_commonsense_qa_train
+# SFT_PATH=$MODEL_PATH-sft_arc_challenge_train
 # cd $SFT_PATH
 # echo
-# echo ">>>Evaluating commonsense_qa for: $SFT_PATH"
+# echo ">>>Evaluating arc_challenge for: $SFT_PATH"
 # uv run accelerate launch -m lm_eval \
+#     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
 #     --model hf \
 #     --model_args pretrained=. \
-#     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-#     --tasks commonsense_qa \
+#     --tasks arc_challenge \
 #     --log_samples \
-#     --output_path eval/commonsense_qa
+#     --output_path eval/arc_challenge
+
+SFT_PATH=$MODEL_PATH-sft_commonsense_qa_train
+cd $SFT_PATH
+echo
+echo ">>>Evaluating commonsense_qa for: $SFT_PATH"
+uv run accelerate launch -m lm_eval \
+    --model hf \
+    --model_args pretrained=. \
+    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+    --tasks commonsense_qa \
+    --log_samples \
+    --output_path eval/commonsense_qa
 
 
 # SFT_PATH=$MODEL_PATH-sft_winogrande_train
@@ -72,14 +72,14 @@ uv run accelerate launch -m lm_eval \
 #     --output_path eval/winogrande
 
 
-# SFT_PATH=$MODEL_PATH-sft_piqa_train
-# cd $SFT_PATH
-# echo
-# echo ">>> Evaluating piqa for: $SFT_PATH"
-# uv run accelerate launch -m lm_eval \
-#     --model hf \
-#     --model_args pretrained=. \
-#     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
-#     --tasks  piqa\
-#     --log_samples \
-#     --output_path eval/piqa
+SFT_PATH=$MODEL_PATH-sft_piqa_train
+cd $SFT_PATH
+echo
+echo ">>> Evaluating piqa for: $SFT_PATH"
+uv run accelerate launch -m lm_eval \
+    --model hf \
+    --model_args pretrained=. \
+    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+    --tasks  piqa\
+    --log_samples \
+    --output_path eval/piqa

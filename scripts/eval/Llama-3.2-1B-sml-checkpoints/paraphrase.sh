@@ -4,7 +4,7 @@
 #PJM -L "gpu=4"
 #PJM -e logs/paraphrase.log
 #PJM -o logs/paraphrase.log
-#PJM -N "ev_lama_pr"
+#PJM -N "evsm_para"
 
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/eval

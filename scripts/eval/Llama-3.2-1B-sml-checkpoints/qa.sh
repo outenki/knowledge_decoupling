@@ -4,7 +4,7 @@
 #PJM -L "gpu=4"
 #PJM -e logs/qa.log
 #PJM -o logs/qa.log
-#PJM -N "ev_lama_qa"
+#PJM -N "evsm_qa"
 
 
 source $HOME/.zshrc
