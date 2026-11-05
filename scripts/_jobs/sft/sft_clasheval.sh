@@ -87,6 +87,7 @@ uv run python train.py --config-name ext_train \
     base.path=$PROJECT_BASE_PATH \
     model.config="$MODEL_CONFIG" \
     model.init_model="$INIT_MODEL" \
+    seed=42 \
     data.name=$EXT_DATA
 
 EXT_MODEL=$INIT_MODEL-ext_${EXT_DATA}
