@@ -5,7 +5,7 @@
 #PBS -W group_list=c30897
 #PBS -j oe
 #PBS -o logs/blimp.log
-#PBS -N sm_blimp
+#PBS -N evmsk_blimp
 
 
 source $HOME/.zshrc

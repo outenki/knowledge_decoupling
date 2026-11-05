@@ -5,7 +5,7 @@
 #PBS -W group_list=c30897
 #PBS -j oe
 #PBS -o logs/continuation.log
-#PBS -N sm_cont_writing
+#PBS -N evmsk_cont_writing
 
 
 source $HOME/.zshrc
