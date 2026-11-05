@@ -13,4 +13,4 @@ cd $PROJECT_BASE_PATH/scripts/_jobs/sft
 
 sh sft_google_re.sh meta-llama/Llama-3.2-1B no_warmup/sml_mask/checkpoints/check_5
 sh sft_google_re.sh meta-llama/Llama-3.2-1B no_warmup/sml_mask/checkpoints/check_7
-sh sft_google_re.sh meta-llama/Llama-3.2-1B no_warmup/sml_mask/checkpoints/check_9
+# sh sft_google_re.sh meta-llama/Llama-3.2-1B no_warmup/sml_mask/checkpoints/check_9
