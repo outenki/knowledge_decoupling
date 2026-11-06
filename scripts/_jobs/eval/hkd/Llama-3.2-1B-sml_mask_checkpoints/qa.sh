@@ -1,4 +1,5 @@
-#PBS -q sg
+#!/bin/bash
+#PBS -q c30897g
 #PBS -l select=1:ngpus=4
 #PBS -l walltime=50:00:00
 #PBS -W group_list=c30897

@@ -24,7 +24,22 @@ uv run accelerate launch -m lm_eval \
     --log_samples \
     --output_path eval/$TASK
 
-# TASK=clasheval_rnd_id
+TASK=clasheval_rnd_id
+echo 
+echo ">>> Evaluating ${TASK} QA for: $SFT_PATH"
+uv run accelerate launch -m lm_eval \
+    --model hf \
+    --model_args pretrained=. \
+    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+    --tasks ${TASK} \
+    --log_samples \
+    --output_path eval/$TASK
+
+# SFT_DATA=clasheval
+# EXT_DATA=clasheval_test_mask-bs4096
+# SFT_PATH=$MODEL_PATH-ext_${EXT_DATA}-sft_${SFT_DATA}_train
+# cd $SFT_PATH
+# TASK=clasheval_conflict
 # echo 
 # echo ">>> Evaluating ${TASK} QA for: $SFT_PATH"
 # uv run accelerate launch -m lm_eval \
@@ -33,15 +48,13 @@ uv run accelerate launch -m lm_eval \
 #     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
 #     --tasks ${TASK} \
 #     --log_samples \
-    # --output_path eval/$TASK
+#     --output_path eval/$TASK
 
-SFT_DATA=clasheval
-EXT_DATA=clasheval_test_mask-bs4096
-SFT_PATH=$MODEL_PATH-ext_${EXT_DATA}-sft_${SFT_DATA}_train
+SFT_DATA=clasheval_rnd_id
+SFT_PATH=$MODEL_PATH-sft_${SFT_DATA}_train
 cd $SFT_PATH
-TASK=clasheval_conflict
-echo 
-echo ">>> Evaluating ${TASK} QA for: $SFT_PATH"
+TASK=clasheval_rnd_id
+echo ">>> Evaluating ${TASK} for: $SFT_PATH"
 uv run accelerate launch -m lm_eval \
     --model hf \
     --model_args pretrained=. \

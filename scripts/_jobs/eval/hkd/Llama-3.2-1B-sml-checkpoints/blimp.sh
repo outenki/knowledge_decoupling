@@ -1,11 +1,11 @@
 #!/bin/bash
-#PBS -q sg
+#PBS -q c30897g
 #PBS -l select=1:ngpus=4
 #PBS -l walltime=50:00:00
 #PBS -W group_list=c30897
 #PBS -j oe
 #PBS -o logs/blimp.log
-#PBS -N blimp
+#PBS -N evsml_blimp
 
 
 source $HOME/.zshrc

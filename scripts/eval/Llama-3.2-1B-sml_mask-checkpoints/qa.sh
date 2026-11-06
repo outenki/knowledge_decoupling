@@ -1,11 +1,11 @@
 #!/bin/bash
-#PJM -L "rscgrp=b-batch"
-#PJM -L "elapse=50:00:00"
-#PJM -L "gpu=4"
-#PJM -e logs/qa.log
-#PJM -o logs/qa.log
-#PJM -N "ev_lama_qa"
-
+#PBS -q sg
+#PBS -l select=1:ngpus=4
+#PBS -l walltime=50:00:00
+#PBS -W group_list=c30897
+#PBS -j oe
+#PBS -o logs/qa.log
+#PBS -N evmsk_qa
 
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/eval
