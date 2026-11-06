@@ -60,3 +60,16 @@ uv run accelerate launch -m lm_eval \
     --tasks ${TASK} \
     --log_samples \
     --output_path eval/$TASK
+
+SFT_DATA=google_re_rnd_id
+SFT_PATH=$MODEL_PATH-sft_${SFT_DATA}_train
+TASK=google_re_rnd_id
+echo 
+echo ">>> Evaluating ${TASK} QA for: $SFT_PATH"
+uv run accelerate launch -m lm_eval \
+    --model hf \
+    --model_args pretrained=. \
+    --include_path $PROJECT_BASE_PATH/config/eval_tasks \
+    --tasks ${TASK} \
+    --log_samples \
+    --output_path eval/$TASK
