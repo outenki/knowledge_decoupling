@@ -60,7 +60,11 @@ def main(cfg: DictConfig):
         assert cfg.model.config is not None, "model.config is required"
         seed = cfg.seed
         set_all_seeds(seed)
-        model = load_model_from_config_random(cfg.model.config, cfg.training.attn_implementation)
+        model = load_model_from_config_random(
+            cfg.model.config,
+            cfg.training.attn_implementation,
+            architecture_config=cfg.model.architecture
+        )
         print(">>> Randomly initialized model. Config:", model.config)
         print(f"Loading tokenizer from: {cfg.model.tokenizer}")
         tokenizer = AutoTokenizer.from_pretrained(cfg.model.tokenizer)
@@ -89,6 +93,9 @@ def main(cfg: DictConfig):
     
 
     # === train model
+    if "skip" in cfg.training and cfg.training.skip:
+        print(">>> Skipping training as per config.")
+        return
     train_dataset, eval_dataset = load_dataset_for_training(cfg.data.paths, cfg.data.limits, cfg.data.shuffle)
     wandb_run = init_wandb_run(cfg.output.path, cfg.wandb.group, cfg.wandb.tags)
     model = train_model_with_data(

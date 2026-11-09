@@ -15,12 +15,33 @@ def load_model_from_pretrained(model_path: str, attn_implementation: str) -> Any
     return model
 
 
-def load_model_from_config_random(config_name: str, attn_implementation: str) -> Any:
-    config = AutoConfig.from_pretrained(config_name, trust_remote_code=True)
+def load_model_from_config_random(
+    config_name: str,
+    attn_implementation: str,
+    architecture_config: dict = None,
+) -> Any:
+
+    config = AutoConfig.from_pretrained(
+        config_name,
+        trust_remote_code=True
+    )
+
     if hasattr(config, "text_config"):
         config = config.text_config
+
+    # Override model architecture
+    if architecture_config is not None:
+        print(">>> Overriding model architecture:")
+
+        for key, value in architecture_config.items():
+            if value is not None:
+                print(f"  {key}: {getattr(config, key, None)} -> {value}")
+                setattr(config, key, value)
+
+    # Initialize model with random parameters
     if attn_implementation:
         print(f"- speed up with {attn_implementation}")
+
         model = AutoModelForCausalLM.from_config(
             config,
             trust_remote_code=True,
@@ -31,18 +52,24 @@ def load_model_from_config_random(config_name: str, attn_implementation: str) ->
             config,
             trust_remote_code=True
         )
+
     for name, module in model.named_modules():
         if hasattr(module, "use_linear_attn"):
             module.use_linear_attn = False
+
     model.tie_weights()
-    # Enable gradient checkpointing to speed up training (trade memory for speed)
+
+    # Enable gradient checkpointing
     model.gradient_checkpointing_enable()
     model.config.use_cache = False
+
     print(">>> Checking random model parameters...")
+
     for name, p in model.named_parameters():
         if p.requires_grad and p.dim() > 1:
             print(name, p.mean().item(), p.std().item())
             break
+
     return model.to(torch.bfloat16)
 
 

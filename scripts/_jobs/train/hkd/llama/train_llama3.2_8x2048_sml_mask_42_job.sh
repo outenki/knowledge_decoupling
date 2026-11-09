@@ -1,0 +1,16 @@
+#!/bin/bash
+#PBS -q c30897g
+#PBS -l select=1:ngpus=4
+#PBS -l walltime=160:00:00
+#PBS -W group_list=c30897
+#PBS -j oe
+#PBS -o "logs/train_llama3.2_8x2048_msk_42.log"
+#PBS -N "tr_8x2048_msk_42"
+
+module load cuda/12.8
+source $HOME/.zshrc
+cd $PROJECT_BASE_PATH/src/train
+
+# export UV_OFFLINE=1
+export WANDB_MODE=offline
+uv run python train.py --config-name Llama3.2-8x2048-sml_mask base.path=$PROJECT_BASE_PATH seed=42
