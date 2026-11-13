@@ -8,6 +8,6 @@
 
 
 source $HOME/.zshrc
-cd $PROJECT_BASE_PATH/scripts/_jobs/tokenization/tokenize
+cd $PROJECT_BASE_PATH/scripts/_jobs/tokenization
 
 sh ./tokenize.sh meta-llama/Llama-3.2-1B 0

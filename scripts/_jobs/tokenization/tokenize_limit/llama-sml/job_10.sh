@@ -4,7 +4,7 @@
 #PJM -L "vnode-core=10"
 #PJM -e logs/llama-sml-job_10.out
 #PJM -o logs/llama-sml-job_10.out
-#PJM -N "llama-sml_010"
+#PJM -N "llama-sml_10"
 
 
 source $HOME/.zshrc
