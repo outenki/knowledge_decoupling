@@ -12,5 +12,9 @@
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/_jobs/sft
 
-sh sft_xsum.sh meta-llama/Llama-3.2-1B seed_42/no_warmup/4x2048/SmolLM2-135M-20B-sml-bs4096
-sh sft_xsum.sh meta-llama/Llama-3.2-1B seed_42/no_warmup/4x2048/SmolLM2-135M-20B-sml_mask-bs4096
+sh sft_xsum.sh meta-llama/Llama-3.2-1B seed_41/no_warmup/4x2048/SmolLM2-135M-20B-sml-bs4096
+sh sft_xsum.sh meta-llama/Llama-3.2-1B seed_41/no_warmup/4x2048/SmolLM2-135M-20B-sml_mask-bs4096
+# sh sft_xsum.sh meta-llama/Llama-3.2-1B seed_42/no_warmup/4x2048/SmolLM2-135M-20B-sml-bs4096
+# sh sft_xsum.sh meta-llama/Llama-3.2-1B seed_42/no_warmup/4x2048/SmolLM2-135M-20B-sml_mask-bs4096
+sh sft_xsum.sh meta-llama/Llama-3.2-1B seed_43/no_warmup/4x2048/SmolLM2-135M-20B-sml-bs4096
+sh sft_xsum.sh meta-llama/Llama-3.2-1B seed_43/no_warmup/4x2048/SmolLM2-135M-20B-sml_mask-bs4096

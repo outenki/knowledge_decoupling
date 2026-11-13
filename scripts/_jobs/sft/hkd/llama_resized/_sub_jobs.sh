@@ -1,18 +1,19 @@
-qsub blimp.sh
-qsub continuation_writing.sh
-qsub xsum.sh
-qsub winogrande.sh
-qsub squadv2.sh
-qsub samsum.sh
-qsub redirect_qa.sh
-qsub qasc.sh
-qsub popqa.sh
-qsub piqa.sh
-qsub paws_en.sh
-qsub nq_swap.sh
-qsub mrpc.sh
-qsub google_re.sh
-qsub commonsense_qa.sh
-qsub cnn_dailymail.sh
-qsub clasheval.sh
-qsub arc.sh
+qsub -W depend=afterany:687555.sjms blimp.sh
+qsub -W depend=afterany:687555.sjms boolq.sh
+qsub -W depend=afterany:687555.sjms continuation_writing.sh
+qsub -W depend=afterany:687555.sjms xsum.sh
+qsub -W depend=afterany:687555.sjms winogrande.sh
+qsub -W depend=afterany:687555.sjms squadv2.sh
+qsub -W depend=afterany:687555.sjms samsum.sh
+qsub -W depend=afterany:687555.sjms redirect_qa.sh
+qsub -W depend=afterany:687555.sjms qasc.sh
+qsub -W depend=afterany:687555.sjms popqa.sh
+qsub -W depend=afterany:687555.sjms piqa.sh
+qsub -W depend=afterany:687555.sjms paws_en.sh
+qsub -W depend=afterany:687555.sjms nq_swap.sh
+qsub -W depend=afterany:687555.sjms mrpc.sh
+qsub -W depend=afterany:687555.sjms google_re.sh
+qsub -W depend=afterany:687555.sjms commonsense_qa.sh
+qsub -W depend=afterany:687555.sjms cnn_dailymail.sh
+qsub -W depend=afterany:687555.sjms clasheval.sh
+qsub -W depend=afterany:687555.sjms arc.sh

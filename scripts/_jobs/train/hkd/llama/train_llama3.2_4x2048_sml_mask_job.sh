@@ -13,4 +13,6 @@ cd $PROJECT_BASE_PATH/src/train
 
 # export UV_OFFLINE=1
 export WANDB_MODE=offline
-uv run python train.py --config-name Llama3.2-4x2048-sml_mask base.path=$PROJECT_BASE_PATH seed=42
+uv run python train.py --config-name Llama3.2-4x2048-sml_mask base.path=$PROJECT_BASE_PATH seed=41
+# uv run python train.py --config-name Llama3.2-4x2048-sml_mask base.path=$PROJECT_BASE_PATH seed=42
+uv run python train.py --config-name Llama3.2-4x2048-sml_mask base.path=$PROJECT_BASE_PATH seed=43

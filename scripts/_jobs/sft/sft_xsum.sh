@@ -29,4 +29,4 @@ uv run accelerate launch -m lm_eval \
     --model_args pretrained=. \
     --tasks xsum \
     --log_samples \
-    --output_path eval/gigaword
+    --output_path eval/xsum

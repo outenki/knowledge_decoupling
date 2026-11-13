@@ -26,6 +26,6 @@ uv run accelerate launch -m lm_eval \
     --include_path $PROJECT_BASE_PATH/config/eval_tasks \
     --model hf \
     --model_args pretrained=. \
-    --tasks paws_en \
+    --tasks paws_en_local \
     --log_samples \
     --output_path eval/paws_en
