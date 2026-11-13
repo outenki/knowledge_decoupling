@@ -15,12 +15,12 @@
 #     pjsub tokenize_smolLM2_sent_job_${i}.sh
 # done
 
-# for i in {0..8}; do
-#     echo "Submitting job for tokenize_llama_job_${i}.sh"
-#     pjsub llama-sml/job_${i}.sh
-# done
+for i in {0..20}; do
+    echo "Submitting job for tokenize_llama_job_${i}.sh"
+    pjsub llama-sml/job_${i}.sh
+done
 
-for i in {0..19}; do
+for i in {0..20}; do
     echo "Submitting job for tokenize_llama_job_${i}.sh"
     pjsub llama-sml-mask/job_${i}.sh
 done
