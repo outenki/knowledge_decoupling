@@ -10,7 +10,12 @@ import numpy as np
 
 from src.lib.dataset import load_dataset_for_training
 from src.lib.trainer import train_model_with_data, init_wandb_run
-from src.lib.model import load_model_from_pretrained, load_model_from_config_random, freeze_parameters
+from src.lib.model import (
+    enable_llama_upcycling,
+    freeze_parameters,
+    load_model_from_config_random,
+    load_model_from_pretrained,
+)
 from src.lib.utils import add_tokens
 
 
@@ -32,6 +37,10 @@ DECAY_RATE = 0.9
     config_name="_"
 )
 def main(cfg: DictConfig):
+    upcycling = cfg.model.get("upcycling", False)
+    if upcycling and (not cfg.model.init_model or cfg.model.freeze_layers != 0):
+        raise ValueError("Upcycling requires model.init_model and model.freeze_layers=0.")
+
     # === Save a copy of the config for later reference
     Path(cfg.output.path).mkdir(parents=True, exist_ok=True)
 
@@ -78,18 +87,27 @@ def main(cfg: DictConfig):
         tokenizer.pad_token = tokenizer.eos_token
     model.config.pad_token_id = tokenizer.pad_token_id
     assert model is not None
+
+    if upcycling:
+        if len(tokenizer) > model.get_input_embeddings().num_embeddings:
+            raise ValueError("The base tokenizer exceeds the frozen embedding vocabulary.")
+        enable_llama_upcycling(model)
+        trainable_params = sum(p.numel() for p in model.parameters() if p.requires_grad)
+        print(f">>> Upcycling: {trainable_params:,} trainable parameters in the added layer.")
+
     model.save_pretrained(Path(cfg.output.path) / "init_model")
     tokenizer.save_pretrained(Path(cfg.output.path) / "init_model")
-    tokenizer = add_tokens(tokenizer)
-    print(f"Tokenizer vocab size: {tokenizer.vocab_size}, pad token id: {tokenizer.pad_token_id}")
 
-    if cfg.model.freeze_layers != 0:
-        freeze_parameters(model, cfg.model.freeze_layers)
-        print(f">>> Frozen the bottom {cfg.model.freeze_layers} layers.")
-    
-    if len(tokenizer) != model.get_input_embeddings().num_embeddings:
-        print(f">>> Resizing model embeddings from {model.get_input_embeddings().num_embeddings} to {len(tokenizer)}")
-        model.resize_token_embeddings(len(tokenizer))
+    if not upcycling:
+        tokenizer = add_tokens(tokenizer)
+        if cfg.model.freeze_layers != 0:
+            freeze_parameters(model, cfg.model.freeze_layers)
+            print(f">>> Frozen the bottom {cfg.model.freeze_layers} layers.")
+
+        if len(tokenizer) != model.get_input_embeddings().num_embeddings:
+            print(f">>> Resizing model embeddings from {model.get_input_embeddings().num_embeddings} to {len(tokenizer)}")
+            model.resize_token_embeddings(len(tokenizer))
+    print(f"Tokenizer vocab size: {tokenizer.vocab_size}, pad token id: {tokenizer.pad_token_id}")
     
 
     # === train model
@@ -110,6 +128,7 @@ def main(cfg: DictConfig):
         attn_implementation=cfg.training.attn_implementation,
         seed=cfg.seed,
         checkpoint=cfg.model.checkpoint,
+        upcycling=upcycling,
     ) 
     wandb_run.finish()
     print(f">>> Save model to: {cfg.output.path}")

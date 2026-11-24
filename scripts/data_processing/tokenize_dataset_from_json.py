@@ -30,6 +30,10 @@ parser.add_argument(
     help='Only include context'
 )
 parser.add_argument(
+    '--keep-tokenizer-vocab', action='store_true',
+    help='Use the checkpoint vocabulary as-is, without adding repository tokens'
+)
+parser.add_argument(
     '--mask-prompt', dest='mask_prompt', action='store_true',
     help='Mask prompt for SFT'
 )
@@ -38,6 +42,8 @@ parser.add_argument(
     help='Maximum sequence length after tokenization'
 )
 args = parser.parse_args()
+if args.only_context and args.chat_template:
+    parser.error('--only-context cannot be combined with --apply-chat-template')
 
 
 print(f"Using tokenizer: {args.tokenizer}")
@@ -45,7 +51,8 @@ TOKENIZER = AutoTokenizer.from_pretrained(args.tokenizer)
 TOKENIZER.padding_side = "left"
 if TOKENIZER.pad_token_id is None:
     TOKENIZER.pad_token = TOKENIZER.eos_token
-TOKENIZER = add_tokens(TOKENIZER)
+if not args.keep_tokenizer_vocab:
+    TOKENIZER = add_tokens(TOKENIZER)
 
 # TOKENIZER.add_special_tokens({'pad_token': '[PAD]'})
 
@@ -115,29 +122,21 @@ def preprocess_chat_template(example):
 
 
 def preprocess_concat(example):
-    context = example.get("context", "")
-    prompt, response = format_qa_prompt(example)
-
-    c_out = TOKENIZER(context, add_special_tokens=False)
-    p_out = TOKENIZER(prompt, add_special_tokens=False)
-    r_out = TOKENIZER(response + TOKENIZER.eos_token, add_special_tokens=False)
-
-    context_ids = c_out.input_ids if c_out.input_ids is not None else []
-    prompt_ids = p_out.input_ids if p_out.input_ids is not None else []
-    response_ids = r_out.input_ids if r_out.input_ids is not None else []
     if args.only_context:
-        input_ids = context_ids
+        input_ids = TOKENIZER(example["context"], add_special_tokens=False).input_ids
         attention_mask = [1] * len(input_ids)
-        labels = input_ids
-        input_ids, attention_mask, labels = truncate_and_pad(input_ids, attention_mask, labels)
+        input_ids, attention_mask, labels = truncate_and_pad(input_ids, attention_mask, input_ids)
         return {
             "input_ids": input_ids,
             "attention_mask": attention_mask,
             "labels": labels,
         }
 
-    if args.skip_answer:
-        response_ids = []
+    prompt, response = format_qa_prompt(example)
+    prompt_ids = TOKENIZER(prompt, add_special_tokens=False).input_ids
+    response_ids = [] if args.skip_answer else TOKENIZER(
+        response + TOKENIZER.eos_token, add_special_tokens=False
+    ).input_ids
     input_ids = prompt_ids + response_ids
 
     if args.mask_prompt:
@@ -200,11 +199,10 @@ if args.chat_template:
     with open(template_path, "w") as f:
         json.dump(template, f, indent=4)
 else:
-    context = example.get("context", "")
-    prompt, response = format_qa_prompt(example)
     if args.only_context:
-        template = context
+        template = example["context"]
     else:
+        prompt, response = format_qa_prompt(example)
         template = prompt + response
     print("\n*****Concat Template:*****")
     print(template)

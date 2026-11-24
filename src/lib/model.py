@@ -1,3 +1,4 @@
+from copy import deepcopy
 from typing import Any
 from transformers import AutoConfig, AutoModelForCausalLM, AutoTokenizer
 import torch
@@ -83,6 +84,35 @@ def get_layers(model):
     raise NotImplementedError(
         f"Unknown architecture: {type(model)}"
     )
+
+
+def enable_llama_upcycling(model):
+    """Append one causal decoder layer and make it the only trainable layer."""
+    from transformers.models.llama.modeling_llama import LlamaForCausalLM
+
+    if not isinstance(model, LlamaForCausalLM):
+        raise ValueError("Upcycling requires a Llama causal language model.")
+
+    layers = get_layers(model)
+    base_depth = getattr(model.config, "upcycling_base_num_hidden_layers", None)
+    if base_depth is None:
+        base_depth = len(layers)
+        layer = deepcopy(layers[-1], memo={id(model.config): model.config})
+        layer.self_attn.layer_idx = base_depth
+        # Keep the starting logits identical by zeroing both residual branches.
+        with torch.no_grad():
+            for projection in (layer.self_attn.o_proj, layer.mlp.down_proj):
+                projection.weight.zero_()
+                if projection.bias is not None:
+                    projection.bias.zero_()
+        layers.append(layer)
+        set_num_layers(model, len(layers))
+        model.config.upcycling_base_num_hidden_layers = base_depth
+    elif len(layers) != base_depth + 1:
+        raise ValueError("Expected exactly one Upcycling layer after the base Llama layers.")
+
+    freeze_parameters(model, 1)
+
 
 def get_num_layers(model):
     if hasattr(model.config, "num_hidden_layers"):

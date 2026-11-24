@@ -42,7 +42,7 @@ def train_model_with_data(
     model, train_dataset, eval_dataset, wandb_run, output_path,
     batch_size, epochs, checkpoints_per_epoch, eval_strategy,
     save_checkpoints_num, learning_rate, attn_implementation,
-    seed, checkpoint=None
+    seed, checkpoint=None, upcycling=False,
 ):
     # === Training setup
     log_path = f"{output_path}/logs"
@@ -97,6 +97,7 @@ def train_model_with_data(
         # optim="adamw_8bit",  # Use optimized AdamW
         max_grad_norm=1.0,  # Gradient clipping
         gradient_checkpointing=True,  # Enable gradient checkpointing
+        gradient_checkpointing_kwargs={"use_reentrant": False} if upcycling else None,
         seed=seed,
         data_seed=seed
     )
@@ -108,7 +109,11 @@ def train_model_with_data(
 
 
     # WSD settings
-    optimizer = AdamW(model.parameters(), lr=learning_rate, weight_decay=0.01)
+    if upcycling:
+        parameters = (param for param in model.parameters() if param.requires_grad)
+        optimizer = torch.optim.AdamW(parameters, lr=learning_rate, weight_decay=0.01)
+    else:
+        optimizer = AdamW(model.parameters(), lr=learning_rate, weight_decay=0.01)
     def ws_decay(step):
         if step < warmup_steps:
             return step / warmup_steps
