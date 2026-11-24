@@ -1,0 +1,17 @@
+defaults:
+  - _base/llama3_2_1b
+  - _self_
+
+# Keep the established corpus directory name while using the canonical
+# sml_rnd_id condition label for experiment tracking.
+data:
+  name: SmolLM2-135M-20B-core_rnd_id-bs4096
+
+wandb:
+  group: Llama-3.2-1B-sml_rnd_id
+  tags:
+    - train
+    - Llama-3.2-1B
+    - sml_rnd_id
+    - rnd_id
+    - bs4096

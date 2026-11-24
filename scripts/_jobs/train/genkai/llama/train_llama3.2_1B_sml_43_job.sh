@@ -7,10 +7,6 @@
 #PJM -N "tr_43_ls"
 
 
-module load cuda/12.8
-source $HOME/.zshrc
-cd $PROJECT_BASE_PATH/src/train
 
-# export UV_OFFLINE=1
-export WANDB_MODE=offline
-uv run python train.py --config-name Llama3.2_1B-sml base.path=$PROJECT_BASE_PATH seed=43
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+bash "$SCRIPT_DIR/../../common/run_llama3_2_1b.sh" Llama3.2_1B-sml 43
