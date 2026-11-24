@@ -84,7 +84,7 @@ def train_model_with_data(
         gradient_accumulation_steps=gradient_accumulation_steps,
         per_device_eval_batch_size=per_device_train_batch_size,
         num_train_epochs=epochs,
-        logging_dir=log_path,
+        # logging_dir=log_path,
         logging_steps=logging_steps,
         eval_steps=eval_steps,
         save_steps=save_steps,
@@ -94,6 +94,7 @@ def train_model_with_data(
         report_to="wandb",
         save_total_limit=save_checkpoints_num,
         optim="adamw_torch",  # Use optimized AdamW
+        # optim="adamw_8bit",  # Use optimized AdamW
         max_grad_norm=1.0,  # Gradient clipping
         gradient_checkpointing=True,  # Enable gradient checkpointing
         seed=seed,

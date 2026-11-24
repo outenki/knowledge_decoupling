@@ -5,10 +5,11 @@
 #PBS -W group_list=c30897
 #PBS -j oe
 #PBS -o logs/redirect_qa.log
-#PBS -N ri_rdqa
+#PBS -N rid_rdqa
 
 
 source $HOME/.zshrc
 cd $PROJECT_BASE_PATH/scripts/_jobs/sft
 
-sh sft_redirect_qa.sh meta-llama/Llama-3.2-1B no_warmup/sml_rnd_id/SmolLM2-135M-20B-rnd_id-bs4096
+sh sft_redirect_qa.sh meta-llama/Llama-3.2-1B seed_41/no_warmup/rnd_id/SmolLM2-135M-20B-rnd_id-bs4096
+sh sft_redirect_qa.sh meta-llama/Llama-3.2-1B seed_43/no_warmup/rnd_id/SmolLM2-135M-20B-rnd_id-bs4096
