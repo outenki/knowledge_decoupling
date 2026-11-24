@@ -1,5 +1,5 @@
 def main():
-    print("Hello from knowledge-decoupling!")
+    print("Knowledge-decoupling!")
 
 
 if __name__ == "__main__":
